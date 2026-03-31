@@ -50,6 +50,37 @@ app.get('/api/requests', (req, res) => {
 });
 // -------------------------
 
+
+// --- RECEIVE SOS FROM FLUTTER APP ---
+app.post('/api/sos', (req, res) => {
+    const { RequestorName, CategoryID, UrgencyScore, Latitude, Longitude } = req.body;
+
+    // 1. First, save the new GPS location to the Locations table
+    const insertLocationSql = `
+        INSERT INTO Locations (AreaName, Latitude, Longitude, ZoneType) 
+        VALUES ('Live SOS Location', ?, ?, 'Urban');
+    `;
+
+    db.query(insertLocationSql, [Latitude, Longitude], (err, locResult) => {
+        if (err) return res.status(500).json({ error: "Failed to save location" });
+
+        const newLocationId = locResult.insertId;
+
+        // 2. Then, save the actual SOS request linked to that new location
+        const insertRequestSql = `
+            INSERT INTO HelpRequests (RequestorName, LocationID, CategoryID, UrgencyScore, Status) 
+            VALUES (?, ?, ?, ?, 'Pending');
+        `;
+
+        db.query(insertRequestSql, [RequestorName, newLocationId, CategoryID, UrgencyScore], (err, reqResult) => {
+            if (err) return res.status(500).json({ error: "Failed to save SOS request" });
+            
+            res.status(201).json({ message: "SOS Received successfully!" });
+        });
+    });
+});
+// ------------------------------------
+
 // 5. Start the server
 const PORT = 3000;
 app.listen(PORT, () => {
