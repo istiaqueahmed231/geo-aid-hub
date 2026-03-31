@@ -1,0 +1,57 @@
+// 1. Import our tools
+const express = require('express');
+const mysql = require('mysql2');
+const cors = require('cors');
+require('dotenv').config(); // This loads your secret .env file
+
+// 2. Set up the server
+const app = express();
+app.use(cors()); // Allows your frontend to talk to this backend
+app.use(express.json()); // Allows us to read JSON data
+
+app.use(express.static('public')); // Tells the server to host files from a folder named 'public'
+
+// 3. Connect to the Aiven Database
+const db = mysql.createConnection(process.env.DATABASE_URL);
+
+db.connect((err) => {
+    if (err) {
+        console.error('❌ Database connection failed:', err.message);
+    } else {
+        console.log('✅ Successfully connected to the Aiven Cloud Database!');
+    }
+});
+
+// 4. Create a simple test route
+app.get('/', (req, res) => {
+    res.send('The Disaster Hub API is running!');
+});
+
+
+// --- OUR NEW API ROUTE ---
+app.get('/api/requests', (req, res) => {
+    // This SQL query joins 3 tables together to get readable names instead of just ID numbers
+    const sql = `
+        SELECT r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, c.CategoryName, l.AreaName
+        FROM HelpRequests r
+        JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
+        JOIN Locations l ON r.LocationID = l.LocationID
+        ORDER BY r.UrgencyScore DESC;
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error fetching requests:", err);
+            return res.status(500).json({ error: "Failed to fetch data" });
+        }
+        // Send the data back to the browser as JSON
+        res.json(results);
+    });
+});
+// -------------------------
+
+// 5. Start the server
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 Server is running on http://localhost:${PORT}`);
+});
