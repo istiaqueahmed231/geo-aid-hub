@@ -67,6 +67,7 @@
             background: rgba(255, 255, 255, 0.2); 
         }
     </style>
+    <script src="./theme.js"></script>
 </head>
 <body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary h-screen overflow-hidden flex hover:text-zinc-200">
     <!-- SideNavBar -->
@@ -126,6 +127,10 @@
             </div>
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-2">
+                    <button id="theme-toggle-btn" class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
+                        <span id="theme-toggle-icon" class="material-symbols-outlined">light_mode</span>
+                        <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-xs text-zinc-300 px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-white/5 font-medium z-[60]">Toggle Theme</div>
+                    </button>
                     <button class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
                         <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
                         <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-xs text-zinc-300 px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-white/5 font-medium z-[60]">Will be implemented later</div>
@@ -166,7 +171,7 @@
                     </p>
                 </div>
                 <div class="flex gap-4">
-                    <button class="bg-primary-container/20 border border-primary-container/50 px-4 py-2 rounded-lg text-sm text-primary font-bold hover:bg-primary-container/40 transition">
+                    <button id="btn-export-registry" class="bg-primary-container/20 border border-primary-container/50 px-4 py-2 rounded-lg text-sm text-primary font-bold hover:bg-primary-container/40 transition flex items-center justify-center min-w-[140px]">
                         Export Registry
                     </button>
                 </div>
@@ -270,6 +275,86 @@
             }
         }
         fetchGlobalStats();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        document.getElementById('btn-export-registry').addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            const originalText = btn.innerText;
+            btn.innerText = 'Exporting...';
+            btn.disabled = true;
+            try {
+                // Fetch all data
+                const [volRes, resourcesRes, sheltersRes] = await Promise.all([
+                    fetch('/api/volunteers'),
+                    fetch('/api/resources'),
+                    fetch('/api/shelters')
+                ]);
+                
+                const volunteers = await volRes.json();
+                const resources = await resourcesRes.json();
+                const shelters = await sheltersRes.json();
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(22);
+                doc.setTextColor(254, 87, 51); // primary-container
+                doc.text('Geo-Aid Central Registry', 14, 20);
+                
+                doc.setFontSize(10);
+                doc.setTextColor(100);
+                doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
+                
+                // Volunteers Table
+                doc.setFontSize(14);
+                doc.setTextColor(40);
+                doc.text('Volunteer Fleet', 14, 40);
+                doc.autoTable({
+                    startY: 45,
+                    head: [['ID', 'Name', 'Role', 'Status', 'Location', 'Age', 'Gender']],
+                    body: volunteers.map(v => [v.VolunteerID, v.Name, v.Role, v.Status, v.Location, v.Age, v.Gender]),
+                    theme: 'grid',
+                    headStyles: { fillColor: [254, 87, 51] },
+                    styles: { fontSize: 8 }
+                });
+                
+                // Resources Table
+                doc.setFontSize(14);
+                doc.setTextColor(40);
+                doc.text('Emergency Resources', 14, doc.lastAutoTable.finalY + 15);
+                doc.autoTable({
+                    startY: doc.lastAutoTable.finalY + 20,
+                    head: [['ID', 'Category', 'Quantity', 'Status', 'Location', 'Coordinates']],
+                    body: resources.map(r => [r.ResourceID, r.CategoryName, `${r.Quantity} ${r.UnitOfMeasure}`, r.Status, r.CurrentLocation, `${r.Latitude}, ${r.Longitude}`]),
+                    theme: 'grid',
+                    headStyles: { fillColor: [254, 87, 51] },
+                    styles: { fontSize: 8 }
+                });
+                
+                // Shelters Table
+                doc.setFontSize(14);
+                doc.setTextColor(40);
+                doc.text('Active Shelters', 14, doc.lastAutoTable.finalY + 15);
+                doc.autoTable({
+                    startY: doc.lastAutoTable.finalY + 20,
+                    head: [['Name', 'Capacity', 'Occupancy', 'Status', 'Area', 'Type']],
+                    body: shelters.map(s => [s.ShelterName, s.TotalCapacity, s.CurrentOccupancy, s.Status, s.AreaName, s.ZoneType]),
+                    theme: 'grid',
+                    headStyles: { fillColor: [254, 87, 51] },
+                    styles: { fontSize: 8 }
+                });
+                
+                doc.save('geo-aid-registry.pdf');
+            } catch (err) {
+                console.error('Export failed:', err);
+                alert('Export failed. Check the console for details.');
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        });
     </script>
 </body>
 </html>

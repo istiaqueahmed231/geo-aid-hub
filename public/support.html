@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Geo-Aid Hub | Support & Development</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script type="module" src="./firebase-config.js"></script>
+    <script type="module" src="./auth.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "inverse-on-surface": "#2f3034",
+                        "on-secondary": "#003909",
+                        "background": "#111316",
+                        "secondary": "#88d982",
+                        "on-secondary-fixed": "#002204",
+                        "outline": "#ad897e",
+                        "inverse-primary": "#b72301",
+                        "on-secondary-container": "#81d27c",
+                        "secondary-container": "#005b14",
+                        "surface-container-high": "#282a2d",
+                        "surface-container": "#1e2023",
+                        "error-container": "#93000a",
+                        "on-primary": "#630e00",
+                        "tertiary-container": "#009fb3",
+                        "on-error": "#690005",
+                        "tertiary-fixed-dim": "#55d7ed",
+                        "surface": "#111316",
+                        "surface-bright": "#37393d",
+                        "surface-variant": "#333538",
+                        "inverse-surface": "#e2e2e6",
+                        "on-tertiary": "#00363e",
+                        "on-error-container": "#ffdad6",
+                        "on-surface-variant": "#e6beb2",
+                        "surface-container-low": "#1a1c1f",
+                        "on-primary-fixed": "#3d0600",
+                        "primary": "#ffb4a4",
+                        "outline-variant": "#5c4037",
+                        "secondary-fixed": "#a3f69c",
+                        "primary-fixed": "#ffdad3",
+                        "primary-fixed-dim": "#ffb4a4",
+                        "on-tertiary-fixed": "#001f24",
+                        "on-primary-fixed-variant": "#8c1800",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed-variant": "#004e59",
+                        "surface-dim": "#111316",
+                        "on-tertiary-container": "#002f36",
+                        "on-background": "#e2e2e6",
+                        "surface-container-highest": "#333538",
+                        "surface-tint": "#ffb4a4",
+                        "surface-container-lowest": "#0c0e11",
+                        "on-surface": "#e2e2e6",
+                        "on-primary-container": "#570b00",
+                        "tertiary-fixed": "#9eefff",
+                        "on-secondary-fixed-variant": "#005312",
+                        "secondary-fixed-dim": "#88d982",
+                        "tertiary": "#55d7ed",
+                        "primary-container": "#fe5733"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333538; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #5c4037; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen flex overflow-hidden">
+    
+    <!-- SideNavBar -->
+    <aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-zinc-900 font-['Inter'] text-sm font-medium flex flex-col py-8 gap-4">
+        <div class="px-6 mb-4">
+            <h1 class="text-lg font-black text-orange-500 tracking-tighter">Geo-Aid Central</h1>
+            <p class="text-xs text-zinc-500">Regional Command</p>
+        </div>
+        <nav class="flex-1 space-y-1">
+            <a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:text-zinc-200 hover:bg-zinc-800 transition-colors group" href="index.html">
+                <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                <span>Dashboard</span>
+            </a>
+            <a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:text-zinc-200 hover:bg-zinc-800 transition-colors group" href="map-view.html">
+                <span class="material-symbols-outlined" data-icon="map">map</span>
+                <span>Map View</span>
+            </a>
+            <a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:text-zinc-200 hover:bg-zinc-800 transition-colors group" href="resource-log.html">
+                <span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+                <span>Resource Log</span>
+            </a>
+            <a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:text-zinc-200 hover:bg-zinc-800 transition-colors group" href="volunteer-fleet.html">
+                <span class="material-symbols-outlined" data-icon="group">group</span>
+                <span>Volunteer Fleet</span>
+            </a>
+        </nav>
+        <div class="px-4 mt-auto space-y-1 pt-6 border-t border-zinc-800/30">
+            <a class="flex items-center gap-3 bg-zinc-800/80 text-orange-400 rounded-lg px-4 py-3 ml-2 mr-2 group" href="support.html">
+                <span class="material-symbols-outlined" data-icon="help">help</span>
+                <span>Support</span>
+            </a>
+            <a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:text-zinc-200" href="#" onclick="event.preventDefault(); window.logout();">
+                <span class="material-symbols-outlined" data-icon="logout">logout</span>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 min-h-screen relative p-12 overflow-y-auto">
+        <div class="max-w-2xl mx-auto pt-16">
+            <div class="bg-surface-container rounded-3xl p-10 border border-zinc-800/50 shadow-2xl relative overflow-hidden group">
+                <!-- Glossy gradient effect -->
+                <div class="absolute inset-0 bg-gradient-to-br from-primary-container/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <h2 class="text-3xl font-headline font-black mb-2 tracking-tight text-white relative z-10">Project Support</h2>
+                <p class="text-on-surface-variant mb-8 text-lg relative z-10">Connect with the development team for help, bug reports, and contributions.</p>
+                
+                <div class="flex items-start gap-6 border-t border-zinc-800 pt-8 relative z-10">
+                    <img src="https://github.com/istiaqueahmed231.png" alt="Istiaque Ahmed" class="w-24 h-24 rounded-2xl shadow-lg border border-zinc-700 object-cover">
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-white mb-1">Istiaque Ahmed</h3>
+                        <p class="text-primary font-medium mb-3">Lead Developer & Maintainer</p>
+                        <p class="text-zinc-400 text-sm leading-relaxed mb-4">
+                            Passionate about building scalable technology to aid during disasters. 
+                            For any inquiries, feature requests, or support related to Geo-Aid Hub, feel free to reach out via GitHub.
+                        </p>
+                        <div class="flex gap-4">
+                            <a href="https://github.com/istiaqueahmed231" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-5 py-2.5 rounded-xl font-semibold transition-colors duration-200">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
+                                </svg>
+                                GitHub Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

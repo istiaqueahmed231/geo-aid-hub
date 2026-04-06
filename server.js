@@ -49,75 +49,7 @@ app.get('/api/requests', (req, res) => {
     });
 });
 
-// --- VOLUNTEERS API ROUTE ---
-app.get('/api/volunteers', (req, res) => {
-    const sql = `
-        SELECT VolunteerID, Name, Status, Location
-        FROM Volunteers
-        ORDER BY Name ASC;
-    `;
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error('Error fetching volunteers:', err);
-            return res.status(500).json({ error: 'Failed to fetch volunteers' });
-        }
-        res.json(results);
-    });
-});
 
-app.post('/api/volunteers', (req, res) => {
-    const { uid, email, name, status, location, age, gender } = req.body;
-    
-    if (!uid || !email || !name) {
-        return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    const sql = `
-        INSERT INTO Volunteers (Name, Email, UID, Gender, Age, Location, Role, Status) 
-        VALUES (?, ?, ?, ?, ?, ?, 'General', ?)
-    `;
-    
-    db.query(sql, [name, email, uid, gender || null, age || null, location || null, status || 'Available'], (err, result) => {
-        if (err) {
-            console.error('Error inserting volunteer:', err);
-            return res.status(500).json({ error: 'Failed to create volunteer profile' });
-        }
-        res.status(201).json({ message: 'Volunteer created successfully', id: result.insertId });
-    });
-});
-
-// --- DISPATCH API ROUTE ---
-app.post('/api/dispatch', async (req, res) => {
-    const { volunteerId, resourceId, requestId } = req.body;
-    if (!volunteerId || !resourceId || !requestId) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-    // Update the request with assigned volunteer and resource, set status to Dispatched
-    const updateSql = `
-        UPDATE HelpRequests
-        SET Status = 'Dispatched', AssignedVolunteerID = ?, AssignedResourceID = ?
-        WHERE RequestID = ?;
-    `;
-    db.query(updateSql, [volunteerId, resourceId, requestId], (err, result) => {
-        if (err) {
-            console.error('Error dispatching request:', err);
-            return res.status(500).json({ error: 'Failed to dispatch request' });
-        }
-        // Optionally decrement resource quantity
-        const decSql = `
-            UPDATE Resources
-            SET Quantity = Quantity - 1
-            WHERE ResourceID = ? AND Quantity > 0;
-        `;
-        db.query(decSql, [resourceId], (err2) => {
-            if (err2) {
-                console.error('Error updating resource quantity:', err2);
-                // Not fatal for dispatch response
-            }
-            return res.json({ message: 'Dispatch successful' });
-        });
-    });
-});
 // --- RESOURCES API ROUTE ---
 app.get('/api/resources', (req, res) => {
     const sql = `
@@ -198,6 +130,27 @@ app.get('/api/volunteers', (req, res) => {
             return res.status(500).json({ error: "Failed to fetch data" });
         }
         res.json(results);
+    });
+});
+
+app.post('/api/volunteers', (req, res) => {
+    const { uid, email, name, status, location, age, gender } = req.body;
+    
+    if (!uid || !email || !name) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const sql = `
+        INSERT INTO Volunteers (Name, Email, UID, Gender, Age, Location, Role, Status) 
+        VALUES (?, ?, ?, ?, ?, ?, 'General', ?)
+    `;
+    
+    db.query(sql, [name, email, uid, gender || null, age || null, location || null, status || 'Available'], (err, result) => {
+        if (err) {
+            console.error('Error inserting volunteer:', err);
+            return res.status(500).json({ error: 'Failed to create volunteer profile' });
+        }
+        res.status(201).json({ message: 'Volunteer created successfully', id: result.insertId });
     });
 });
 // --- GLOBAL STATS API ROUTE ---

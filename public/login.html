@@ -1,28 +1,103 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Volunteer Login</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Geo-Aid Hub | Login</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
   <script type="module" src="./firebase-config.js"></script>
   <script type="module" src="./auth.js"></script>
-  <style>
-    body {font-family: Inter, sans-serif; background: #111316; color: #e2e2e6; display:flex; justify-content:center; align-items:center; height:100vh;}
-    .card {background:#1e2023; padding:2rem; border-radius:0.5rem; box-shadow:0 4px 6px rgba(0,0,0,0.2); width:320px;}
-    input {width:100%; padding:0.5rem; margin:0.5rem 0; border:1px solid #333; border-radius:0.25rem; background:#282a2d; color:#e2e2e6;}
-    button {width:100%; padding:0.75rem; background:#ffb4a4; color:#000; border:none; border-radius:0.25rem; font-weight:bold; cursor:pointer;}
-    a {color:#88d982; display:block; text-align:center; margin-top:0.5rem;}
-  </style>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "background": "#111316",
+            "surface-container": "#1e2023",
+            "secondary": "#88d982",
+            "error-container": "#93000a",
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Manrope', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
 </head>
-<body>
-  <div class="card">
-    <h2>Volunteer Login</h2>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button onclick="if(window.login) { window.login(); } else { alert('Error: Authentication script failed to load. Are you opening this file directly? Please make sure to run the server with node server.js and open http://localhost:3000 in your browser!'); }">Login</button>
-    <a href="signup.html">Create an account</a>
+<body class="bg-background text-zinc-300 font-sans min-h-screen flex items-center justify-center relative py-12">
+  
+  <!-- Add toast notification element -->
+  <div id="toast" style="display:none;" class="fixed bottom-4 right-4 px-4 py-2 rounded shadow-lg z-50"></div>
+  
+  <script>
+    window.showToast = function(message, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-xl z-50 transition-all duration-300 font-medium ${isError ? 'bg-error-container text-white border border-red-500/30' : 'bg-secondary text-background border border-secondary/50'}`;
+      toast.style.display = 'block';
+      toast.style.transform = 'translateY(0)';
+      toast.style.opacity = '1';
+      
+      setTimeout(() => { 
+        toast.style.transform = 'translateY(20px)';
+        toast.style.opacity = '0';
+        setTimeout(() => { toast.style.display = 'none'; }, 300);
+      }, 4000);
+    }
+  </script>
+
+  <!-- Top Left Logo -->
+  <div class="absolute top-6 left-6 md:left-8 flex items-center gap-3 select-none">
+    <div class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-surface-container/80 backdrop-blur border border-zinc-700/50 shadow-lg">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+    <div>
+      <h1 class="text-lg font-black text-white tracking-tighter leading-none">Geo-Aid <span class="text-orange-500">Central</span></h1>
+    </div>
+  </div>
+
+  <div class="relative z-10 w-full max-w-md p-8 bg-surface-container/50 backdrop-blur-xl border border-zinc-800/50 rounded-3xl shadow-xl">
+    
+    <div class="mb-8 text-center">
+      <h2 class="text-3xl font-display font-bold text-white tracking-tight mb-2">Welcome Back</h2>
+      <p class="text-zinc-400">Log in to coordinate disaster relief efforts.</p>
+    </div>
+
+    <form onsubmit="event.preventDefault(); if(window.login) { window.login(); } else { alert('Error: Authentication script failed to load. Are you opening this file directly? Please make sure to run the server with node server.js and open http://localhost:3000 in your browser!'); }" class="space-y-4">
+      
+      <!-- Email -->
+      <div class="space-y-1">
+        <label for="email" class="block text-sm font-medium text-zinc-400 ml-1">Email Address</label>
+        <input type="email" id="email" required class="w-full bg-zinc-800/50 border border-zinc-700/50 text-white placeholder-zinc-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors" placeholder="you@example.com" />
+      </div>
+
+      <!-- Password -->
+      <div class="space-y-1">
+        <label for="password" class="block text-sm font-medium text-zinc-400 ml-1">Password</label>
+        <input type="password" id="password" required class="w-full bg-zinc-800/50 border border-zinc-700/50 text-white placeholder-zinc-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors" placeholder="••••••••" />
+      </div>
+
+      <div class="pt-6">
+        <button type="submit" class="w-full py-3.5 px-4 bg-secondary text-background hover:bg-[#99e294] font-semibold rounded-xl transition-all duration-300 transform active:scale-[0.98] shadow-[0_0_20px_rgba(136,217,130,0.15)]">
+          Sign In
+        </button>
+      </div>
+
+    </form>
+
+    <div class="mt-6 text-center">
+      <p class="text-sm text-zinc-400">
+        Don't have an account? 
+        <a href="signup.html" class="text-secondary hover:text-white transition-colors font-medium ml-1">Sign up here</a>
+      </p>
+    </div>
+
   </div>
 </body>
 </html>

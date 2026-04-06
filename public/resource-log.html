@@ -81,6 +81,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
     <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+    <script src="./theme.js"></script>
 </head>
 <body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary h-screen overflow-hidden flex hover:text-zinc-200">
     <!-- SideNavBar -->
@@ -140,6 +141,10 @@
             </div>
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-2">
+                    <button id="theme-toggle-btn" class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
+                        <span id="theme-toggle-icon" class="material-symbols-outlined">light_mode</span>
+                        <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-xs text-zinc-300 px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-white/5 font-medium z-[60]">Toggle Theme</div>
+                    </button>
                     <button class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
                         <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
                         <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-xs text-zinc-300 px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-white/5 font-medium z-[60]">Will be implemented later</div>
