@@ -57,7 +57,7 @@
       <p class="text-zinc-400">Join the volunteer network to help during emergencies.</p>
     </div>
 
-    <form onsubmit="event.preventDefault(); window.signup();" class="space-y-4">
+    <form onsubmit="event.preventDefault(); if(window.signup) { window.signup(); } else { alert('Error: Authentication script failed to load. Are you opening this file directly? Please make sure to run the server with node server.js and open http://localhost:3000 in your browser!'); }" class="space-y-4">
       <!-- 2 column grid for fields that can sit side-by-side -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         

@@ -21,7 +21,7 @@
     <h2>Volunteer Login</h2>
     <input type="email" id="email" placeholder="Email" />
     <input type="password" id="password" placeholder="Password" />
-    <button onclick="login()">Login</button>
+    <button onclick="if(window.login) { window.login(); } else { alert('Error: Authentication script failed to load. Are you opening this file directly? Please make sure to run the server with node server.js and open http://localhost:3000 in your browser!'); }">Login</button>
     <a href="signup.html">Create an account</a>
   </div>
 </body>
