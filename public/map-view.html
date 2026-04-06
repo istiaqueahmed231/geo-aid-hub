@@ -103,13 +103,9 @@
                 <span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
                 <span>Resource Log</span>
             </a>
-            <a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:text-zinc-200 hover:bg-zinc-800 transition-colors group" href="#">
+            <a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:text-zinc-200 hover:bg-zinc-800 transition-colors group" href="volunteer-fleet.html">
                 <span class="material-symbols-outlined" data-icon="group">group</span>
                 <span>Volunteer Fleet</span>
-            </a>
-            <a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:text-zinc-200 hover:bg-zinc-800 transition-colors group" href="#">
-                <span class="material-symbols-outlined" data-icon="history">history</span>
-                <span>Archive</span>
             </a>
         </nav>
         <div class="px-4 mt-auto space-y-1 pt-6 border-t border-zinc-800/30">
@@ -124,6 +120,16 @@
         <!-- TopNavBar -->
         <header class="fixed top-0 left-64 right-0 z-50 bg-zinc-950/80 backdrop-blur-xl shadow-2xl shadow-black/50 font-['Manrope'] antialiased tracking-tight flex justify-between items-center px-8 h-20">
             <div class="flex items-center gap-8">
+                <div class="flex gap-6 items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+                        <span class="text-error font-bold" id="nav-active-sos">Active SOS: ...</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                        <span class="text-secondary font-bold" id="nav-active-volunteers">Available Volunteers: ...</span>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -279,6 +285,7 @@
                         
                         // Click on row to move map and open popup
                         row.onclick = () => {
+                            if (marker.isPopupOpen()) return;
                             map.flyTo([lat, lng], 13);
                             marker.openPopup();
                         };
@@ -302,6 +309,21 @@
         }
 
         loadShelterMap();
+    </script>
+    <script>
+        async function fetchGlobalStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                const sosEl = document.getElementById('nav-active-sos');
+                const volEl = document.getElementById('nav-active-volunteers');
+                if (sosEl) sosEl.textContent = `Active SOS: ${data.pendingSOS}`;
+                if (volEl) volEl.textContent = `Available Volunteers: ${data.activeVolunteers}`;
+            } catch (err) {
+                console.error("Failed to load global stats:", err);
+            }
+        }
+        fetchGlobalStats();
     </script>
 </body>
 </html>

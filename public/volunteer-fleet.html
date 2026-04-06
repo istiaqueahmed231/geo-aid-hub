@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Geo-Aid Hub | Resource Log</title>
+    <title>Geo-Aid Hub | Volunteer Fleet</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
@@ -52,17 +52,9 @@
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             vertical-align: middle;
         }
-        /* Leaflet tile override for dark mode aesthetic */
-        .leaflet-layer,
-        .leaflet-control-zoom-in,
-        .leaflet-control-zoom-out,
-        .leaflet-control-attribution {
-            filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
-        }
 
-        /* Custom Scrollbar for Directory */
         .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
+            width: 6px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.05); 
@@ -75,16 +67,10 @@
             background: rgba(255, 255, 255, 0.2); 
         }
     </style>
-    
-    <!-- Leaflet CSS and JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
-    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
 </head>
 <body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary h-screen overflow-hidden flex hover:text-zinc-200">
     <!-- SideNavBar -->
-    <aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-zinc-900 font-['Inter'] text-sm font-medium flex flex-col py-8 gap-4">
+    <aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-zinc-900 font-['Inter'] text-sm font-medium flex flex-col py-8 gap-4 shadow-2xl">
         <div class="px-6 mb-4">
             <h1 class="text-lg font-black text-orange-500 tracking-tighter">Geo-Aid Central</h1>
             <p class="text-xs text-zinc-500">Regional Command</p>
@@ -98,11 +84,11 @@
                 <span class="material-symbols-outlined" data-icon="map">map</span>
                 <span>Map View</span>
             </a>
-            <a class="flex items-center gap-3 bg-zinc-800/80 text-orange-400 rounded-lg px-4 py-3 ml-2 mr-2 group" href="resource-log.html">
+            <a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:text-zinc-200 hover:bg-zinc-800 transition-colors group" href="resource-log.html">
                 <span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
                 <span>Resource Log</span>
             </a>
-            <a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:text-zinc-200 hover:bg-zinc-800 transition-colors group" href="volunteer-fleet.html">
+            <a class="flex items-center gap-3 bg-zinc-800/80 text-orange-400 rounded-lg px-4 py-3 ml-2 mr-2 group" href="volunteer-fleet.html">
                 <span class="material-symbols-outlined" data-icon="group">group</span>
                 <span>Volunteer Fleet</span>
             </a>
@@ -170,181 +156,105 @@
         <!-- Content Section -->
         <div class="mt-20 flex-1 p-8 flex flex-col overflow-hidden">
             
-            <!-- Page Context / User Friendly Text -->
-            <div class="mb-8 flex justify-between items-end">
+            <!-- Context / User Friendly Text -->
+            <div class="mb-4 flex flex-col md:flex-row justify-between items-end gap-4">
                 <div>
-                    <h2 class="text-3xl font-black text-white tracking-tight mb-2">Resource Global View</h2>
+                    <h2 class="text-3xl font-black text-white tracking-tight mb-2">Volunteer Fleet Command</h2>
                     <p class="text-zinc-400 max-w-3xl leading-relaxed text-sm">
-                        Monitor distributed resources and supply drops geographically. The interactive map logs active supplies 
-                        at regional depots and hubs. Use the inventory directory to quickly dispatch or review status levels.
+                        Coordinate active field responders, medical aids, and logisticians. Real-time Firebase authentication 
+                        and live availability mapping will be deployed soon. Currently viewing static registry.
                     </p>
                 </div>
                 <div class="flex gap-4">
-                    <button class="bg-primary-container px-4 py-2 rounded-lg text-sm text-white font-bold hover:bg-primary-container/90 transition shadow-lg shadow-primary/20">
-                        Add Resource
+                    <button class="bg-primary-container/20 border border-primary-container/50 px-4 py-2 rounded-lg text-sm text-primary font-bold hover:bg-primary-container/40 transition">
+                        Export Registry
                     </button>
                 </div>
             </div>
-
-            <!-- Map and Directory Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
-                
-                <!-- Map Container (Left, 2/3 width) -->
-                <div class="lg:col-span-2 rounded-2xl shadow-2xl border border-white/10 overflow-hidden relative z-0 flex flex-col min-h-[300px]">
-                    <div id="map" class="w-full h-full"></div>
+            
+            <!-- Auth Upcoming Banner -->
+            <div class="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4 mb-6 flex items-start gap-4">
+                <span class="material-symbols-outlined text-blue-400 mt-0.5">security</span>
+                <div>
+                    <h4 class="text-blue-100 font-bold text-sm mb-1">Firebase Authentication Coming Soon</h4>
+                    <p class="text-blue-300 text-xs leading-relaxed">
+                        Volunteers will soon be able to directly sign up and log in using Firebase secure authentication. 
+                        Their active status and current location will update automatically based on auth sessions.
+                    </p>
                 </div>
-
-                <!-- Resource Directory Table (Right, 1/3 width) -->
-                <div class="lg:col-span-1 border border-white/10 bg-surface-container/50 rounded-2xl p-4 flex flex-col shadow-2xl overflow-hidden backdrop-blur-md">
-                    <div class="flex items-center justify-between mb-4 px-2">
-                        <h3 class="text-lg font-bold text-zinc-100 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary" style="font-size: 20px;">inventory</span>
-                            Resource Inventory
-                        </h3>
-                        <span class="bg-primary/20 text-primary text-xs font-bold px-2 py-1 rounded-full" id="resource-count">0 Tracked</span>
-                    </div>
-
-                    <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                        <table class="w-full text-left text-sm border-collapse">
-                            <thead class="sticky top-0 bg-[#232528] text-zinc-400 border-b border-white/10 z-10 shadow-sm">
-                                <tr>
-                                    <th class="py-3 px-3 font-semibold uppercase tracking-wider text-[10px]">Resource</th>
-                                    <th class="py-3 px-3 text-right font-semibold uppercase tracking-wider text-[10px]">Qty.</th>
-                                    <th class="py-3 px-3 font-semibold uppercase tracking-wider text-[10px] pl-4">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="resource-table-body" class="divide-y divide-white/5 text-zinc-300">
-                                <tr>
-                                    <td colspan="3" class="text-center py-8 text-zinc-500">Loading resources...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
             </div>
+
+            <!-- Grid container -->
+            <div class="overflow-y-auto custom-scrollbar flex-1 pb-10">
+                <div id="volunteer-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <!-- Cards will be populated by JS -->
+                </div>
+            </div>
+            
         </div>
     </main>
 
     <script>
-        // Use an icon mapping for categories
-        const categoryIcons = {
-            'Drinking Water': 'water_drop',
-            'Medical Kits': 'medical_services',
-            'Dry Food Rations': 'fastfood',
-            'Rescue Boats': 'directions_boat',
-            'Tents': 'holiday_village',
-            'Generators': 'bolt'
-        };
-
-        const getCategoryIcon = (categoryName) => {
-            return categoryIcons[categoryName] || 'inventory_2';
-        };
-
-        // Init Leaflet map centered on Bangladesh
-        const map = L.map('map', {
-            fullscreenControl: true,
-            fullscreenControlOptions: { position: 'topleft' }
-        }).setView([23.6850, 90.3563], 7);
-
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        let markers = {};
-
-        async function loadResources() {
+        async function loadVolunteers() {
             try {
-                const response = await fetch('/api/resources');
-                const resources = await response.json();
+                const response = await fetch('/api/volunteers');
+                const volunteers = await response.json();
                 
-                const tableBody = document.getElementById('resource-table-body');
-                const resourceCount = document.getElementById('resource-count');
-                
-                if (!tableBody) return;
-                tableBody.innerHTML = ''; 
+                const grid = document.getElementById('volunteer-grid');
+                grid.innerHTML = '';
 
-                if (resources.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="3" class="px-3 py-8 text-center text-zinc-500">No resources available.</td></tr>';
-                    resourceCount.textContent = "0 Tracked";
-                    return;
-                }
+                volunteers.forEach(vol => {
+                    const statusColor = vol.Status === 'Active' ? 'bg-secondary/20 text-secondary' : 
+                                        vol.Status === 'Pending' ? 'bg-yellow-500/20 text-yellow-500' : 
+                                        'bg-zinc-500/20 text-zinc-400';
+                                        
+                    const icon = vol.Role.includes('Medical') ? 'health_and_safety' :
+                                 vol.Role.includes('Rescue') ? 'emergency' :
+                                 vol.Role.includes('Supply') ? 'local_shipping' :
+                                 vol.Role.includes('Communication') ? 'wifi_tethering' : 'person';
 
-                resourceCount.textContent = `${resources.length} Tracked`;
-
-                resources.forEach(res => {
-                    const row = document.createElement('tr');
-                    row.className = 'hover:bg-surface-variant/50 cursor-pointer transition-colors group';
+                    const card = document.createElement('div');
+                    card.className = "bg-surface-container border border-surface-bright rounded-xl p-5 hover:border-zinc-500 transition-colors duration-300 flex flex-col gap-3 group";
                     
-                    let statusColor = "bg-green-500/10 text-green-400 border border-green-500/20";
-                    if(res.Status === 'Reserved') {
-                        statusColor = "bg-orange-500/10 text-orange-400 border border-orange-500/20";
-                    } else if(res.Status === 'In-Transit') {
-                        statusColor = "bg-blue-500/10 text-blue-400 border border-blue-500/20";
-                    } else if(res.Status === 'Depleted' || res.Quantity === 0) {
-                        statusColor = "bg-red-500/10 text-red-400 border border-red-500/20";
-                    }
-
-                    const iconName = getCategoryIcon(res.CategoryName);
-
-                    row.innerHTML = `
-                        <td class="py-4 px-3 align-top min-w-[140px]">
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                                    <span class="material-symbols-outlined text-[16px] group-hover:text-primary transition-colors text-zinc-400">${iconName}</span>
+                                <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
+                                    <span class="material-symbols-outlined text-xl">${icon}</span>
                                 </div>
-                                <div class="flex flex-col overflow-hidden">
-                                    <span class="font-semibold text-zinc-200 text-sm truncate">${res.CategoryName}</span>
-                                    <span class="text-[10px] text-zinc-500 truncate" title="${res.CurrentLocation}">📍 ${res.CurrentLocation}</span>
+                                <div>
+                                    <h3 class="font-bold text-zinc-100">${vol.Name}</h3>
+                                    <div class="text-xs text-zinc-500">${vol.Role}</div>
                                 </div>
                             </div>
-                        </td>
-                        <td class="py-4 px-3 text-right align-top w-20">
-                            <div class="text-md font-bold text-zinc-200">${res.Quantity}</div>
-                            <div class="text-[10px] text-zinc-500">Units</div>
-                        </td>
-                        <td class="py-4 px-3 pl-4 align-top w-24">
-                            <span class="inline-flex text-[10px] uppercase font-bold px-2 py-1 rounded whitespace-nowrap mt-0.5 ${statusColor}">
-                                ${res.Status}
+                            <span class="text-[10px] font-bold px-2 py-1 rounded-full uppercase ${statusColor}">
+                                ${vol.Status}
                             </span>
-                        </td>
-                    `;
-                    
-                    tableBody.appendChild(row);
-
-                    // Add map markers if location is valid
-                    if (res.Latitude && res.Longitude) {
-                        const marker = L.marker([res.Latitude, res.Longitude]).addTo(map);
+                        </div>
                         
-                        marker.bindPopup(`
-                            <div class="font-['Inter'] font-semibold mb-1">${res.CategoryName}</div>
-                            <div class="text-xs mb-1"><b>Qty:</b> ${res.Quantity} ${res.UnitOfMeasure || ''}</div>
-                            <div class="text-xs text-gray-600">📍 ${res.CurrentLocation}</div>
-                            <div class="mt-2 text-[10px] px-2 py-0.5 inline-block rounded ${statusColor.replace('bg-', 'bg-transparent text-').split(' ')[0]} border border-current">${res.Status}</div>
-                        `);
-
-                        // Ensure multiple resources at the same lat/lng open gracefully or pan to them
-                        markers[res.ResourceID] = marker;
-
-                        row.addEventListener('click', () => {
-                            if (marker.isPopupOpen()) return;
-                            map.flyTo([res.Latitude, res.Longitude], 13, { duration: 1 });
-                            setTimeout(() => { marker.openPopup(); }, 1000);
-                        });
-                    }
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div class="bg-zinc-900/50 rounded-lg p-2 flex flex-col gap-1">
+                                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Age & Gender</span>
+                                <span class="text-sm font-medium text-zinc-300">${vol.Age} y/o &bull; ${vol.Gender}</span>
+                            </div>
+                            <div class="bg-zinc-900/50 rounded-lg p-2 flex flex-col gap-1">
+                                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Location</span>
+                                <span class="text-sm font-medium text-zinc-300 flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px]">pin_drop</span> ${vol.Location}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
                 });
             } catch (error) {
-                console.error("Failed to load resources:", error);
-                const tableBody = document.getElementById('resource-table-body');
-                if (tableBody) {
-                    tableBody.innerHTML = '<tr><td colspan="3" class="px-3 py-8 text-center text-error">Failed to load data. Make sure the server is running.</td></tr>';
-                }
+                console.error("Failed to load volunteers:", error);
+                const grid = document.getElementById('volunteer-grid');
+                grid.innerHTML = '<div class="col-span-full py-8 text-center text-error">Failed to load data. Make sure the server is running.</div>';
             }
         }
 
-        loadResources();
+        loadVolunteers();
     </script>
     <script>
         async function fetchGlobalStats() {

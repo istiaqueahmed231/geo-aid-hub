@@ -116,6 +116,37 @@ app.post('/api/sos', (req, res) => {
         });
     });
 });
+// --- VOLUNTEER FLEET API ROUTE ---
+app.get('/api/volunteers', (req, res) => {
+    const sql = `
+        SELECT VolunteerID, Name, Gender, Age, Location, Role, Status
+        FROM Volunteers
+        ORDER BY VolunteerID ASC;
+    `;
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error fetching volunteers:", err);
+            return res.status(500).json({ error: "Failed to fetch data" });
+        }
+        res.json(results);
+    });
+});
+// --- GLOBAL STATS API ROUTE ---
+app.get('/api/stats', (req, res) => {
+    const sosSql = `SELECT COUNT(*) AS count FROM HelpRequests WHERE Status = 'Pending'`;
+    const volSql = `SELECT COUNT(*) AS count FROM Volunteers WHERE Status = 'Active'`;
+
+    db.query(sosSql, (err, sosResult) => {
+        if (err) return res.status(500).json({ error: "Failed to fetch SOS stats" });
+        db.query(volSql, (err, volResult) => {
+            if (err) return res.status(500).json({ error: "Failed to fetch Volunteer stats" });
+            res.json({
+                pendingSOS: sosResult[0].count,
+                activeVolunteers: volResult[0].count
+            });
+        });
+    });
+});
 // ------------------------------------
 
 // 5. Start the server
