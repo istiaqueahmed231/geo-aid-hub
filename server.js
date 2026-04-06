@@ -97,7 +97,8 @@ app.post('/api/dispatch', async (req, res) => {
         });
     });
 });
-
+// --- RESOURCES API ROUTE ---
+app.get('/api/resources', (req, res) => {
     const sql = `
         SELECT r.ResourceID, c.CategoryName, c.UnitOfMeasure, l.AreaName as CurrentLocation, l.Latitude, l.Longitude, r.Quantity, r.Status
         FROM Resources r
