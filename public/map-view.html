@@ -12,6 +12,8 @@
     <!-- Leaflet CSS and JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
 
     <script id="tailwind-config">
         tailwind.config = {
@@ -81,7 +83,7 @@
         }
     </style>
 </head>
-<body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen flex hover:text-zinc-200">
+<body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary h-screen overflow-hidden flex hover:text-zinc-200">
     <!-- SideNavBar -->
     <aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-zinc-900 font-['Inter'] text-sm font-medium flex flex-col py-8 gap-4">
         <div class="px-6 mb-4">
@@ -118,16 +120,15 @@
     </aside>
 
     <!-- Main Content Canvas -->
-    <main class="flex-1 ml-64 min-h-screen relative flex flex-col">
+    <main class="flex-1 ml-64 h-screen relative flex flex-col">
         <!-- TopNavBar -->
         <header class="fixed top-0 left-64 right-0 z-50 bg-zinc-950/80 backdrop-blur-xl shadow-2xl shadow-black/50 font-['Manrope'] antialiased tracking-tight flex justify-between items-center px-8 h-20">
             <div class="flex items-center gap-8">
-                <span class="text-2xl font-bold tracking-tighter text-zinc-100">Live Map View</span>
             </div>
         </header>
 
         <!-- Content Section -->
-        <div class="mt-20 flex-1 p-8 flex flex-col overflow-y-auto">
+        <div class="mt-20 flex-1 p-8 flex flex-col overflow-hidden">
             
             <!-- Page Context / User Friendly Text -->
             <div class="mb-8">
@@ -140,11 +141,11 @@
             </div>
 
             <!-- Map and Directory Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-[600px]">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
                 
                 <!-- Map Container (Left, 2/3 width) -->
-                <div class="lg:col-span-2 rounded-2xl shadow-2xl border border-white/10 overflow-hidden relative z-0 flex flex-col">
-                    <div id="map" class="w-full flex-1 min-h-[400px]"></div>
+                <div class="lg:col-span-2 rounded-2xl shadow-2xl border border-white/10 overflow-hidden relative z-0 flex flex-col min-h-[300px]">
+                    <div id="map" class="w-full h-full"></div>
                 </div>
 
                 <!-- Shelter Table (Right, 1/3 width) -->
@@ -181,7 +182,10 @@
 
     <script>
         // Init Leaflet map centered on Bangladesh
-        const map = L.map('map').setView([23.6850, 90.3563], 7);
+        const map = L.map('map', {
+            fullscreenControl: true,
+            fullscreenControlOptions: { position: 'topleft' }
+        }).setView([23.6850, 90.3563], 7);
 
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
