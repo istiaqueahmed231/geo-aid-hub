@@ -64,6 +64,21 @@
         .leaflet-control-attribution {
             filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
         }
+
+        /* Custom Scrollbar for Directory */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05); 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1); 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2); 
+        }
     </style>
 </head>
 <body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen flex hover:text-zinc-200">
@@ -111,9 +126,56 @@
             </div>
         </header>
 
-        <!-- Map Section -->
-        <div class="mt-20 flex-1 p-6 flex flex-col h-[calc(100vh-5rem)]">
-            <div id="map" class="w-full h-full rounded-2xl shadow-2xl border border-white/10 z-0" style="min-height: 600px;"></div>
+        <!-- Content Section -->
+        <div class="mt-20 flex-1 p-8 flex flex-col overflow-y-auto">
+            
+            <!-- Page Context / User Friendly Text -->
+            <div class="mb-8">
+                <h2 class="text-3xl font-black text-white tracking-tight mb-2">Regional Safe Zones</h2>
+                <p class="text-zinc-400 max-w-3xl leading-relaxed text-sm">
+                    This interactive map displays currently available safe zones and shelters across the region.
+                    You can monitor real-time shelter statuses, current capacities, and deployment locations. 
+                    Select a marker on the map for detailed metrics or use the directory on the right to quickly view all shelter statuses at a glance.
+                </p>
+            </div>
+
+            <!-- Map and Directory Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-[600px]">
+                
+                <!-- Map Container (Left, 2/3 width) -->
+                <div class="lg:col-span-2 rounded-2xl shadow-2xl border border-white/10 overflow-hidden relative z-0 flex flex-col">
+                    <div id="map" class="w-full flex-1 min-h-[400px]"></div>
+                </div>
+
+                <!-- Shelter Table (Right, 1/3 width) -->
+                <div class="lg:col-span-1 border border-white/10 bg-surface-container/50 rounded-2xl p-4 flex flex-col shadow-2xl overflow-hidden backdrop-blur-md">
+                    <div class="flex items-center justify-between mb-4 px-2">
+                        <h3 class="text-lg font-bold text-zinc-100 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary" style="font-size: 20px;">home_work</span>
+                            Shelter Directory
+                        </h3>
+                        <span class="bg-primary/20 text-primary text-xs font-bold px-2 py-1 rounded-full" id="shelter-count">0 Active</span>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                        <table class="w-full text-left text-sm border-collapse">
+                            <thead class="sticky top-0 bg-[#232528] text-zinc-400 border-b border-white/10 z-10 shadow-sm">
+                                <tr>
+                                    <th class="py-3 px-3 font-semibold uppercase tracking-wider text-[10px]">Shelter</th>
+                                    <th class="py-3 px-3 text-right font-semibold uppercase tracking-wider text-[10px]">Cap.</th>
+                                    <th class="py-3 px-3 font-semibold uppercase tracking-wider text-[10px] pl-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shelter-table-body" class="divide-y divide-white/5 text-zinc-300">
+                                <tr>
+                                    <td colspan="3" class="text-center py-8 text-zinc-500">Loading directory...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </main>
 
@@ -133,23 +195,55 @@
                 const response = await fetch('/api/shelters');
                 const shelters = await response.json();
                 
+                const tableBody = document.getElementById('shelter-table-body');
+                const shelterCount = document.getElementById('shelter-count');
+                tableBody.innerHTML = '';
+                
                 // Keep track of locations to potentially fit bounds
                 const bounds = [];
+                let activeCount = 0;
 
                 shelters.forEach(shelter => {
+                    activeCount++;
+                    
+                    // -- Build Table Row -- 
+                    let badgeClass = 'bg-blue-500/20 text-blue-400';
+                    let colorStr = '#3b82f6'; // blue-500
+                    if (shelter.Status === 'Full') {
+                        badgeClass = 'bg-red-500/20 text-red-400';
+                        colorStr = '#ef4444'; // red-500
+                    }
+                    if (shelter.Status === 'Closed') {
+                        badgeClass = 'bg-zinc-500/20 text-zinc-400';
+                        colorStr = '#71717a'; // zinc-500
+                    }
+
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-white/5 transition-colors cursor-pointer group";
+                    row.innerHTML = `
+                        <td class="py-3 px-3">
+                            <div class="font-bold text-zinc-200 group-hover:text-primary transition-colors">${shelter.ShelterName}</div>
+                            <div class="text-[10px] text-zinc-500">${shelter.AreaName}</div>
+                        </td>
+                        <td class="py-3 px-3 text-right font-mono text-xs text-zinc-400">
+                            ${shelter.CurrentOccupancy}/${shelter.TotalCapacity}
+                        </td>
+                        <td class="py-3 px-3 pl-4">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeClass}">
+                                ${shelter.Status}
+                            </span>
+                        </td>
+                    `;
+                    
+                    let marker = null;
                     if (shelter.Latitude && shelter.Longitude) {
                         const lat = parseFloat(shelter.Latitude);
                         const lng = parseFloat(shelter.Longitude);
                         
-                        // Pick a color based on status
-                        let colorStr = 'blue';
-                        if (shelter.Status === 'Full') colorStr = 'red';
-                        if (shelter.Status === 'Closed') colorStr = 'gray';
-
                         // Custom pin marker via Leaflet DIV Icon
                         const markerHtml = `<div style="
-                            width: 24px; 
-                            height: 24px; 
+                            width: 18px; 
+                            height: 18px; 
                             background: ${colorStr}; 
                             border-radius: 50%;
                             border: 3px solid white;
@@ -159,11 +253,11 @@
                         const customIcon = L.divIcon({
                             className: 'custom-icon',
                             html: markerHtml,
-                            iconSize: [24, 24],
-                            iconAnchor: [12, 12]
+                            iconSize: [18, 18],
+                            iconAnchor: [9, 9]
                         });
 
-                        const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+                        marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
 
                         const popupContent = `
                             <div style="font-family: 'Inter', sans-serif; color: #111;">
@@ -179,9 +273,19 @@
 
                         marker.bindPopup(popupContent);
                         
+                        // Click on row to move map and open popup
+                        row.onclick = () => {
+                            map.flyTo([lat, lng], 13);
+                            marker.openPopup();
+                        };
+                        
                         bounds.push([lat, lng]);
                     }
+
+                    tableBody.appendChild(row);
                 });
+
+                shelterCount.textContent = `${activeCount} Shelters`;
 
                 // Auto-zoom to fit all shelters if we found any
                 if (bounds.length > 0) {
