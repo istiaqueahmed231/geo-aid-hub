@@ -48,6 +48,25 @@ app.get('/api/requests', (req, res) => {
         res.json(results);
     });
 });
+
+// --- RESOURCE LOG API ROUTE ---
+app.get('/api/resources', (req, res) => {
+    const sql = `
+        SELECT r.ResourceID, c.CategoryName, c.UnitOfMeasure, l.AreaName as CurrentLocation, r.Quantity, r.Status
+        FROM Resources r
+        JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
+        JOIN Locations l ON r.CurrentLocationID = l.LocationID
+        ORDER BY r.ResourceID ASC;
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error fetching resources:", err);
+            return res.status(500).json({ error: "Failed to fetch resources" });
+        }
+        res.json(results);
+    });
+});
 // -------------------------
 
 
