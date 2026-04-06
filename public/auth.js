@@ -1,9 +1,9 @@
 // auth.js – shared Firebase Auth logic (client‑only)
 
 // Initialize Firebase app
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js";
-import { firebaseConfig } from "../firebase-config.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { firebaseConfig } from "./firebase-config.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -43,8 +43,12 @@ export function signup() {
   const name = document.getElementById("name").value.trim();
   const status = document.getElementById("status").value.trim();
   const location = document.getElementById("location").value.trim();
-  const age = document.getElementById("age").value.trim();
-  const gender = document.getElementById("gender").value.trim();
+  
+  // Optional fields
+  const ageElem = document.getElementById("age");
+  const genderElem = document.getElementById("gender");
+  const age = ageElem ? ageElem.value.trim() : null;
+  const gender = genderElem ? genderElem.value.trim() : null;
 
   if (!email || !password || !name) {
     toast("Email, password and name are required", true);
@@ -75,17 +79,39 @@ export function signup() {
     });
 }
 
+// Logout function
+export function logout() {
+  signOut(auth).then(() => {
+    window.location.href = "welcome.html";
+  }).catch((error) => {
+    toast(error.message, true);
+  });
+}
+
 // Listen for auth state changes – redirect unauthenticated users to login
 export function monitorAuth() {
   onAuthStateChanged(auth, (user) => {
+    const isPublicPage = window.location.pathname.endsWith("welcome.html") || 
+                         window.location.pathname.endsWith("login.html") || 
+                         window.location.pathname.endsWith("signup.html") ||
+                         window.location.pathname === "/" && !window.location.pathname.endsWith("index.html");
+                         
     if (!user) {
-      // Not logged in – send to login page
-      if (!window.location.pathname.endsWith("login.html")) {
-        window.location.href = "login.html";
+      if (!isPublicPage) {
+        window.location.href = "welcome.html";
+      }
+    } else {
+      if (isPublicPage) {
+        window.location.href = "index.html";
       }
     }
   });
 }
+
+// Expose functions to the global window object so HTML inline event handlers find them
+window.login = login;
+window.signup = signup;
+window.logout = logout;
 
 // Initialize monitoring when script loads
 monitorAuth();

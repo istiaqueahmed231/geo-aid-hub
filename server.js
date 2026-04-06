@@ -9,7 +9,7 @@ const app = express();
 app.use(cors()); // Allows your frontend to talk to this backend
 app.use(express.json()); // Allows us to read JSON data
 
-app.use(express.static('public')); // Tells the server to host files from a folder named 'public'
+app.use(express.static('public', { index: 'welcome.html' })); // Tells the server to host files from a folder named 'public' and load welcome.html by default
 
 // 3. Connect to the Aiven Database
 const db = mysql.createConnection(process.env.DATABASE_URL);

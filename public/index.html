@@ -8,6 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script type="module" src="./firebase-config.js"></script>
+<script type="module" src="./auth.js"></script>
 <script id="tailwind-config">
       tailwind.config = {
         darkMode: "class",
@@ -116,7 +118,7 @@
 <span class="material-symbols-outlined" data-icon="help">help</span>
 <span>Support</span>
 </a>
-<a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:text-zinc-200" href="#">
+<a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:text-zinc-200" href="#" onclick="event.preventDefault(); window.logout();">
 <span class="material-symbols-outlined" data-icon="logout">logout</span>
 <span>Logout</span>
 </a>

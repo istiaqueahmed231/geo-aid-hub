@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Geo-Aid Hub | Sign Up</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script type="module" src="./firebase-config.js"></script>
+  <script type="module" src="./auth.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "background": "#111316",
+            "surface-container": "#1e2023",
+            "secondary": "#88d982",
+            "error-container": "#93000a",
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Manrope', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-zinc-300 font-sans min-h-screen flex items-center justify-center relative py-12">
+  
+  <!-- Add toast notification element -->
+  <div id="toast" style="display:none;" class="fixed bottom-4 right-4 px-4 py-2 rounded shadow-lg z-50"></div>
+  
+  <script>
+    window.showToast = function(message, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-xl z-50 transition-all duration-300 font-medium ${isError ? 'bg-error-container text-white border border-red-500/30' : 'bg-secondary text-background border border-secondary/50'}`;
+      toast.style.display = 'block';
+      toast.style.transform = 'translateY(0)';
+      toast.style.opacity = '1';
+      
+      setTimeout(() => { 
+        toast.style.transform = 'translateY(20px)';
+        toast.style.opacity = '0';
+        setTimeout(() => { toast.style.display = 'none'; }, 300);
+      }, 4000);
+    }
+  </script>
+
+  <div class="relative z-10 w-full max-w-xl p-8 bg-surface-container/50 backdrop-blur-xl border border-zinc-800/50 rounded-3xl shadow-xl">
+    
+    <div class="mb-8 text-center">
+      <h2 class="text-3xl font-display font-bold text-white tracking-tight mb-2">Create an Account</h2>
+      <p class="text-zinc-400">Join the volunteer network to help during emergencies.</p>
+    </div>
+
+    <form onsubmit="event.preventDefault(); window.signup();" class="space-y-4">
+      <!-- 2 column grid for fields that can sit side-by-side -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <!-- Name -->
+        <div class="space-y-1">
+          <label for="name" class="block text-sm font-medium text-zinc-400 ml-1">Full Name *</label>
+          <input type="text" id="name" required class="w-full bg-zinc-800/50 border border-zinc-700/50 text-white placeholder-zinc-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors" placeholder="John Doe" />
+        </div>
+
+        <!-- Email -->
+        <div class="space-y-1">
+          <label for="email" class="block text-sm font-medium text-zinc-400 ml-1">Email Address *</label>
+          <input type="email" id="email" required class="w-full bg-zinc-800/50 border border-zinc-700/50 text-white placeholder-zinc-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors" placeholder="you@example.com" />
+        </div>
+
+        <!-- Password -->
+        <div class="space-y-1">
+          <label for="password" class="block text-sm font-medium text-zinc-400 ml-1">Password *</label>
+          <input type="password" id="password" required class="w-full bg-zinc-800/50 border border-zinc-700/50 text-white placeholder-zinc-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors" placeholder="••••••••" />
+        </div>
+
+        <!-- Location -->
+        <div class="space-y-1">
+          <label for="location" class="block text-sm font-medium text-zinc-400 ml-1">General Location</label>
+          <input type="text" id="location" class="w-full bg-zinc-800/50 border border-zinc-700/50 text-white placeholder-zinc-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors" placeholder="e.g. Downtown Sector 4" />
+        </div>
+
+        <!-- Age -->
+        <div class="space-y-1">
+          <label for="age" class="block text-sm font-medium text-zinc-400 ml-1">Age</label>
+          <input type="number" id="age" min="18" max="100" class="w-full bg-zinc-800/50 border border-zinc-700/50 text-white placeholder-zinc-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors" placeholder="18+" />
+        </div>
+
+        <!-- Gender -->
+        <div class="space-y-1">
+          <label for="gender" class="block text-sm font-medium text-zinc-400 ml-1">Gender</label>
+          <select id="gender" class="w-full bg-zinc-800/50 border border-zinc-700/50 text-white placeholder-zinc-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors appearance-none">
+            <option value="" disabled selected>Select gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Status (hidden or default) -->
+      <input type="hidden" id="status" value="Available" />
+
+      <div class="pt-6">
+        <button type="submit" class="w-full py-3.5 px-4 bg-secondary text-background hover:bg-[#99e294] font-semibold rounded-xl transition-all duration-300 transform active:scale-[0.98] shadow-[0_0_20px_rgba(136,217,130,0.15)]">
+          Create Account
+        </button>
+      </div>
+
+    </form>
+
+    <div class="mt-6 text-center">
+      <p class="text-sm text-zinc-400">
+        Already have an account? 
+        <a href="login.html" class="text-secondary hover:text-white transition-colors font-medium ml-1">Log in here</a>
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>
