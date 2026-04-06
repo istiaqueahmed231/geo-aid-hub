@@ -52,13 +52,37 @@
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             vertical-align: middle;
         }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #333538; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #5c4037; }
+        /* Leaflet tile override for dark mode aesthetic */
+        .leaflet-layer,
+        .leaflet-control-zoom-in,
+        .leaflet-control-zoom-out,
+        .leaflet-control-attribution {
+            filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+        }
+
+        /* Custom Scrollbar for Directory */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05); 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1); 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2); 
+        }
     </style>
+    
+    <!-- Leaflet CSS and JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
 </head>
-<body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen flex">
+<body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary h-screen overflow-hidden flex hover:text-zinc-200">
     <!-- SideNavBar -->
     <aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-zinc-900 font-['Inter'] text-sm font-medium flex flex-col py-8 gap-4">
         <div class="px-6 mb-4">
@@ -103,17 +127,10 @@
     </aside>
 
     <!-- Main Content Canvas -->
-    <main class="flex-1 ml-64 min-h-screen relative">
+    <main class="flex-1 ml-64 h-screen relative flex flex-col">
         <!-- TopNavBar -->
         <header class="fixed top-0 left-64 right-0 z-50 bg-zinc-950/80 backdrop-blur-xl shadow-2xl shadow-black/50 font-['Manrope'] antialiased tracking-tight flex justify-between items-center px-8 h-20">
             <div class="flex items-center gap-8">
-                <span class="text-2xl font-bold tracking-tighter text-zinc-100">Geo-Aid Hub</span>
-                <div class="flex gap-6 items-center">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
-                        <span class="text-error font-bold">Active SOS: 142</span>
-                    </div>
-                </div>
             </div>
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-2">
@@ -128,68 +145,116 @@
             </div>
         </header>
 
-        <!-- Resource Log Section -->
-        <div class="pt-24 px-8 pb-8 flex flex-col h-full">
-            <div class="flex justify-between items-end mb-6">
-                <h2 class="font-headline text-3xl font-bold text-on-surface">Resource Log</h2>
+        <!-- Content Section -->
+        <div class="mt-20 flex-1 p-8 flex flex-col overflow-hidden">
+            
+            <!-- Page Context / User Friendly Text -->
+            <div class="mb-8 flex justify-between items-end">
+                <div>
+                    <h2 class="text-3xl font-black text-white tracking-tight mb-2">Resource Global View</h2>
+                    <p class="text-zinc-400 max-w-3xl leading-relaxed text-sm">
+                        Monitor distributed resources and supply drops geographically. The interactive map logs active supplies 
+                        at regional depots and hubs. Use the inventory directory to quickly dispatch or review status levels.
+                    </p>
+                </div>
                 <div class="flex gap-4">
-                    <button class="bg-surface-container-high px-4 py-2 rounded-lg text-sm text-on-surface font-medium hover:bg-surface-container-highest transition">
-                        Filter
-                    </button>
                     <button class="bg-primary-container px-4 py-2 rounded-lg text-sm text-white font-bold hover:bg-primary-container/90 transition shadow-lg shadow-primary/20">
                         Add Resource
                     </button>
                 </div>
             </div>
-            
-            <div class="bg-surface-container rounded-2xl overflow-hidden shadow-xl border border-white/5 flex-1 flex flex-col">
-                <div class="overflow-x-auto flex-1">
-                    <table class="w-full text-left text-sm whitespace-nowrap">
-                        <thead class="uppercase tracking-wider text-xs font-bold text-on-surface-variant bg-surface-container-low border-b border-white/10 sticky top-0">
-                            <tr>
-                                <th scope="col" class="px-6 py-4">ID</th>
-                                <th scope="col" class="px-6 py-4">Category Name</th>
-                                <th scope="col" class="px-6 py-4">Unit</th>
-                                <th scope="col" class="px-6 py-4">Current Location</th>
-                                <th scope="col" class="px-6 py-4">Quantity</th>
-                                <th scope="col" class="px-6 py-4 text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resource-table-body" class="divide-y divide-white/5">
-                            <!-- Rows injected by JavaScript -->
-                            <tr class="animate-pulse">
-                                <td colspan="6" class="px-6 py-8 text-center text-zinc-500">Loading resources...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+            <!-- Map and Directory Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
+                
+                <!-- Map Container (Left, 2/3 width) -->
+                <div class="lg:col-span-2 rounded-2xl shadow-2xl border border-white/10 overflow-hidden relative z-0 flex flex-col min-h-[300px]">
+                    <div id="map" class="w-full h-full"></div>
                 </div>
+
+                <!-- Resource Directory Table (Right, 1/3 width) -->
+                <div class="lg:col-span-1 border border-white/10 bg-surface-container/50 rounded-2xl p-4 flex flex-col shadow-2xl overflow-hidden backdrop-blur-md">
+                    <div class="flex items-center justify-between mb-4 px-2">
+                        <h3 class="text-lg font-bold text-zinc-100 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary" style="font-size: 20px;">inventory</span>
+                            Resource Inventory
+                        </h3>
+                        <span class="bg-primary/20 text-primary text-xs font-bold px-2 py-1 rounded-full" id="resource-count">0 Tracked</span>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                        <table class="w-full text-left text-sm border-collapse">
+                            <thead class="sticky top-0 bg-[#232528] text-zinc-400 border-b border-white/10 z-10 shadow-sm">
+                                <tr>
+                                    <th class="py-3 px-3 font-semibold uppercase tracking-wider text-[10px]">Resource</th>
+                                    <th class="py-3 px-3 text-right font-semibold uppercase tracking-wider text-[10px]">Qty.</th>
+                                    <th class="py-3 px-3 font-semibold uppercase tracking-wider text-[10px] pl-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resource-table-body" class="divide-y divide-white/5 text-zinc-300">
+                                <tr>
+                                    <td colspan="3" class="text-center py-8 text-zinc-500">Loading resources...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
     </main>
 
     <script>
+        // Use an icon mapping for categories
+        const categoryIcons = {
+            'Drinking Water': 'water_drop',
+            'Medical Kits': 'medical_services',
+            'Dry Food Rations': 'fastfood',
+            'Rescue Boats': 'directions_boat',
+            'Tents': 'holiday_village',
+            'Generators': 'bolt'
+        };
+
+        const getCategoryIcon = (categoryName) => {
+            return categoryIcons[categoryName] || 'inventory_2';
+        };
+
+        // Init Leaflet map centered on Bangladesh
+        const map = L.map('map', {
+            fullscreenControl: true,
+            fullscreenControlOptions: { position: 'topleft' }
+        }).setView([23.6850, 90.3563], 7);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let markers = {};
+
         async function loadResources() {
             try {
                 const response = await fetch('/api/resources');
                 const resources = await response.json();
                 
                 const tableBody = document.getElementById('resource-table-body');
+                const resourceCount = document.getElementById('resource-count');
                 
-                if (!tableBody) {
-                    console.error("Could not find the table body container!");
-                    return;
-                }
-
+                if (!tableBody) return;
                 tableBody.innerHTML = ''; 
 
                 if (resources.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-zinc-500">No resources available.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="3" class="px-3 py-8 text-center text-zinc-500">No resources available.</td></tr>';
+                    resourceCount.textContent = "0 Tracked";
                     return;
                 }
 
+                resourceCount.textContent = `${resources.length} Tracked`;
+
                 resources.forEach(res => {
                     const row = document.createElement('tr');
-                    row.className = 'hover:bg-surface-container-highest transition-colors group';
+                    row.className = 'hover:bg-surface-variant/50 cursor-pointer transition-colors group';
                     
                     let statusColor = "bg-green-500/10 text-green-400 border border-green-500/20";
                     if(res.Status === 'Reserved') {
@@ -200,29 +265,58 @@
                         statusColor = "bg-red-500/10 text-red-400 border border-red-500/20";
                     }
 
+                    const iconName = getCategoryIcon(res.CategoryName);
+
                     row.innerHTML = `
-                        <td class="px-6 py-4 font-mono text-zinc-500 group-hover:text-zinc-300">#${res.ResourceID}</td>
-                        <td class="px-6 py-4 font-medium text-on-surface">${res.CategoryName}</td>
-                        <td class="px-6 py-4 text-zinc-400">${res.UnitOfMeasure || '-'}</td>
-                        <td class="px-6 py-4 text-zinc-300 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-[16px] text-zinc-500">location_on</span>
-                            ${res.CurrentLocation || 'Unknown'}
+                        <td class="py-4 px-3 align-top min-w-[140px]">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                                    <span class="material-symbols-outlined text-[16px] group-hover:text-primary transition-colors text-zinc-400">${iconName}</span>
+                                </div>
+                                <div class="flex flex-col overflow-hidden">
+                                    <span class="font-semibold text-zinc-200 text-sm truncate">${res.CategoryName}</span>
+                                    <span class="text-[10px] text-zinc-500 truncate" title="${res.CurrentLocation}">📍 ${res.CurrentLocation}</span>
+                                </div>
+                            </div>
                         </td>
-                        <td class="px-6 py-4 font-bold text-on-surface">${res.Quantity}</td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="text-[10px] uppercase font-bold px-2 py-1 rounded ${statusColor}">
+                        <td class="py-4 px-3 text-right align-top w-20">
+                            <div class="text-md font-bold text-zinc-200">${res.Quantity}</div>
+                            <div class="text-[10px] text-zinc-500">Units</div>
+                        </td>
+                        <td class="py-4 px-3 pl-4 align-top w-24">
+                            <span class="inline-flex text-[10px] uppercase font-bold px-2 py-1 rounded whitespace-nowrap mt-0.5 ${statusColor}">
                                 ${res.Status}
                             </span>
                         </td>
                     `;
                     
                     tableBody.appendChild(row);
+
+                    // Add map markers if location is valid
+                    if (res.Latitude && res.Longitude) {
+                        const marker = L.marker([res.Latitude, res.Longitude]).addTo(map);
+                        
+                        marker.bindPopup(`
+                            <div class="font-['Inter'] font-semibold mb-1">${res.CategoryName}</div>
+                            <div class="text-xs mb-1"><b>Qty:</b> ${res.Quantity} ${res.UnitOfMeasure || ''}</div>
+                            <div class="text-xs text-gray-600">📍 ${res.CurrentLocation}</div>
+                            <div class="mt-2 text-[10px] px-2 py-0.5 inline-block rounded ${statusColor.replace('bg-', 'bg-transparent text-').split(' ')[0]} border border-current">${res.Status}</div>
+                        `);
+
+                        // Ensure multiple resources at the same lat/lng open gracefully or pan to them
+                        markers[res.ResourceID] = marker;
+
+                        row.addEventListener('click', () => {
+                            map.flyTo([res.Latitude, res.Longitude], 13, { duration: 1 });
+                            setTimeout(() => { marker.openPopup(); }, 1000);
+                        });
+                    }
                 });
             } catch (error) {
                 console.error("Failed to load resources:", error);
                 const tableBody = document.getElementById('resource-table-body');
                 if (tableBody) {
-                    tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-error">Failed to load data. Make sure the server is running.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="3" class="px-3 py-8 text-center text-error">Failed to load data. Make sure the server is running.</td></tr>';
                 }
             }
         }

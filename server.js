@@ -52,7 +52,7 @@ app.get('/api/requests', (req, res) => {
 // --- RESOURCE LOG API ROUTE ---
 app.get('/api/resources', (req, res) => {
     const sql = `
-        SELECT r.ResourceID, c.CategoryName, c.UnitOfMeasure, l.AreaName as CurrentLocation, r.Quantity, r.Status
+        SELECT r.ResourceID, c.CategoryName, c.UnitOfMeasure, l.AreaName as CurrentLocation, l.Latitude, l.Longitude, r.Quantity, r.Status
         FROM Resources r
         JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
         JOIN Locations l ON r.CurrentLocationID = l.LocationID
