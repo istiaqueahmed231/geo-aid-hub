@@ -69,6 +69,24 @@ app.get('/api/resources', (req, res) => {
 });
 // -------------------------
 
+// --- SHELTERS API ROUTE ---
+app.get('/api/shelters', (req, res) => {
+    const sql = `
+        SELECT s.ShelterName, s.TotalCapacity, s.CurrentOccupancy, s.Status, l.AreaName, l.Latitude, l.Longitude, l.ZoneType
+        FROM Shelters s
+        JOIN Locations l ON s.LocationID = l.LocationID;
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error fetching shelters:", err);
+            return res.status(500).json({ error: "Failed to fetch shelters" });
+        }
+        res.json(results);
+    });
+});
+// -------------------------
+
 
 // --- RECEIVE SOS FROM FLUTTER APP ---
 app.post('/api/sos', (req, res) => {
