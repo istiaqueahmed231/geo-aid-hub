@@ -83,7 +83,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #5c4037; }
     </style>
 </head>
-<body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen flex">
+<body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen flex overflow-hidden">
 <!-- SideNavBar (Authority: JSON) -->
 <aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-zinc-900 font-['Inter'] text-sm font-medium flex flex-col py-8 gap-4">
 <div class="px-6 mb-4">
@@ -141,7 +141,81 @@
 <div class="flex items-center gap-4">
 <div class="flex items-center gap-2">
 <button class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
-<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<div class="flex items-center gap-2 ml-4">
+    <label for="resource-select" class="text-sm text-zinc-400">Resource:</label>
+    <select id="resource-select" class="bg-zinc-800 text-on-surface rounded px-2 py-1 focus:outline-none">
+        <option value="" disabled selected>Select resource</option>
+    </select>
+</div>
+<!-- Volunteer Dropdown -->
+<div class="flex items-center gap-2 ml-4">
+    <label for="volunteer-select" class="text-sm text-zinc-400">Volunteer:</label>
+    <select id="volunteer-select" class="bg-zinc-800 text-on-surface rounded px-2 py-1 focus:outline-none">
+        <option value="" disabled selected>Select volunteer</option>
+    </select>
+</div>
+<script>
+// Toast helper
+function showToast(message, isError = false) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded shadow-lg ${isError ? 'bg-error-container text-on-error-container' : 'bg-primary-container text-white'}`;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 3000);
+}
+
+// Populate volunteer dropdown
+async function populateVolunteerDropdown(volunteers) {
+  const select = document.getElementById('volunteer-select');
+  volunteers.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.VolunteerID;
+    opt.textContent = `${v.Name} (${v.Status})`;
+    select.appendChild(opt);
+  });
+}
+
+// Attach dispatch handlers to buttons
+function attachDispatchHandlers(volunteers, resources, requests) {
+  // Ensure dropdowns are populated
+  populateVolunteerDropdown(volunteers);
+
+  document.querySelectorAll('.dispatch-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const requestId = btn.dataset.requestId;
+      const volunteerId = document.getElementById('volunteer-select').value;
+      const resourceId = document.getElementById('resource-select').value;
+      if (!volunteerId || !resourceId) {
+        showToast('Select both volunteer and resource', true);
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Dispatching...';
+      try {
+        const res = await fetch('/api/dispatch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ volunteerId, resourceId, requestId })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(data.message);
+          // Optionally refresh data
+          initDashboard();
+        } else {
+          showToast(data.error || 'Dispatch failed', true);
+        }
+      } catch (e) {
+        showToast('Network error', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Dispatch';
+      }
+    });
+  });
+}
+</script>
+<script src="/map-tooltip.js"></script>
 <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-xs text-zinc-300 px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-white/5 font-medium z-[60]">Will be implemented later</div>
 </button>
 <button class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
@@ -175,6 +249,10 @@
 <span class="text-xs font-label text-on-surface-variant uppercase tracking-widest">Live Updates</span>
 </div>
 <div class="flex-1 overflow-y-auto pr-2 space-y-4">
+    <!-- Nearest Help Section -->
+    <div id="nearest-help" class="grid gap-2"></div>
+    <!-- Existing request cards will follow -->
+</div>
 <!-- Sarah Miller Card (Selected) -->
 <div class="bg-surface-container-highest p-5 rounded-xl relative transition-all duration-300 ring-1 ring-primary/20">
 <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-12 bg-error rounded-r-full"></div>
@@ -185,7 +263,10 @@
 <span class="material-symbols-outlined text-xs" data-icon="location_on">location_on</span> Sector 4
                                 </p>
 </div>
-<span class="bg-error-container text-on-error-container text-xs font-bold px-2 py-1 rounded-lg">9/10 URGENCY</span>
+<!-- Dispatch Button -->
+<button class="dispatch-btn w-full bg-primary-container text-white py-2 rounded-lg mt-2 hover:bg-primary-container/80 transition-colors" data-request-id="${req.RequestID}" data-volunteer-id="" data-resource-id="">Dispatch</button>
+<!-- Toast container -->
+<div id="toast" class="fixed bottom-4 right-4 hidden bg-primary-container text-white px-4 py-2 rounded shadow-lg"></div>
 </div>
 <div class="flex items-center gap-2 mb-3">
 <span class="bg-tertiary/10 text-tertiary text-[10px] font-bold px-2 py-0.5 rounded border border-tertiary/20 uppercase">Drinking Water</span>

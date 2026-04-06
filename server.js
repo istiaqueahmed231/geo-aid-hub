@@ -32,7 +32,7 @@ app.get('/', (req, res) => {
 app.get('/api/requests', (req, res) => {
     // This SQL query joins 3 tables together to get readable names instead of just ID numbers
     const sql = `
-        SELECT r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, c.CategoryName, l.AreaName
+        SELECT r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, c.CategoryName, l.AreaName, l.Latitude, l.Longitude
         FROM HelpRequests r
         JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
         JOIN Locations l ON r.LocationID = l.LocationID
@@ -49,8 +49,55 @@ app.get('/api/requests', (req, res) => {
     });
 });
 
-// --- RESOURCE LOG API ROUTE ---
-app.get('/api/resources', (req, res) => {
+// --- VOLUNTEERS API ROUTE ---
+app.get('/api/volunteers', (req, res) => {
+    const sql = `
+        SELECT VolunteerID, Name, Status, Location
+        FROM Volunteers
+        ORDER BY Name ASC;
+    `;
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Error fetching volunteers:', err);
+            return res.status(500).json({ error: 'Failed to fetch volunteers' });
+        }
+        res.json(results);
+    });
+});
+
+// --- DISPATCH API ROUTE ---
+app.post('/api/dispatch', async (req, res) => {
+    const { volunteerId, resourceId, requestId } = req.body;
+    if (!volunteerId || !resourceId || !requestId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    // Update the request with assigned volunteer and resource, set status to Dispatched
+    const updateSql = `
+        UPDATE HelpRequests
+        SET Status = 'Dispatched', AssignedVolunteerID = ?, AssignedResourceID = ?
+        WHERE RequestID = ?;
+    `;
+    db.query(updateSql, [volunteerId, resourceId, requestId], (err, result) => {
+        if (err) {
+            console.error('Error dispatching request:', err);
+            return res.status(500).json({ error: 'Failed to dispatch request' });
+        }
+        // Optionally decrement resource quantity
+        const decSql = `
+            UPDATE Resources
+            SET Quantity = Quantity - 1
+            WHERE ResourceID = ? AND Quantity > 0;
+        `;
+        db.query(decSql, [resourceId], (err2) => {
+            if (err2) {
+                console.error('Error updating resource quantity:', err2);
+                // Not fatal for dispatch response
+            }
+            return res.json({ message: 'Dispatch successful' });
+        });
+    });
+});
+
     const sql = `
         SELECT r.ResourceID, c.CategoryName, c.UnitOfMeasure, l.AreaName as CurrentLocation, l.Latitude, l.Longitude, r.Quantity, r.Status
         FROM Resources r
@@ -147,7 +194,29 @@ app.get('/api/stats', (req, res) => {
         });
     });
 });
-// ------------------------------------
+app.post('/api/dispatch', (req, res) => {
+    const { volunteerId, resourceId, requestId, notes } = req.body;
+    if (!volunteerId || !resourceId || !requestId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    // Example: Update volunteer status to Assigned
+    const updateVolunteerSql = `UPDATE Volunteers SET Status = 'Assigned' WHERE VolunteerID = ?`;
+    // Example: Decrement resource quantity
+    const updateResourceSql = `UPDATE Resources SET Quantity = Quantity - 1 WHERE ResourceID = ? AND Quantity > 0`;
+    // Example: Update request status to Dispatched and link volunteer/resource
+    const updateRequestSql = `UPDATE HelpRequests SET Status = 'Dispatched', AssignedVolunteerID = ?, AssignedResourceID = ? WHERE RequestID = ?`;
+    db.query(updateVolunteerSql, [volunteerId], (err) => {
+        if (err) return res.status(500).json({ error: 'Failed to update volunteer' });
+        db.query(updateResourceSql, [resourceId], (err) => {
+            if (err) return res.status(500).json({ error: 'Failed to update resource' });
+            db.query(updateRequestSql, [volunteerId, resourceId, requestId], (err) => {
+                if (err) return res.status(500).json({ error: 'Failed to update request' });
+                res.json({ message: 'Dispatch successful', notes: notes || null });
+            });
+        });
+    });
+});
+
 
 // 5. Start the server
 const PORT = 3000;
