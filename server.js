@@ -65,6 +65,27 @@ app.get('/api/volunteers', (req, res) => {
     });
 });
 
+app.post('/api/volunteers', (req, res) => {
+    const { uid, email, name, status, location, age, gender } = req.body;
+    
+    if (!uid || !email || !name) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const sql = `
+        INSERT INTO Volunteers (Name, Email, UID, Gender, Age, Location, Role, Status) 
+        VALUES (?, ?, ?, ?, ?, ?, 'General', ?)
+    `;
+    
+    db.query(sql, [name, email, uid, gender || null, age || null, location || null, status || 'Available'], (err, result) => {
+        if (err) {
+            console.error('Error inserting volunteer:', err);
+            return res.status(500).json({ error: 'Failed to create volunteer profile' });
+        }
+        res.status(201).json({ message: 'Volunteer created successfully', id: result.insertId });
+    });
+});
+
 // --- DISPATCH API ROUTE ---
 app.post('/api/dispatch', async (req, res) => {
     const { volunteerId, resourceId, requestId } = req.body;
