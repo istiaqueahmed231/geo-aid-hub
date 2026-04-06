@@ -10,8 +10,8 @@ const auth = getAuth(app);
 
 // Helper to show toast messages (assumes a global showToast function exists)
 function toast(msg, isError = false) {
-  if (typeof showToast === "function") {
-    showToast(msg, isError);
+  if (window && typeof window.showToast === "function") {
+    window.showToast(msg, isError);
   } else {
     alert(msg);
   }
@@ -38,45 +38,58 @@ export function login() {
 
 // Sign‑up function – called from signup.html
 export function signup() {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  const name = document.getElementById("name").value.trim();
-  const status = document.getElementById("status").value.trim();
-  const location = document.getElementById("location").value.trim();
-  
-  // Optional fields
-  const ageElem = document.getElementById("age");
-  const genderElem = document.getElementById("gender");
-  const age = ageElem ? ageElem.value.trim() : null;
-  const gender = genderElem ? genderElem.value.trim() : null;
+  try {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const name = document.getElementById("name").value.trim();
+    const status = document.getElementById("status").value.trim();
+    const location = document.getElementById("location").value.trim();
+    
+    // Optional fields
+    const ageElem = document.getElementById("age");
+    const genderElem = document.getElementById("gender");
+    const age = ageElem ? ageElem.value.trim() : null;
+    const gender = genderElem ? genderElem.value.trim() : null;
 
-  if (!email || !password || !name) {
-    toast("Email, password and name are required", true);
-    return;
-  }
+    if (!email || !password || !name) {
+      toast("Email, password and name are required", true);
+      return;
+    }
 
-  createUserWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      const uid = userCredential.user.uid;
-      // Send extra profile data to backend
-      fetch("/api/volunteers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid, email, name, status, location, age, gender })
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          toast("Account created and profile saved");
-          window.location.href = "index.html";
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const uid = userCredential.user.uid;
+        // Send extra profile data to backend
+        fetch("/api/volunteers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ uid, email, name, status, location, age, gender })
         })
-        .catch((err) => {
-          console.error(err);
-          toast("Failed to save profile", true);
-        });
-    })
-    .catch((error) => {
-      toast(error.message, true);
-    });
+          .then(async (res) => {
+            const data = await res.json();
+            if (!res.ok) {
+              throw new Error(data.error || "Failed to save profile");
+            }
+            return data;
+          })
+          .then((data) => {
+            toast("Account created and profile saved");
+            // NOTE: monitorAuth() will automatically redirect the user to index.html 
+            // since their Firebase state just became Authenticated. Setting href just in case.
+            window.location.href = "index.html";
+          })
+          .catch((err) => {
+            console.error(err);
+            toast(err.message || "Failed to save profile on backend", true);
+          });
+      })
+      .catch((error) => {
+        toast(error.message, true);
+      });
+  } catch (err) {
+    console.error("Synchronous error during signup:", err);
+    toast(err.message || "An unexpected error occurred", true);
+  }
 }
 
 // Logout function
