@@ -122,6 +122,7 @@ app.get('/api/volunteers', (req, res) => {
     const sql = `
         SELECT VolunteerID, Name, Gender, Age, Location, Role, Status
         FROM Volunteers
+        WHERE UID IS NOT NULL AND Email IS NOT NULL
         ORDER BY VolunteerID ASC;
     `;
     db.query(sql, (err, results) => {
@@ -156,7 +157,7 @@ app.post('/api/volunteers', (req, res) => {
 // --- GLOBAL STATS API ROUTE ---
 app.get('/api/stats', (req, res) => {
     const sosSql = `SELECT COUNT(*) AS count FROM HelpRequests WHERE Status = 'Pending'`;
-    const volSql = `SELECT COUNT(*) AS count FROM Volunteers WHERE Status = 'Active'`;
+    const volSql = `SELECT COUNT(*) AS count FROM Volunteers WHERE Status = 'Active' AND UID IS NOT NULL AND Email IS NOT NULL`;
 
     db.query(sosSql, (err, sosResult) => {
         if (err) return res.status(500).json({ error: "Failed to fetch SOS stats" });
@@ -179,7 +180,7 @@ app.post('/api/dispatch', (req, res) => {
     // Example: Decrement resource quantity
     const updateResourceSql = `UPDATE Resources SET Quantity = Quantity - 1 WHERE ResourceID = ? AND Quantity > 0`;
     // Example: Update request status to Dispatched and link volunteer/resource
-    const updateRequestSql = `UPDATE HelpRequests SET Status = 'Dispatched', AssignedVolunteerID = ?, AssignedResourceID = ? WHERE RequestID = ?`;
+    const updateRequestSql = `UPDATE HelpRequests SET Status = 'Assigned', AssignedVolunteerID = ?, AssignedResourceID = ? WHERE RequestID = ?`;
     db.query(updateVolunteerSql, [volunteerId], (err) => {
         if (err) return res.status(500).json({ error: 'Failed to update volunteer' });
         db.query(updateResourceSql, [resourceId], (err) => {
