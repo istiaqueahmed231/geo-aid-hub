@@ -14,6 +14,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
     <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+    <script src="./mobile-menu.js"></script>
+    <script src="./theme.js"></script>
 
     <script id="tailwind-config">
         tailwind.config = {
@@ -85,7 +87,7 @@
 </head>
 <body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary h-screen overflow-hidden flex hover:text-zinc-200">
     <!-- SideNavBar -->
-    <aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-zinc-900 font-['Inter'] text-sm font-medium flex flex-col py-8 gap-4">
+    <aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-zinc-900 font-['Inter'] text-sm font-medium flex flex-col py-8 gap-4 transition-transform duration-300 -translate-x-full lg:translate-x-0">
         <div class="px-6 mb-4">
             <h1 class="text-lg font-black text-orange-500 tracking-tighter">Geo-Aid Central</h1>
             <p class="text-xs text-zinc-500">Regional Command</p>
@@ -113,10 +115,13 @@
     </aside>
 
     <!-- Main Content Canvas -->
-    <main class="flex-1 ml-64 h-screen relative flex flex-col">
+    <main class="flex-1 ml-0 lg:ml-64 h-screen relative flex flex-col">
         <!-- TopNavBar -->
-        <header class="fixed top-0 left-64 right-0 z-50 bg-zinc-950/80 backdrop-blur-xl shadow-2xl shadow-black/50 font-['Manrope'] antialiased tracking-tight flex justify-between items-center px-8 h-20">
-            <div class="flex items-center gap-8">
+        <header class="fixed top-0 left-0 lg:left-64 right-0 z-50 bg-zinc-950/80 backdrop-blur-xl shadow-2xl shadow-black/50 font-['Manrope'] antialiased tracking-tight flex justify-between items-center px-4 lg:px-8 h-20">
+            <div class="flex items-center gap-4 lg:gap-8">
+                <button id="mobile-menu-toggle" class="lg:hidden p-2 text-zinc-400 hover:bg-zinc-800 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
                 <div class="flex gap-6 items-center">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
@@ -131,7 +136,7 @@
         </header>
 
         <!-- Content Section -->
-        <div class="mt-20 flex-1 p-8 flex flex-col overflow-hidden">
+        <div class="mt-20 flex-1 p-4 lg:p-8 flex flex-col overflow-y-auto lg:overflow-hidden">
             
             <!-- Page Context / User Friendly Text -->
             <div class="mb-8">

@@ -32,7 +32,7 @@ app.get('/', (req, res) => {
 app.get('/api/requests', (req, res) => {
     // This SQL query joins 3 tables together to get readable names instead of just ID numbers
     const sql = `
-        SELECT r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, c.CategoryName, l.AreaName, l.Latitude, l.Longitude
+        SELECT r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage, c.CategoryName, l.AreaName, l.Latitude, l.Longitude
         FROM HelpRequests r
         JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
         JOIN Locations l ON r.LocationID = l.LocationID
@@ -91,7 +91,7 @@ app.get('/api/shelters', (req, res) => {
 
 // --- RECEIVE SOS FROM FLUTTER APP ---
 app.post('/api/sos', (req, res) => {
-    const { RequestorName, CategoryID, UrgencyScore, Latitude, Longitude } = req.body;
+    const { RequestorName, CategoryID, UrgencyScore, Latitude, Longitude, ShortMessage } = req.body;
 
     // 1. First, save the new GPS location to the Locations table
     const insertLocationSql = `
@@ -106,11 +106,11 @@ app.post('/api/sos', (req, res) => {
 
         // 2. Then, save the actual SOS request linked to that new location
         const insertRequestSql = `
-            INSERT INTO HelpRequests (RequestorName, LocationID, CategoryID, UrgencyScore, Status) 
-            VALUES (?, ?, ?, ?, 'Pending');
+            INSERT INTO HelpRequests (RequestorName, LocationID, CategoryID, UrgencyScore, Status, ShortMessage) 
+            VALUES (?, ?, ?, ?, 'Pending', ?);
         `;
 
-        db.query(insertRequestSql, [RequestorName, newLocationId, CategoryID, UrgencyScore], (err, reqResult) => {
+        db.query(insertRequestSql, [RequestorName, newLocationId, CategoryID, UrgencyScore, ShortMessage], (err, reqResult) => {
             if (err) return res.status(500).json({ error: "Failed to save SOS request" });
             
             res.status(201).json({ message: "SOS Received successfully!" });

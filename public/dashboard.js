@@ -65,6 +65,7 @@ function computeAndRenderNearestHelp(volunteers, requests) {
     card.className = 'bg-surface-container-low p-3 rounded-lg mb-2';
     card.innerHTML = `
       <strong>${req.RequestorName}</strong> – ${req.CategoryName}<br/>
+      ${req.ShortMessage ? `<p class="text-xs text-zinc-400 italic my-1">"${req.ShortMessage}"</p>` : ''}
       <span class="text-xs">${minDist.toFixed(1)} km from ${nearest ? nearest.Name : 'N/A'}</span>
     `;
     container.appendChild(card);
