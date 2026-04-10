@@ -234,6 +234,31 @@ app.get('/api/nearest-resources', (req, res) => {
     });
 });
 
+// Get ALL available resources (any category), sorted by proximity
+app.get('/api/available-resources', (req, res) => {
+    const { lat, lon } = req.query;
+    if (!lat || !lon) return res.status(400).json({ error: "Missing lat/lon parameters" });
+
+    const sql = `
+        SELECT r.ResourceID, c.CategoryName, c.UnitOfMeasure, r.Quantity, l.AreaName, l.Latitude, l.Longitude,
+        (6371 * acos(
+            cos(radians(?)) * cos(radians(l.Latitude)) * cos(radians(l.Longitude) - radians(?))
+            + sin(radians(?)) * sin(radians(l.Latitude))
+        )) AS distance
+        FROM Resources r
+        JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
+        JOIN Locations l ON r.CurrentLocationID = l.LocationID
+        WHERE r.Quantity > 0 AND r.Status = 'Available'
+        ORDER BY distance ASC;
+    `;
+
+    db.query(sql, [lat, lon, lat], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+
 // Get nearest available volunteers
 app.get('/api/nearest-volunteers', (req, res) => {
     const { lat, lon } = req.query;

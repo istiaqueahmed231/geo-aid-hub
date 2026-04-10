@@ -823,21 +823,21 @@ async function selectRequest(req, cardEl) {
   await loadNearestResources(req);
 }
 
-// ─── Load Nearest Resources ───
+// ─── Load All Available Resources ───
 async function loadNearestResources(req) {
   const container = document.getElementById('nearest-resources');
-  container.innerHTML = '<div class="supply-empty">Loading nearby supplies…</div>';
+  container.innerHTML = '<div class="supply-empty">Loading available supplies…</div>';
 
   try {
     const data = await fetch(
-      `/api/nearest-resources?lat=${req.Latitude}&lon=${req.Longitude}&categoryId=${req.CategoryID}`
+      `/api/available-resources?lat=${req.Latitude}&lon=${req.Longitude}`
     ).then(r => r.json());
 
     container.innerHTML = '';
 
     if (!data.length) {
       container.innerHTML = `<div class="supply-empty" style="color:var(--red);border-color:rgba(255,107,107,0.3);">
-        No ${req.CategoryName} available in nearby inventory.
+        No supplies currently available in inventory.
       </div>`;
       return;
     }
@@ -849,11 +849,11 @@ async function loadNearestResources(req) {
       el.innerHTML = `
         <div class="supply-left">
           <div class="supply-name">${res.CategoryName}</div>
-          <div class="supply-sub">${res.AreaName} &bull; ${parseFloat(res.distance).toFixed(1)} km away</div>
+          <div class="supply-sub">${res.AreaName} &bull; ${parseFloat(res.distance).toFixed(1)} km away &bull; ${res.UnitOfMeasure || 'units'}</div>
         </div>
         <span class="supply-qty">Qty: ${res.Quantity}</span>
       `;
-      el.onclick = () => selectSupply(el, res.ResourceID);
+      el.onclick = () => selectSupply(el, res.ResourceID, res.CategoryName);
       container.appendChild(el);
     });
 
@@ -864,8 +864,9 @@ async function loadNearestResources(req) {
 }
 
 // ─── Select a Supply ───
-function selectSupply(el, resourceId) {
+function selectSupply(el, resourceId, supplyName) {
   selectedResourceId = resourceId;
+  window._selectedSupplyName = supplyName || 'selected supply';
   document.querySelectorAll('.supply-item').forEach(i => i.classList.remove('selected'));
   el.classList.add('selected');
   // Show dispatch area
@@ -876,9 +877,8 @@ function selectSupply(el, resourceId) {
 async function confirmDispatch() {
   if (!selectedRequest || !selectedResourceId || !currentVolunteer) return;
 
-  const reqName  = selectedRequest.RequestorName;
-  const supplyEl = document.querySelector('.supply-item.selected');
-  const supplyName = supplyEl ? supplyEl.querySelector('.supply-name').textContent : 'selected supplies';
+  const reqName    = selectedRequest.RequestorName;
+  const supplyName = window._selectedSupplyName || 'selected supply';
 
   const ok = confirm(
     `DISPATCH CONFIRMATION\n\n` +
