@@ -170,7 +170,7 @@
     </style>
     <script src="./theme.js"></script>
 </head>
-<body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen">
+<body style="background:var(--background);color:var(--on-surface);font-family:Inter,sans-serif;margin:0;padding:0;">
 <!-- SideNavBar (Authority: JSON) -->
 <aside id="sidebar" class="bg-zinc-900 border-r border-zinc-800/50 font-['Inter'] text-sm font-medium flex flex-col py-8 gap-4 shadow-2xl shadow-black/50 overflow-y-auto">
 <div class="px-6 mb-4">
@@ -207,8 +207,8 @@
 </div>
 </aside>
 <!-- Main Content Canvas -->
-<main id="main-content" class="relative">
-    <header id="main-header" class="bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/50 font-['Manrope'] antialiased tracking-tight flex justify-between items-center px-4 lg:px-8 h-20">
+<main id="main-content" style="min-height:100vh;padding-top:80px;" class="relative">
+    <header id="main-header" style="display:flex;justify-content:space-between;align-items:center;padding:0 2rem;" class="bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/50 font-['Manrope'] antialiased tracking-tight">
         <div class="flex items-center gap-4 lg:gap-8">
             <button id="mobile-menu-toggle" class="lg:hidden p-2 text-zinc-400 hover:bg-zinc-800 rounded-lg transition-colors">
                 <span class="material-symbols-outlined">menu</span>
@@ -269,9 +269,9 @@
     </script>
 
     <!-- Dashboard Layout Grid -->
-<div class="px-4 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 min-h-[calc(100vh-5rem)]">
+<div style="display:grid;grid-template-columns:1fr 2fr;gap:2rem;padding:2rem;">
 <!-- Left Column: Pending SOS Requests -->
-<section class="lg:col-span-4 flex flex-col gap-4 overflow-hidden h-full min-h-[600px]">
+<section style="min-height:600px;display:flex;flex-direction:column;gap:1rem;overflow:hidden;">
 <div class="flex justify-between items-end mb-2">
 <h2 class="font-headline text-xl font-bold text-on-surface">Pending Requests</h2>
 <span class="text-xs font-label text-on-surface-variant uppercase tracking-widest">Live Updates</span>
@@ -284,7 +284,7 @@
     </div>
 </section>
 <!-- Right Column: Command Center (Details/Dispatch) -->
-<section id="detailed-view" class="lg:col-span-8 flex flex-col gap-6 opacity-0 translate-y-4 transition-all duration-500 hidden">
+<section id="detailed-view" style="display:none;flex-direction:column;gap:1.5rem;" class="opacity-0 transition-all duration-500">
     <!-- Top Section: Victim Header -->
     <div class="bg-surface-container rounded-2xl p-6 lg:p-8 overflow-hidden relative border border-outline/10 shadow-xl">
         <div class="absolute top-0 right-0 w-64 h-full opacity-10 pointer-events-none">
@@ -361,7 +361,7 @@
 </section>
 
 <!-- Empty State Placeholder -->
-<section id="empty-state" class="lg:col-span-8 flex flex-col items-center justify-center text-center p-12 opacity-50 bg-surface-container/30 rounded-3xl border border-dashed border-outline/20">
+<section id="empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:3rem;opacity:0.5;background:rgba(30,32,35,0.3);border-radius:1.5rem;border:1px dashed var(--outline);">
     <div class="w-20 h-20 rounded-full bg-surface-container-highest flex items-center justify-center mb-6">
         <span class="material-symbols-outlined text-4xl text-on-surface-variant">touch_app</span>
     </div>
@@ -457,11 +457,10 @@
         selectedResourceId = null;
 
         // UI Reset
-        document.getElementById('empty-state').classList.add('hidden');
-        document.getElementById('detailed-view').classList.remove('hidden');
-        setTimeout(() => {
-            document.getElementById('detailed-view').classList.remove('opacity-0', 'translate-y-4');
-        }, 10);
+        document.getElementById('empty-state').style.display = 'none';
+        const dv = document.getElementById('detailed-view');
+        dv.style.display = 'flex';
+        setTimeout(() => { dv.classList.remove('opacity-0'); }, 10);
         document.getElementById('dispatch-actions').classList.add('hidden');
         
         // Update Info
@@ -577,10 +576,11 @@
                 if (response.ok) {
                     showToast("Emergency Dispatch success! Request state updated.");
                     // Reset UI
-                    document.getElementById('detailed-view').classList.add('opacity-0');
+                    const dv = document.getElementById('detailed-view');
+                    dv.classList.add('opacity-0');
                     setTimeout(() => {
-                        document.getElementById('empty-state').classList.remove('hidden');
-                        document.getElementById('detailed-view').classList.add('hidden');
+                        dv.style.display = 'none';
+                        document.getElementById('empty-state').style.display = 'flex';
                         document.getElementById('dispatch-actions').classList.add('hidden');
                     }, 500);
                     
