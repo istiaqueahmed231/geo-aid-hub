@@ -83,9 +83,37 @@
         ::-webkit-scrollbar-thumb { background: #333538; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #5c4037; }
     </style>
+    <script src="./theme.js"></script>
 </head>
 <body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen flex overflow-hidden">
     
+    <!-- TopNavBar -->
+    <header class="fixed top-0 left-0 lg:left-64 right-0 z-50 bg-zinc-950/80 backdrop-blur-xl shadow-2xl shadow-black/50 font-['Manrope'] antialiased tracking-tight flex justify-between items-center px-4 lg:px-8 h-20">
+        <div class="flex items-center gap-4 lg:gap-8">
+            <button id="mobile-menu-toggle" class="lg:hidden p-2 text-zinc-400 hover:bg-zinc-800 rounded-lg transition-colors">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+            <div class="flex gap-6 items-center">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                    <span class="text-secondary font-bold">Support Center</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+                <button id="theme-toggle-btn" class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
+                    <span id="theme-toggle-icon" class="material-symbols-outlined">light_mode</span>
+                    <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-xs text-zinc-300 px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-white/5 font-medium z-[60]">Toggle Theme</div>
+                </button>
+                <button class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
+                    <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+                    <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-xs text-zinc-300 px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-white/5 font-medium z-[60]">Will be implemented later</div>
+                </button>
+            </div>
+        </div>
+    </header>
+
     <!-- SideNavBar -->
     <aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-zinc-900 font-['Inter'] text-sm font-medium flex flex-col py-8 gap-4">
         <div class="px-6 mb-4">

@@ -85,6 +85,7 @@
         ::-webkit-scrollbar-thumb { background: #333538; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #5c4037; }
     </style>
+    <script src="./theme.js"></script>
 </head>
 <body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen flex overflow-hidden">
 <!-- SideNavBar (Authority: JSON) -->
@@ -141,22 +142,38 @@
 </div>
 </div>
 </div>
-<div class="flex items-center gap-4">
-<div class="flex items-center gap-2">
-<button class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
-<div class="flex items-center gap-2 ml-4">
-    <label for="resource-select" class="text-sm text-zinc-400">Resource:</label>
-    <select id="resource-select" class="bg-zinc-800 text-on-surface rounded px-2 py-1 focus:outline-none">
-        <option value="" disabled selected>Select resource</option>
-    </select>
-</div>
-<!-- Volunteer Dropdown -->
-<div class="flex items-center gap-2 ml-4">
-    <label for="volunteer-select" class="text-sm text-zinc-400">Volunteer:</label>
-    <select id="volunteer-select" class="bg-zinc-800 text-on-surface rounded px-2 py-1 focus:outline-none">
-        <option value="" disabled selected>Select volunteer</option>
-    </select>
-</div>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+                <button id="theme-toggle-btn" class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
+                    <span id="theme-toggle-icon" class="material-symbols-outlined">light_mode</span>
+                    <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-xs text-zinc-300 px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-white/5 font-medium z-[60]">Toggle Theme</div>
+                </button>
+                <button class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
+                    <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+                    <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-xs text-zinc-300 px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-white/5 font-medium z-[60]">Will be implemented later</div>
+                </button>
+                <button class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
+                    <span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+                    <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-xs text-zinc-300 px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-white/5 font-medium z-[60]">Profile</div>
+                </button>
+            </div>
+            <div class="h-8 w-px bg-zinc-800 mx-2"></div>
+            <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 ml-4">
+                    <label for="resource-select" class="text-sm text-zinc-400">Resource:</label>
+                    <select id="resource-select" class="bg-zinc-800 text-on-surface rounded px-2 py-1 focus:outline-none">
+                        <option value="" disabled selected>Select resource</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2 ml-4">
+                    <label for="volunteer-select" class="text-sm text-zinc-400">Volunteer:</label>
+                    <select id="volunteer-select" class="bg-zinc-800 text-on-surface rounded px-2 py-1 focus:outline-none">
+                        <option value="" disabled selected>Select volunteer</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
 <script>
 // Toast helper
 function showToast(message, isError = false) {
