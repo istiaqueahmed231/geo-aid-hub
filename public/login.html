@@ -8,163 +8,130 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
   <script type="module" src="./firebase-config.js"></script>
   <script type="module" src="./auth.js"></script>
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "background": "var(--background)",
-            "surface-container": "var(--surface-container)",
-            "surface-container-low": "var(--surface-container-low)",
-            "surface-container-high": "var(--surface-container-high)",
-            "surface-container-highest": "var(--surface-container-highest)",
-            "on-surface": "var(--on-surface)",
-            "on-surface-variant": "var(--on-surface-variant)",
-            "primary": "var(--primary)",
-            "primary-container": "var(--primary-container)",
-            "secondary": "var(--secondary)",
-            "secondary-container": "var(--secondary-container)",
-            "tertiary": "var(--tertiary)",
-            "error": "var(--error)",
-            "error-container": "var(--error-container)",
-            "outline": "var(--outline)"
-          },
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            display: ['Manrope', 'sans-serif'],
-          }
+    <link rel="stylesheet" href="./app.css"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "background": "var(--bg)",
+                        "surface": "var(--bg-panel)",
+                        "primary": "var(--orange)",
+                        "secondary": "var(--green)",
+                        "error": "var(--red)",
+                        "outline": "var(--border)",
+                        "surface-container": "var(--surface)",
+                        "on-surface": "var(--text)",
+                        "on-surface-variant": "var(--text-dim)",
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                    },
+                },
+            },
         }
-      }
-    }
-  </script>
-  <script src="./theme.js"></script>
-  <style>
-    :root {
-        --background: #111316;
-        --surface: #111316;
-        --surface-container: #1e2023;
-        --surface-container-low: #1a1c1f;
-        --surface-container-high: #282a2d;
-        --surface-container-highest: #333538;
-        --on-surface: #e2e2e6;
-        --on-surface-variant: #e6beb2;
-        --primary: #ffb4a4;
-        --primary-container: #fe5733;
-        --on-primary-container: #570b00;
-        --secondary: #88d982;
-        --secondary-container: #005b14;
-        --tertiary: #55d7ed;
-        --error: #ffb4ab;
-        --error-container: #93000a;
-        --outline: #ad897e;
-    }
-
-    :root:not(.dark) {
-        --background: #fdfdfd;
-        --surface: #f9f9f9;
-        --surface-container: #f0f0f0;
-        --surface-container-low: #f5f5f5;
-        --surface-container-high: #e8e8e8;
-        --surface-container-highest: #e0e0e0;
-        --on-surface: #1b1b1b;
-        --on-surface-variant: #44474e;
-        --primary: #fe5733;
-        --primary-container: #ffdad3;
-        --on-primary-container: #3d0600;
-        --secondary: #386a37;
-        --secondary-container: #b9f0b2;
-        --tertiary: #006874;
-        --error: #ba1a1a;
-        --error-container: #ffdad6;
-        --outline: #74777f;
-    }
-    
-    .material-symbols-outlined {
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        vertical-align: middle;
-    }
-  </style>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    </script>
 </head>
-<body class="bg-background text-on-surface font-sans min-h-screen flex items-center justify-center relative py-12">
-  
-  <!-- Add toast notification element -->
-  <div id="toast" style="display:none;" class="fixed bottom-4 right-4 px-4 py-2 rounded shadow-lg z-50"></div>
-  
-  <script>
-    window.showToast = function(message, isError = false) {
-      const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-xl z-50 transition-all duration-300 font-medium ${isError ? 'bg-error-container text-white border border-red-500/30' : 'bg-secondary text-background border border-secondary/50'}`;
-      toast.style.display = 'block';
-      toast.style.transform = 'translateY(0)';
-      toast.style.opacity = '1';
-      
-      setTimeout(() => { 
-        toast.style.transform = 'translateY(20px)';
-        toast.style.opacity = '0';
-        setTimeout(() => { toast.style.display = 'none'; }, 300);
-      }, 4000);
-    }
-  </script>
-
-  <!-- Top Left Logo -->
-  <div class="absolute top-6 left-6 md:left-8 flex items-center gap-3 select-none">
-    <div class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-surface-container/80 backdrop-blur border border-outline/10 shadow-lg">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
+<body class="bg-background text-on-surface font-body min-h-screen flex items-center justify-center relative py-12 overflow-hidden">
+    <!-- Ambient Background Effect -->
+    <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full"></div>
     </div>
-    <div>
-      <h1 class="text-lg font-black text-on-surface tracking-tighter leading-none">Geo-Aid <span class="text-primary">Central</span></h1>
-    </div>
-  </div>
 
-  <!-- Theme Toggle in Top Right -->
-  <div class="absolute top-6 right-6 md:right-8 flex items-center gap-2">
-    <button id="theme-toggle-btn" class="p-2.5 text-on-surface-variant hover:bg-surface-container/80 backdrop-blur border border-outline/10 rounded-xl transition-all duration-300 active:scale-95 shadow-lg group relative">
-       <span id="theme-toggle-icon" class="material-symbols-outlined !text-xl">light_mode</span>
-       <div class="absolute -bottom-10 right-0 bg-surface-container-highest text-xs text-on-surface px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-outline/10 font-medium z-50">Toggle Theme</div>
-    </button>
-  </div>
-
-  <div class="relative z-10 w-full max-w-md p-8 bg-surface-container/50 backdrop-blur-xl border border-outline/10 rounded-3xl shadow-xl">
+    <!-- toast notification element -->
+    <div id="toast" style="display:none;" class="fixed bottom-4 right-4 px-4 py-2 rounded shadow-lg z-50"></div>
     
-    <div class="mb-8 text-center">
-      <h2 class="text-3xl font-display font-bold text-on-surface tracking-tight mb-2">Welcome Back</h2>
-      <p class="text-on-surface-variant">Log in to coordinate disaster relief efforts.</p>
+    <script>
+        window.showToast = function(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `fixed bottom-6 right-6 px-5 py-3 rounded-xl shadow-2xl z-50 transition-all duration-300 font-bold border ${isError ? 'bg-red-900/80 text-white border-red-500/30 backdrop-blur' : 'bg-green-900/80 text-white border-green-500/30 backdrop-blur'}`;
+            toast.style.display = 'block';
+            toast.style.transform = 'translateY(0)';
+            toast.style.opacity = '1';
+            
+            setTimeout(() => { 
+                toast.style.transform = 'translateY(20px)';
+                toast.style.opacity = '0';
+                setTimeout(() => { toast.style.display = 'none'; }, 300);
+            }, 4000);
+        }
+    </script>
+
+    <!-- Top Left Logo -->
+    <div class="absolute top-6 left-6 md:left-8 flex items-center gap-3 select-none z-20">
+        <div class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-surface/80 backdrop-blur border border-outline shadow-lg cursor-pointer" onclick="location.href='welcome.html'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <div>
+            <h1 class="text-lg font-headline font-black text-on-surface tracking-tighter leading-none">Geo-Aid <span class="text-primary font-bold">HUB</span></h1>
+        </div>
     </div>
 
-    <form onsubmit="event.preventDefault(); if(window.login) { window.login(); } else { alert('Error: Authentication script failed to load. Are you opening this file directly? Please make sure to run the server with node server.js and open http://localhost:3000 in your browser!'); }" class="space-y-4">
-      
-      <!-- Email -->
-      <div class="space-y-1">
-        <label for="email" class="block text-sm font-medium text-on-surface-variant ml-1">Email Address</label>
-        <input type="email" id="email" required class="w-full bg-surface-container-high border border-outline/10 text-on-surface placeholder-on-surface-variant/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors" placeholder="you@example.com" />
-      </div>
-
-      <!-- Password -->
-      <div class="space-y-1">
-        <label for="password" class="block text-sm font-medium text-on-surface-variant ml-1">Password</label>
-        <input type="password" id="password" required class="w-full bg-surface-container-high border border-outline/10 text-on-surface placeholder-on-surface-variant/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-colors" placeholder="••••••••" />
-      </div>
-
-      <div class="pt-6">
-        <button type="submit" class="w-full py-3.5 px-4 bg-secondary text-background hover:bg-[#99e294] font-semibold rounded-xl transition-all duration-300 transform active:scale-[0.98] shadow-[0_0_20px_rgba(136,217,130,0.15)]">
-          Sign In
+    <!-- Theme Toggle in Top Right -->
+    <div class="absolute top-6 right-6 md:right-8 flex items-center gap-2 z-20">
+        <button id="theme-toggle-btn" class="icon-btn">
+            <span id="theme-toggle-icon" class="material-symbols-outlined">light_mode</span>
         </button>
-      </div>
-
-    </form>
-
-    <div class="mt-6 text-center">
-      <p class="text-sm text-on-surface-variant">
-        Don't have an account? 
-        <a href="signup.html" class="text-secondary hover:text-on-surface transition-colors font-medium ml-1">Sign up here</a>
-      </p>
     </div>
 
-  </div>
+    <div class="relative z-10 w-full max-w-md p-8 md:p-10 bg-surface/40 backdrop-blur-2xl border border-outline rounded-3xl shadow-2xl animate-fade-in-up">
+        
+        <div class="mb-8 text-center">
+            <h2 class="text-4xl font-headline font-black text-on-surface tracking-tight mb-2">Welcome Back</h2>
+            <p class="text-on-surface-variant font-medium">Log in to coordinate disaster relief efforts.</p>
+        </div>
+
+        <form onsubmit="event.preventDefault(); if(window.login) { window.login(); } else { alert('Error: Authentication script failed to load.'); }" class="space-y-6">
+            
+            <!-- Email -->
+            <div class="space-y-1.5">
+                <label for="email" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">Email Address</label>
+                <div class="relative group">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors">mail</span>
+                    <input type="email" id="email" required class="w-full bg-surface/50 border border-outline text-on-surface placeholder-on-surface-variant/30 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium" placeholder="you@example.com" />
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="space-y-1.5">
+                <label for="password" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">Password</label>
+                <div class="relative group">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors">lock</span>
+                    <input type="password" id="password" required class="w-full bg-surface/50 border border-outline text-on-surface placeholder-on-surface-variant/30 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium" placeholder="••••••••" />
+                </div>
+            </div>
+
+            <div class="pt-4">
+                <button type="submit" class="w-full py-4 px-4 bg-primary text-white hover:brightness-110 font-bold rounded-2xl transition-all duration-300 transform active:scale-[0.98] shadow-lg shadow-primary/20">
+                    Sign In
+                </button>
+            </div>
+
+        </form>
+
+        <div class="mt-8 text-center">
+            <p class="text-sm text-on-surface-variant font-medium">
+                Don't have an account? 
+                <a href="signup.html" class="text-primary hover:text-on-surface transition-colors font-bold ml-1">Sign up here</a>
+            </p>
+        </div>
+
+    </div>
+
+    <style>
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s cubic-bezier(0.2, 1, 0.2, 1) forwards;
+        }
+    </style>
+    <script src="./theme.js"></script>
 </body>
 </html>

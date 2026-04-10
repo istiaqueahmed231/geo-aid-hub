@@ -45,7 +45,8 @@ app.get('/api/requests', (req, res) => {
             r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage, 
             c.CategoryName, l.AreaName, l.Latitude, l.Longitude,
             v.Name AS DispatcherName, 
-            rc.CategoryName AS DispatchedItemName
+            rc.CategoryName AS DispatchedItemName,
+            r.DispatchedQuantity
         FROM HelpRequests r
         JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
         JOIN Locations l ON r.LocationID = l.LocationID
@@ -278,25 +279,28 @@ app.get('/api/nearest-volunteers', (req, res) => {
 });
 
 app.post('/api/dispatch', (req, res) => {
-    const { volunteerId, resourceId, requestId } = req.body;
+    const { volunteerId, resourceId, requestId, quantity } = req.body;
+    const dispatchQty = parseInt(quantity) || 1;
+
     if (!volunteerId || !resourceId || !requestId) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
     // Use a simplified multi-step update for now
     const updateV = "UPDATE Volunteers SET Status = 'Active' WHERE VolunteerID = ?";
-    const updateR = "UPDATE Resources SET Quantity = Quantity - 1 WHERE ResourceID = ? AND Quantity > 0";
-    const updateReq = "UPDATE HelpRequests SET Status = 'Dispatched', AssignedVolunteerID = ?, AssignedResourceID = ?, DispatchedAt = NOW() WHERE RequestID = ?";
+    const updateR = "UPDATE Resources SET Quantity = Quantity - ? WHERE ResourceID = ? AND Quantity >= ?";
+    const updateReq = "UPDATE HelpRequests SET Status = 'Dispatched', AssignedVolunteerID = ?, AssignedResourceID = ?, DispatchedQuantity = ?, DispatchedAt = NOW() WHERE RequestID = ?";
 
     db.query(updateV, [volunteerId], (err) => {
         if (err) return res.status(500).json({ error: 'Volunteer update failed' });
         
-        db.query(updateR, [resourceId], (err) => {
+        db.query(updateR, [dispatchQty, resourceId, dispatchQty], (err, result) => {
             if (err) return res.status(500).json({ error: 'Resource update failed' });
+            if (result.affectedRows === 0) return res.status(400).json({ error: 'Insufficient resource quantity' });
             
-            db.query(updateReq, [volunteerId, resourceId, requestId], (err) => {
+            db.query(updateReq, [volunteerId, resourceId, dispatchQty, requestId], (err) => {
                 if (err) return res.status(500).json({ error: 'Request update failed' });
-                res.json({ message: 'Dispatch successful! Field assets have been deployed.' });
+                res.json({ message: `Dispatch successful! ${dispatchQty} units have been deployed.` });
             });
         });
     });

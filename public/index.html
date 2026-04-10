@@ -21,169 +21,9 @@
 <script type="module" src="./firebase-config.js"></script>
 <script type="module" src="./auth.js"></script>
 
+<link rel="stylesheet" href="./app.css"/>
+
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg:           #0c0e11;
-    --bg-panel:     #111316;
-    --sidebar-bg:   #0f1115;
-    --border:       rgba(255,255,255,0.09);
-    --border-strong:rgba(255,255,255,0.20);
-    --text:         #e2e2e6;
-    --text-dim:     #888c94;
-    --orange:       #fe5733;
-    --orange-dim:   #c43f21;
-    --green:        #88d982;
-    --red:          #ff6b6b;
-    --surface:      #191c20;
-    --surface-hi:   #21252b;
-    --selected-res: rgba(254,87,51,0.10);
-  }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-  }
-
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #2a2d32; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--orange); }
-
-  /* ─── Sidebar ─── */
-  #sidebar {
-    width: 256px;
-    min-width: 256px;
-    height: 100vh;
-    background: var(--sidebar-bg);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    z-index: 100;
-  }
-
-  .sidebar-brand {
-    padding: 24px 20px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-  .sidebar-brand-name {
-    font-family: 'Manrope', sans-serif;
-    font-size: 17px;
-    font-weight: 900;
-    color: var(--orange);
-    letter-spacing: -0.3px;
-  }
-  .sidebar-brand-sub {
-    font-size: 11px;
-    color: var(--text-dim);
-    margin-top: 3px;
-  }
-
-  .sidebar-nav { flex: 1; padding: 12px 0; }
-  .nav-link {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 10px 20px;
-    margin: 1px 10px;
-    border-radius: 8px;
-    color: var(--text-dim);
-    text-decoration: none;
-    font-size: 13.5px;
-    font-weight: 500;
-    transition: all 0.15s;
-  }
-  .nav-link:hover { background: rgba(255,255,255,0.04); color: var(--text); }
-  .nav-link.active { background: rgba(254,87,51,0.10); color: var(--orange); }
-  .nav-link .material-symbols-outlined { font-size: 19px; }
-
-  .sidebar-footer {
-    padding: 12px 0 16px;
-    border-top: 1px solid var(--border);
-  }
-
-  /* ─── Main ─── */
-  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-
-  /* ─── Header ─── */
-  #header {
-    height: 60px;
-    min-height: 60px;
-    background: rgba(10,12,15,0.92);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 24px;
-    gap: 16px;
-    flex-shrink: 0;
-  }
-
-  .header-left { display: flex; align-items: center; gap: 14px; }
-  .header-logo {
-    width: 34px; height: 34px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .header-logo svg { width: 17px; height: 17px; }
-  .header-title {
-    font-family: 'Manrope', sans-serif;
-    font-size: 12px; font-weight: 900;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: white;
-  }
-  .header-title span { color: var(--orange); }
-  .header-divider { width: 1px; height: 26px; background: var(--border); }
-  .header-stats { display: flex; gap: 18px; }
-  .stat-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; }
-  .stat-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-  .stat-dot.red  { background: var(--red);  animation: blink 1.4s ease-in-out infinite; }
-  .stat-dot.green{ background: var(--green); }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-  .header-right { display: flex; align-items: center; gap: 4px; }
-  .icon-btn {
-    width: 34px; height: 34px;
-    background: transparent; border: none;
-    border-radius: 7px; color: var(--text-dim);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
-  }
-  .icon-btn:hover { background: var(--surface); color: var(--text); }
-  .icon-btn .material-symbols-outlined { font-size: 19px; }
-
-  /* ─── Dispatcher Badge (top right of header) ─── */
-  #dispatcher-badge {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    background: rgba(136,217,130,0.08);
-    border: 1px solid rgba(136,217,130,0.2);
-    border-radius: 20px;
-    padding: 5px 12px 5px 6px;
-    font-size: 12px;
-    color: var(--green);
-    font-weight: 600;
-  }
-  .dispatcher-avatar-sm {
-    width: 22px; height: 22px; border-radius: 50%;
-    background: rgba(136,217,130,0.2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700;
-    color: var(--green);
-  }
-
   /* ─── Dashboard Two-Panel Grid ─── */
   #dashboard-grid {
     flex: 1;
@@ -503,8 +343,8 @@
 <!-- ══════════════════════════════════════════ SIDEBAR -->
 <nav id="sidebar">
   <div class="sidebar-brand">
-    <div class="sidebar-brand-name">Geo-Aid Central</div>
-    <div class="sidebar-brand-sub">Regional Command</div>
+    <div class="sidebar-brand-name">Geo-Aid <span>HUB</span></div>
+    <div class="sidebar-brand-sub">National Command Center</div>
   </div>
 
   <div class="sidebar-nav">
@@ -519,6 +359,9 @@
     </a>
     <a class="nav-link" href="volunteer-fleet.html">
       <span class="material-symbols-outlined">group</span> Volunteer Fleet
+    </a>
+    <a class="nav-link" href="support.html">
+      <span class="material-symbols-outlined">support</span> Support & Info
     </a>
   </div>
 
@@ -538,12 +381,7 @@
   <!-- ─── HEADER ─── -->
   <header id="header">
     <div class="header-left">
-      <div class="header-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="var(--orange)" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-      </div>
-      <div class="header-title">GEO-AID <span>CENTRAL</span></div>
+      <div class="header-title">GEO-AID <span>HUB</span></div>
       <div class="header-divider"></div>
       <div class="header-stats">
         <div class="stat-item">
@@ -642,6 +480,15 @@
               <div class="d-strip-name" id="strip-name">Loading…</div>
             </div>
             <span class="material-symbols-outlined" style="font-size:16px;color:var(--green);">verified</span>
+          </div>
+
+          <div id="dispatch-quantity-wrapper" style="display:flex; align-items:center; gap:12px; margin-bottom:5px; background:rgba(255,255,255,0.03); padding:10px 14px; border-radius:10px; border:1px solid var(--border);">
+            <div style="display:flex; align-items:center; gap:8px; flex:1;">
+              <span class="material-symbols-outlined" style="font-size:20px; color:var(--orange);">inventory_2</span>
+              <span style="font-size:13px; font-weight:700;">Units to Send</span>
+            </div>
+            <input type="number" id="dispatch-quantity" value="1" min="1" step="1" 
+              style="width:80px; height:34px; background:var(--bg); border:1.5px solid var(--border-strong); color:white; border-radius:6px; padding:0 10px; font-family:monospace; font-weight:800; font-size:15px; outline:none; text-align:center;">
           </div>
 
           <button id="dispatch-btn" onclick="confirmDispatch()">
@@ -756,7 +603,7 @@ async function loadRequests() {
         </div>
         ${isD && req.DispatcherName ? `
           <div class="dispatched-footer">
-            <b>${req.DispatcherName}</b> dispatched <b>${req.DispatchedItemName || 'supplies'}</b>
+            <b>${req.DispatcherName}</b> dispatched <b>${req.DispatchedQuantity || '1 unit'}</b> of <b>${req.DispatchedItemName || 'supplies'}</b>
           </div>` : ''}
       `;
 
@@ -853,7 +700,7 @@ async function loadNearestResources(req) {
         </div>
         <span class="supply-qty">Qty: ${res.Quantity}</span>
       `;
-      el.onclick = () => selectSupply(el, res.ResourceID, res.CategoryName);
+      el.onclick = () => selectSupply(el, res.ResourceID, res.CategoryName, res.Quantity);
       container.appendChild(el);
     });
 
@@ -864,9 +711,15 @@ async function loadNearestResources(req) {
 }
 
 // ─── Select a Supply ───
-function selectSupply(el, resourceId, supplyName) {
+function selectSupply(el, resourceId, supplyName, availableQty) {
   selectedResourceId = resourceId;
   window._selectedSupplyName = supplyName || 'selected supply';
+  
+  // Set max quantity
+  const qtyInput = document.getElementById('dispatch-quantity');
+  qtyInput.max = availableQty;
+  qtyInput.value = 1;
+
   document.querySelectorAll('.supply-item').forEach(i => i.classList.remove('selected'));
   el.classList.add('selected');
   // Show dispatch area
@@ -879,15 +732,16 @@ async function confirmDispatch() {
 
   const reqName    = selectedRequest.RequestorName;
   const supplyName = window._selectedSupplyName || 'selected supply';
+  const quantity = parseInt(document.getElementById('dispatch-quantity').value) || 1;
 
   const ok = confirm(
     `DISPATCH CONFIRMATION\n\n` +
     `  Requester : ${reqName}\n` +
-    `  Supply    : ${supplyName}\n` +
+    `  Supply    : ${supplyName} (x${quantity})\n` +
     `  Dispatcher: ${currentVolunteer.Name}\n\n` +
     `This will:\n` +
     `  • Mark the request as "Dispatched"\n` +
-    `  • Reduce ${supplyName} stock by 1\n` +
+    `  • Reduce ${supplyName} stock by ${quantity}\n` +
     `  • Record your name as the dispatcher\n\n` +
     `Confirm dispatch?`
   );
