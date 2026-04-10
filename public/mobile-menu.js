@@ -1,47 +1,41 @@
 // public/mobile-menu.js
 document.addEventListener('DOMContentLoaded', () => {
-    const sidebar = document.querySelector('aside');
+    const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('mobile-menu-toggle');
-    const mainContent = document.querySelector('main');
 
     if (!sidebar || !toggleBtn) return;
 
     // Create overlay
     const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 bg-black/50 z-30 hidden lg:hidden transition-opacity duration-300 opacity-0';
+    overlay.className = 'fixed inset-0 bg-black/50 z-[90] hidden transition-opacity duration-300';
     document.body.appendChild(overlay);
 
-    const toggleSidebar = () => {
-        const isOpen = !sidebar.classList.contains('-translate-x-full');
-        
-        if (isOpen) {
-            // Close
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden', 'opacity-0');
-            overlay.classList.remove('block', 'opacity-100');
-            document.body.classList.remove('overflow-hidden');
-        } else {
-            // Open
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.remove('hidden', 'opacity-0');
-            overlay.classList.add('block', 'opacity-100');
-            document.body.classList.add('overflow-hidden');
-        }
+    const openSidebar = () => {
+        sidebar.style.transform = 'translateX(0)';
+        overlay.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeSidebar = () => {
+        sidebar.style.transform = 'translateX(-256px)';
+        overlay.classList.add('hidden');
+        document.body.style.overflow = '';
     };
 
     toggleBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        toggleSidebar();
+        const isOpen = sidebar.style.transform === 'translateX(0px)';
+        isOpen ? closeSidebar() : openSidebar();
     });
 
-    overlay.addEventListener('click', toggleSidebar);
+    overlay.addEventListener('click', closeSidebar);
 
     // Close sidebar on link click (mobile)
     const navLinks = sidebar.querySelectorAll('nav a');
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
-            if (window.innerWidth < 1024) { // lg breakpoint
-                toggleSidebar();
+            if (window.innerWidth < 900) {
+                closeSidebar();
             }
         });
     });
