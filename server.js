@@ -191,6 +191,25 @@ app.get('/api/stats', (req, res) => {
         });
     });
 });
+// --- GET CURRENT VOLUNTEER PROFILE BY FIREBASE UID ---
+app.get('/api/me', (req, res) => {
+    const { uid } = req.query;
+    if (!uid) return res.status(400).json({ error: 'Missing uid parameter' });
+
+    const sql = `
+        SELECT VolunteerID, Name, Email, Role, Status, Location
+        FROM Volunteers
+        WHERE UID = ?
+        LIMIT 1;
+    `;
+    db.query(sql, [uid], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (results.length === 0) return res.status(404).json({ error: 'Volunteer profile not found for this account.' });
+        res.json(results[0]);
+    });
+});
+// -------------------------------------------------------
+
 // --- PROXIMITY APIS FOR DISPATCH ---
 
 // Get nearest available resources for a specific category

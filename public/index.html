@@ -17,30 +17,28 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
-<!-- Firebase -->
+<!-- Firebase Auth (module) -->
 <script type="module" src="./firebase-config.js"></script>
 <script type="module" src="./auth.js"></script>
 
 <style>
-  /* ─── Reset ─── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg:        #0c0e11;
-    --bg-panel:  #111316;
-    --sidebar-bg:#0f1115;
-    --border:    rgba(255,255,255,0.10);
-    --border-strong: rgba(255,255,255,0.22);
-    --text:      #e2e2e6;
-    --text-dim:  #9a9a9e;
-    --orange:    #fe5733;
-    --orange-dim:#c43f21;
-    --green:     #88d982;
-    --red:       #ff6b6b;
-    --surface:   #1a1d21;
-    --surface-hi:#222529;
-    --selected-res: rgba(254,87,51,0.12);
-    --selected-vol: rgba(136,217,130,0.12);
+    --bg:           #0c0e11;
+    --bg-panel:     #111316;
+    --sidebar-bg:   #0f1115;
+    --border:       rgba(255,255,255,0.09);
+    --border-strong:rgba(255,255,255,0.20);
+    --text:         #e2e2e6;
+    --text-dim:     #888c94;
+    --orange:       #fe5733;
+    --orange-dim:   #c43f21;
+    --green:        #88d982;
+    --red:          #ff6b6b;
+    --surface:      #191c20;
+    --surface-hi:   #21252b;
+    --selected-res: rgba(254,87,51,0.10);
   }
 
   body {
@@ -52,79 +50,72 @@
     display: flex;
   }
 
-  /* ─── Scrollbar ─── */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb { background: #2a2d32; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--orange); }
 
   /* ─── Sidebar ─── */
   #sidebar {
-    width: 260px;
-    min-width: 260px;
+    width: 256px;
+    min-width: 256px;
     height: 100vh;
     background: var(--sidebar-bg);
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    padding: 24px 0;
+    padding: 0;
     z-index: 100;
-    overflow-y: auto;
   }
 
   .sidebar-brand {
-    padding: 0 20px 24px;
+    padding: 24px 20px 20px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 12px;
   }
-  .sidebar-brand h1 {
+  .sidebar-brand-name {
     font-family: 'Manrope', sans-serif;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 900;
     color: var(--orange);
-    letter-spacing: -0.5px;
+    letter-spacing: -0.3px;
   }
-  .sidebar-brand p {
+  .sidebar-brand-sub {
     font-size: 11px;
     color: var(--text-dim);
-    margin-top: 2px;
+    margin-top: 3px;
   }
 
+  .sidebar-nav { flex: 1; padding: 12px 0; }
   .nav-link {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 11px 20px;
-    margin: 2px 12px;
-    border-radius: 10px;
+    gap: 11px;
+    padding: 10px 20px;
+    margin: 1px 10px;
+    border-radius: 8px;
     color: var(--text-dim);
     text-decoration: none;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 500;
     transition: all 0.15s;
   }
-  .nav-link:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-  .nav-link.active { background: rgba(254,87,51,0.12); color: var(--orange); }
-  .nav-link .material-symbols-outlined { font-size: 20px; }
+  .nav-link:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+  .nav-link.active { background: rgba(254,87,51,0.10); color: var(--orange); }
+  .nav-link .material-symbols-outlined { font-size: 19px; }
 
   .sidebar-footer {
-    margin-top: auto;
-    padding-top: 16px;
+    padding: 12px 0 16px;
     border-top: 1px solid var(--border);
   }
 
-  /* ─── Main Area ─── */
-  #main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+  /* ─── Main ─── */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
   /* ─── Header ─── */
   #header {
-    height: 64px;
-    min-height: 64px;
-    background: rgba(11,13,16,0.85);
+    height: 60px;
+    min-height: 60px;
+    background: rgba(10,12,15,0.92);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
     display: flex;
@@ -132,75 +123,80 @@
     justify-content: space-between;
     padding: 0 24px;
     gap: 16px;
+    flex-shrink: 0;
   }
 
-  .header-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
   .header-logo {
-    width: 36px;
-    height: 36px;
+    width: 34px; height: 34px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
   }
-  .header-logo svg { width: 18px; height: 18px; color: var(--orange); }
-  .header-brand-name {
+  .header-logo svg { width: 17px; height: 17px; }
+  .header-title {
     font-family: 'Manrope', sans-serif;
-    font-size: 12px;
-    font-weight: 900;
-    letter-spacing: 1px;
+    font-size: 12px; font-weight: 900;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     color: white;
   }
-  .header-brand-name span { color: var(--orange); }
+  .header-title span { color: var(--orange); }
+  .header-divider { width: 1px; height: 26px; background: var(--border); }
+  .header-stats { display: flex; gap: 18px; }
+  .stat-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; }
+  .stat-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .stat-dot.red  { background: var(--red);  animation: blink 1.4s ease-in-out infinite; }
+  .stat-dot.green{ background: var(--green); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-  .header-divider { width: 1px; height: 28px; background: var(--border); }
-
-  .header-stats { display: flex; gap: 20px; align-items: center; }
-  .stat-pill {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 12px; font-weight: 600;
-  }
-  .stat-dot { width: 6px; height: 6px; border-radius: 50%; }
-  .dot-red { background: var(--red); animation: pulse 1.5s infinite; }
-  .dot-green { background: var(--green); }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-  .header-actions { display: flex; align-items: center; gap: 4px; }
+  .header-right { display: flex; align-items: center; gap: 4px; }
   .icon-btn {
-    width: 36px; height: 36px;
-    background: transparent;
-    border: none;
-    border-radius: 8px;
-    color: var(--text-dim);
+    width: 34px; height: 34px;
+    background: transparent; border: none;
+    border-radius: 7px; color: var(--text-dim);
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.15s;
-    font-size: 20px;
   }
   .icon-btn:hover { background: var(--surface); color: var(--text); }
-  .icon-btn .material-symbols-outlined { font-size: 20px; }
+  .icon-btn .material-symbols-outlined { font-size: 19px; }
 
-  /* ─── Dashboard Grid ─── */
+  /* ─── Dispatcher Badge (top right of header) ─── */
+  #dispatcher-badge {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: rgba(136,217,130,0.08);
+    border: 1px solid rgba(136,217,130,0.2);
+    border-radius: 20px;
+    padding: 5px 12px 5px 6px;
+    font-size: 12px;
+    color: var(--green);
+    font-weight: 600;
+  }
+  .dispatcher-avatar-sm {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(136,217,130,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    color: var(--green);
+  }
+
+  /* ─── Dashboard Two-Panel Grid ─── */
   #dashboard-grid {
     flex: 1;
     display: grid;
     grid-template-columns: 5fr 7fr;
-    gap: 20px;
-    padding: 20px;
+    gap: 18px;
+    padding: 18px;
     overflow: hidden;
   }
 
-  /* ─── Panels ─── */
+  /* ─── Panel Base ─── */
   .panel {
     background: var(--bg-panel);
-    border-radius: 16px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -208,16 +204,16 @@
 
   #panel-requests {
     border: 1.5px solid var(--border-strong);
-    border-radius: 12px;
+    border-radius: 14px;
   }
 
   #panel-dispatch {
-    border: 2.5px solid rgba(255,255,255,0.18);
-    border-radius: 24px;
+    border: 2.5px solid rgba(255,255,255,0.17);
+    border-radius: 22px;
   }
 
   .panel-header {
-    padding: 16px 20px 12px;
+    padding: 15px 18px 12px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
@@ -226,25 +222,22 @@
   }
   .panel-header h2 {
     font-family: 'Manrope', sans-serif;
-    font-size: 15px;
-    font-weight: 800;
+    font-size: 14px; font-weight: 800;
     color: var(--text);
   }
-  .panel-header span {
-    font-size: 10px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+  .panel-header-sub {
+    font-size: 10px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1px;
   }
 
   /* ─── Request Feed ─── */
   #request-feed {
     flex: 1;
     overflow-y: auto;
-    padding: 12px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 7px;
   }
 
   .req-card {
@@ -252,76 +245,67 @@
     border: 1px solid var(--border);
     border-left: 3px solid var(--red);
     border-radius: 10px;
-    padding: 14px;
+    padding: 13px;
     cursor: pointer;
-    transition: all 0.18s;
+    transition: all 0.16s;
+    position: relative;
   }
-  .req-card:hover { background: var(--surface-hi); border-color: rgba(255,255,255,0.2); transform: translateX(2px); }
+  .req-card:hover { background: var(--surface-hi); border-left-color: var(--orange); transform: translateX(2px); }
+  .req-card.selected { border-color: var(--orange); background: rgba(254,87,51,0.05); border-left-color: var(--orange); }
   .req-card.dispatched {
     border-left-color: var(--green);
-    opacity: 0.55;
-    filter: grayscale(0.4);
-    cursor: default;
+    opacity: 0.5;
+    cursor: not-allowed;
     pointer-events: none;
   }
-  .req-card.active-selected { border-color: var(--orange); background: rgba(254,87,51,0.06); }
 
-  .req-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-  .req-name { font-family: 'Manrope',sans-serif; font-size: 14px; font-weight: 700; color: var(--text); }
-  .req-area { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+  .req-row { display: flex; justify-content: space-between; align-items: flex-start; }
+  .req-name  { font-family:'Manrope',sans-serif; font-size: 14px; font-weight: 700; }
+  .req-area  { font-size: 10px; color: var(--text-dim); margin-top: 3px; }
   .urgency-badge {
     font-size: 10px; font-weight: 800;
-    background: rgba(255,107,107,0.12);
+    background: rgba(255,107,107,0.10);
     color: var(--red);
-    border: 1px solid rgba(255,107,107,0.2);
-    border-radius: 6px;
+    border: 1px solid rgba(255,107,107,0.18);
+    border-radius: 5px;
     padding: 2px 7px;
-    white-space: nowrap;
+    flex-shrink: 0;
   }
   .req-msg {
-    font-size: 11px; color: var(--text-dim);
-    font-style: italic;
-    background: rgba(255,255,255,0.03);
-    border-radius: 6px;
-    padding: 6px 8px;
-    margin-bottom: 8px;
+    font-size: 11px; color: var(--text-dim); font-style: italic;
+    background: rgba(255,255,255,0.025);
+    border-radius: 6px; padding: 6px 8px;
+    margin: 7px 0;
     line-height: 1.5;
-    overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    overflow: hidden;
   }
-  .req-footer { display: flex; justify-content: space-between; align-items: center; }
+  .req-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
   .cat-badge {
     font-size: 10px; font-weight: 700;
     color: var(--orange);
-    background: rgba(254,87,51,0.08);
-    border: 1px solid rgba(254,87,51,0.15);
+    background: rgba(254,87,51,0.07);
+    border: 1px solid rgba(254,87,51,0.14);
     border-radius: 5px;
     padding: 2px 7px;
     text-transform: uppercase;
   }
-  .status-dot { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-dim); font-family: monospace; }
-  .dot-sm { width: 5px; height: 5px; border-radius: 50%; background: var(--red); }
-  .dot-sm.dispatched { background: var(--green); animation: none; }
+  .status-pill { display: flex; align-items: center; gap: 5px; font-size: 10px; font-family: monospace; color: var(--text-dim); }
+  .dot-sm { width: 5px; height: 5px; border-radius: 50%; background: var(--red); animation: blink 1.4s infinite; }
+  .dot-sm.done { background: var(--green); animation: none; }
 
-  .dispatched-info {
+  .dispatched-footer {
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 1px solid rgba(136,217,130,0.1);
-    display: flex; align-items: center; gap: 8px;
+    border-top: 1px solid rgba(136,217,130,0.08);
+    font-size: 11px;
+    color: var(--text-dim);
   }
-  .dispatcher-avatar {
-    width: 22px; height: 22px; border-radius: 50%;
-    background: rgba(136,217,130,0.15);
-    color: var(--green);
-    font-size: 10px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .dispatched-info p { font-size: 10px; color: var(--text-dim); }
-  .dispatched-info b { color: var(--green); }
+  .dispatched-footer b { color: var(--green); }
 
-  /* ─── Dispatch Panel States ─── */
+  /* ─── Dispatch Panel: Empty State ─── */
   #empty-state {
     flex: 1;
     display: flex;
@@ -330,114 +314,91 @@
     justify-content: center;
     text-align: center;
     padding: 40px;
-    gap: 16px;
-    opacity: 0.5;
+    gap: 14px;
+    opacity: 0.45;
   }
-  #empty-state .empty-icon {
-    width: 72px; height: 72px; border-radius: 50%;
+  #empty-state .e-icon {
+    width: 68px; height: 68px; border-radius: 50%;
     background: var(--surface);
     display: flex; align-items: center; justify-content: center;
-    font-size: 32px; color: var(--text-dim);
   }
-  #empty-state h3 { font-family: 'Manrope',sans-serif; font-size: 20px; font-weight: 800; }
-  #empty-state p { font-size: 13px; color: var(--text-dim); max-width: 240px; line-height: 1.6; }
+  #empty-state .e-icon .material-symbols-outlined { font-size: 30px; color: var(--text-dim); }
+  #empty-state h3 { font-family:'Manrope',sans-serif; font-size: 18px; font-weight: 800; }
+  #empty-state p { font-size: 12px; color: var(--text-dim); max-width: 220px; line-height: 1.7; }
 
-  /* ─── Detailed View ─── */
+  /* ─── Dispatch Panel: Detailed View ─── */
   #detailed-view {
     display: none;
     flex-direction: column;
     flex: 1;
     overflow-y: auto;
-    gap: 0;
   }
 
-  /* Requester Header */
-  .detail-hero {
-    padding: 20px;
+  /* Hero section */
+  .d-hero {
+    padding: 18px;
+    background: linear-gradient(135deg, rgba(254,87,51,0.06) 0%, transparent 55%);
     border-bottom: 1px solid var(--border);
-    background: linear-gradient(135deg, rgba(254,87,51,0.05) 0%, transparent 60%);
     flex-shrink: 0;
   }
-  .detail-hero-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 10px;
-  }
+  .d-hero-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
   #detail-name {
-    font-family: 'Manrope',sans-serif;
-    font-size: 22px;
-    font-weight: 900;
-    color: var(--text);
-    margin-bottom: 4px;
+    font-family:'Manrope',sans-serif;
+    font-size: 20px; font-weight: 900;
+    color: var(--text); margin-bottom: 4px;
+  }
+  #detail-category-badge {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    background: rgba(254,87,51,0.10); color: var(--orange);
+    border: 1px solid rgba(254,87,51,0.20); border-radius: 5px;
+    padding: 2px 8px; display: inline-block; margin-bottom: 6px;
   }
   #detail-coords {
-    font-family: monospace;
-    font-size: 11px;
+    font-family: monospace; font-size: 11px;
     color: var(--orange);
-    background: rgba(254,87,51,0.08);
-    border: 1px solid rgba(254,87,51,0.15);
-    border-radius: 6px;
-    padding: 3px 8px;
-    display: inline-block;
+    background: rgba(254,87,51,0.07);
+    border: 1px solid rgba(254,87,51,0.14);
+    border-radius: 5px; padding: 2px 7px; display: inline-block;
   }
-  #detail-status-badge {
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    background: rgba(255,107,107,0.12);
-    color: var(--red);
-    border: 1px solid rgba(255,107,107,0.25);
-    border-radius: 20px;
-    padding: 4px 12px;
+  .d-urg-badge {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    background: rgba(255,107,107,0.10); color: var(--red);
+    border: 1px solid rgba(255,107,107,0.20);
+    border-radius: 20px; padding: 4px 11px;
   }
   #detail-message {
-    font-size: 13px;
-    color: var(--text-dim);
-    font-style: italic;
-    background: rgba(255,255,255,0.03);
-    border-radius: 8px;
-    padding: 10px 12px;
+    font-size: 12.5px; color: var(--text-dim); font-style: italic;
+    background: rgba(255,255,255,0.025);
+    border-radius: 7px; padding: 10px 12px;
     line-height: 1.6;
   }
 
   /* Map */
-  #detail-map {
-    height: 180px;
-    width: 100%;
-    border-radius: 0;
-    flex-shrink: 0;
-  }
+  #detail-map { height: 185px; flex-shrink: 0; }
 
-  /* Asset Selection */
-  .asset-section {
-    padding: 16px 20px;
+  /* Supply section */
+  .supply-section {
+    padding: 14px 18px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
-  .asset-section-title {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+  .supply-section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
     color: var(--text-dim);
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    display: flex; align-items: center; gap: 6px;
     margin-bottom: 10px;
   }
-  .asset-section-title .material-symbols-outlined { font-size: 14px; }
+  .supply-section-title .material-symbols-outlined { font-size: 14px; }
 
-  .asset-list {
+  #nearest-resources {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    max-height: 160px;
+    max-height: 200px;
     overflow-y: auto;
   }
 
-  .asset-item {
+  .supply-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -446,78 +407,79 @@
     border: 1.5px solid var(--border);
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.14s;
   }
-  .asset-item:hover { border-color: rgba(255,255,255,0.2); background: var(--surface-hi); }
-  .asset-item.selected-resource { border-color: var(--orange); background: var(--selected-res); }
-  .asset-item.selected-volunteer { border-color: var(--green); background: var(--selected-vol); }
-
-  .asset-name { font-size: 13px; font-weight: 600; color: var(--text); }
-  .asset-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
-  .asset-qty {
-    font-size: 11px; font-family: monospace; font-weight: 600;
+  .supply-item:hover { border-color: rgba(254,87,51,0.35); background: var(--surface-hi); }
+  .supply-item.selected { border-color: var(--orange); background: var(--selected-res); }
+  .supply-left { display: flex; flex-direction: column; gap: 2px; }
+  .supply-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .supply-sub  { font-size: 10px; color: var(--text-dim); }
+  .supply-qty {
+    font-size: 11px; font-weight: 700; font-family: monospace;
     color: var(--orange);
-    background: rgba(254,87,51,0.08);
+    background: rgba(254,87,51,0.07);
     padding: 3px 8px; border-radius: 5px;
-  }
-  .vol-avatar {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: rgba(136,217,130,0.12);
-    color: var(--green);
-    font-size: 12px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
-    margin-right: 10px;
   }
-  .asset-empty {
-    padding: 12px;
-    font-size: 12px;
-    color: var(--text-dim);
+  .supply-empty {
+    text-align: center; font-size: 12px; color: var(--text-dim);
     font-style: italic;
-    text-align: center;
-    background: rgba(255,107,107,0.04);
+    padding: 14px;
+    border: 1px dashed rgba(255,107,107,0.25);
+    background: rgba(255,107,107,0.03);
     border-radius: 8px;
-    border: 1px dashed rgba(255,107,107,0.2);
   }
 
-  /* Dispatch Button Section */
-  #dispatch-actions {
-    padding: 16px 20px;
+  /* Dispatch action area */
+  #dispatch-action-area {
+    padding: 16px 18px;
     flex-shrink: 0;
     display: none;
+    flex-direction: column;
+    gap: 10px;
   }
+
+  /* Dispatcher identity strip */
+  #dispatcher-strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(136,217,130,0.06);
+    border: 1px solid rgba(136,217,130,0.15);
+    border-radius: 9px;
+    padding: 10px 14px;
+  }
+  .d-strip-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(136,217,130,0.15);
+    color: var(--green); font-size: 13px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .d-strip-info { flex: 1; }
+  .d-strip-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; }
+  .d-strip-name  { font-size: 13px; font-weight: 700; color: var(--green); }
+
+  /* Dispatch button */
   #dispatch-btn {
-    width: 100%;
-    height: 52px;
+    width: 100%; height: 50px;
     background: linear-gradient(135deg, var(--orange), var(--orange-dim));
-    border: none;
-    border-radius: 12px;
+    border: none; border-radius: 11px;
     color: white;
     font-family: 'Manrope', sans-serif;
-    font-size: 15px;
-    font-weight: 900;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    font-size: 14px; font-weight: 900;
+    letter-spacing: 0.5px; text-transform: uppercase;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
     transition: all 0.2s;
-    box-shadow: 0 4px 20px rgba(254,87,51,0.25);
+    box-shadow: 0 4px 18px rgba(254,87,51,0.22);
   }
-  #dispatch-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(254,87,51,0.35); }
+  #dispatch-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(254,87,51,0.35); }
   #dispatch-btn:active { transform: scale(0.98); }
-  #dispatch-btn .material-symbols-outlined { font-size: 20px; }
+  #dispatch-btn .material-symbols-outlined { font-size: 19px; }
   .dispatch-note {
-    text-align: center;
-    font-size: 10px;
-    color: var(--text-dim);
-    margin-top: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
+    text-align: center; font-size: 10px; color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center; gap: 5px;
   }
   .dispatch-note .material-symbols-outlined { font-size: 12px; color: var(--green); }
 
@@ -525,179 +487,170 @@
   #toast {
     display: none;
     position: fixed;
-    bottom: 24px;
-    right: 24px;
-    padding: 12px 20px;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 600;
+    bottom: 22px; right: 22px;
+    padding: 11px 18px;
+    border-radius: 9px;
+    font-size: 13px; font-weight: 600;
     z-index: 9999;
-    max-width: 320px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    max-width: 340px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.06);
   }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════ SIDEBAR -->
+<!-- ══════════════════════════════════════════ SIDEBAR -->
 <nav id="sidebar">
   <div class="sidebar-brand">
-    <h1>Geo-Aid Central</h1>
-    <p>Regional Command</p>
+    <div class="sidebar-brand-name">Geo-Aid Central</div>
+    <div class="sidebar-brand-sub">Regional Command</div>
   </div>
 
-  <a class="nav-link active" href="index.html">
-    <span class="material-symbols-outlined">dashboard</span>
-    Dashboard
-  </a>
-  <a class="nav-link" href="map-view.html">
-    <span class="material-symbols-outlined">map</span>
-    Map View
-  </a>
-  <a class="nav-link" href="resource-log.html">
-    <span class="material-symbols-outlined">inventory_2</span>
-    Resource Log
-  </a>
-  <a class="nav-link" href="volunteer-fleet.html">
-    <span class="material-symbols-outlined">group</span>
-    Volunteer Fleet
-  </a>
+  <div class="sidebar-nav">
+    <a class="nav-link active" href="index.html">
+      <span class="material-symbols-outlined">dashboard</span> Dashboard
+    </a>
+    <a class="nav-link" href="map-view.html">
+      <span class="material-symbols-outlined">map</span> Map View
+    </a>
+    <a class="nav-link" href="resource-log.html">
+      <span class="material-symbols-outlined">inventory_2</span> Resource Log
+    </a>
+    <a class="nav-link" href="volunteer-fleet.html">
+      <span class="material-symbols-outlined">group</span> Volunteer Fleet
+    </a>
+  </div>
 
   <div class="sidebar-footer">
     <a class="nav-link" href="support.html">
-      <span class="material-symbols-outlined">help</span>
-      Support
+      <span class="material-symbols-outlined">help</span> Support
     </a>
     <a class="nav-link" href="#" onclick="event.preventDefault(); window.logout && window.logout();">
-      <span class="material-symbols-outlined">logout</span>
-      Logout
+      <span class="material-symbols-outlined">logout</span> Logout
     </a>
   </div>
 </nav>
 
-<!-- ═══════════════════════════════════════════════════════ MAIN -->
+<!-- ══════════════════════════════════════════ MAIN -->
 <div id="main">
 
   <!-- ─── HEADER ─── -->
   <header id="header">
-    <div class="header-brand">
+    <div class="header-left">
       <div class="header-logo">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="var(--orange)" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
       </div>
-      <div>
-        <div class="header-brand-name">GEO-AID <span>CENTRAL</span></div>
+      <div class="header-title">GEO-AID <span>CENTRAL</span></div>
+      <div class="header-divider"></div>
+      <div class="header-stats">
+        <div class="stat-item">
+          <span class="stat-dot red"></span>
+          <span style="color:var(--red);">Active SOS: <strong id="nav-active-sos">…</strong></span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-dot green"></span>
+          <span style="color:var(--green);">Volunteers: <strong id="nav-active-volunteers">…</strong></span>
+        </div>
       </div>
     </div>
 
-    <div class="header-divider"></div>
-
-    <div class="header-stats">
-      <div class="stat-pill">
-        <span class="stat-dot dot-red"></span>
-        <span style="color:#ff6b6b;">Active SOS: <strong id="nav-active-sos">...</strong></span>
+    <div class="header-right">
+      <!-- Logged-in volunteer badge -->
+      <div id="dispatcher-badge">
+        <div class="dispatcher-avatar-sm" id="db-avatar">?</div>
+        <span id="db-name">Loading…</span>
       </div>
-      <div class="stat-pill">
-        <span class="stat-dot dot-green"></span>
-        <span style="color:#88d982;">Available Volunteers: <strong id="nav-active-volunteers">...</strong></span>
-      </div>
-    </div>
 
-    <div class="header-actions">
       <button class="icon-btn" id="theme-toggle-btn" title="Toggle Theme">
         <span class="material-symbols-outlined" id="theme-icon">light_mode</span>
       </button>
-      <button class="icon-btn" onclick="exportRegistry()" title="Export Registry PDF">
+      <button class="icon-btn" onclick="exportRegistry()" title="Export PDF">
         <span class="material-symbols-outlined">description</span>
-      </button>
-      <button class="icon-btn" title="Profile">
-        <span class="material-symbols-outlined">account_circle</span>
       </button>
     </div>
   </header>
 
-  <!-- ─── DASHBOARD GRID ─── -->
+  <!-- ─── TWO-PANEL GRID ─── -->
   <div id="dashboard-grid">
 
-    <!-- ══ LEFT PANEL: PENDING REQUESTS ══ -->
+    <!-- ══ LEFT: PENDING REQUESTS ══ -->
     <div class="panel" id="panel-requests">
       <div class="panel-header">
         <h2>Pending Requests</h2>
-        <span>Live Updates</span>
+        <span class="panel-header-sub">Live Feed</span>
       </div>
       <div id="request-feed">
-        <div style="color:var(--text-dim);font-style:italic;text-align:center;padding:40px;font-size:13px;">
+        <div style="color:var(--text-dim);font-style:italic;text-align:center;padding:40px 20px;font-size:12px;">
           Loading SOS reports…
         </div>
       </div>
     </div>
 
-    <!-- ══ RIGHT PANEL: DISPATCH OPTION ══ -->
+    <!-- ══ RIGHT: DISPATCH OPTION ══ -->
     <div class="panel" id="panel-dispatch">
       <div class="panel-header">
         <h2>Dispatch Option</h2>
-        <span id="dispatch-panel-status">Awaiting Selection</span>
+        <span class="panel-header-sub" id="dispatch-panel-sub">Select a request</span>
       </div>
 
       <!-- Empty state -->
       <div id="empty-state">
-        <div class="empty-icon">
-          <span class="material-symbols-outlined">touch_app</span>
-        </div>
-        <h3>Command Center Ready</h3>
-        <p>Click any incoming SOS report on the left to begin the dispatch protocol.</p>
+        <div class="e-icon"><span class="material-symbols-outlined">touch_app</span></div>
+        <h3>Dispatch Center</h3>
+        <p>Click any pending SOS request on the left to begin the dispatch protocol.</p>
       </div>
 
-      <!-- Active Dispatch View (hidden until a card is clicked) -->
+      <!-- Active dispatch detail (shown when a request is selected) -->
       <div id="detailed-view">
 
-        <!-- Requester Hero -->
-        <div class="detail-hero">
-          <div class="detail-hero-top">
+        <!-- ─ Requester Info ─ -->
+        <div class="d-hero">
+          <div class="d-hero-row">
             <div>
               <div id="detail-name">—</div>
-              <code id="detail-coords">0.0000° N, 0.0000° E</code>
+              <span id="detail-category-badge">—</span>
+              <br>
+              <code id="detail-coords">—</code>
             </div>
-            <span id="detail-status-badge">Pending</span>
+            <span class="d-urg-badge" id="detail-urgency">Urgency: —</span>
           </div>
-          <div id="detail-message">"No message provided."</div>
+          <div id="detail-message" style="margin-top:10px;">"—"</div>
         </div>
 
-        <!-- Live Map -->
+        <!-- ─ Live Map ─ -->
         <div id="detail-map"></div>
 
-        <!-- Resource Selection -->
-        <div class="asset-section">
-          <div class="asset-section-title">
+        <!-- ─ Available Supplies ─ -->
+        <div class="supply-section">
+          <div class="supply-section-title">
             <span class="material-symbols-outlined">inventory_2</span>
-            Available Supplies (matched by category)
+            Available Supplies — Select one to dispatch
           </div>
-          <div id="nearest-resources" class="asset-list">
-            <div class="asset-empty">Select a request to see nearby inventory</div>
-          </div>
+          <div id="nearest-resources"></div>
         </div>
 
-        <!-- Volunteer Selection -->
-        <div class="asset-section">
-          <div class="asset-section-title">
-            <span class="material-symbols-outlined">groups</span>
-            Available Field Volunteers
+        <!-- ─ Dispatch Action ─ -->
+        <div id="dispatch-action-area">
+          <!-- Dispatcher strip — shows who is dispatching -->
+          <div id="dispatcher-strip">
+            <div class="d-strip-avatar" id="strip-avatar">?</div>
+            <div class="d-strip-info">
+              <div class="d-strip-label">Dispatching As</div>
+              <div class="d-strip-name" id="strip-name">Loading…</div>
+            </div>
+            <span class="material-symbols-outlined" style="font-size:16px;color:var(--green);">verified</span>
           </div>
-          <div id="nearest-volunteers" class="asset-list">
-            <div class="asset-empty">Select a request to see active volunteers</div>
-          </div>
-        </div>
 
-        <!-- Dispatch Button -->
-        <div id="dispatch-actions">
           <button id="dispatch-btn" onclick="confirmDispatch()">
             <span class="material-symbols-outlined">send</span>
-            Confirm Dispatch
+            Dispatch Now
           </button>
           <div class="dispatch-note">
-            <span class="material-symbols-outlined">verified</span>
-            Action will be permanently logged in the database
+            <span class="material-symbols-outlined">lock</span>
+            This action is permanent and will be saved to the database
           </div>
         </div>
 
@@ -707,34 +660,59 @@
   </div><!-- /dashboard-grid -->
 </div><!-- /main -->
 
-<!-- Toast -->
 <div id="toast"></div>
 
-<!-- ═══════════════════════════════════════════════════════ SCRIPTS -->
-<script src="./mobile-menu.js"></script>
+<!-- ══════════════════════════════════════════ SCRIPTS -->
 <script>
 // ─── Globals ───
-let map = null;
-let mapMarker = null;
-let selectedRequest = null;
+let map = null, mapMarker = null;
+let selectedRequest  = null;
 let selectedResourceId = null;
-let selectedVolunteerId = null;
+let currentVolunteer = null;   // { VolunteerID, Name, Role, … }
 
 // ─── Toast ───
 function showToast(msg, isError = false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.style.background = isError ? '#c0392b' : '#1e7d34';
-  t.style.color = 'white';
+  t.style.background = isError ? '#7f1d1d' : '#14532d';
+  t.style.color = isError ? '#fca5a5' : '#86efac';
   t.style.display = 'block';
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => { t.style.display = 'none'; }, 3500);
+  t._timer = setTimeout(() => { t.style.display = 'none'; }, 3800);
 }
+window.showToast = showToast;
+
+// ─── Fetch current volunteer profile after auth is ready ───
+window.addEventListener('authReady', async (e) => {
+  const { uid } = e.detail;
+  try {
+    const res = await fetch(`/api/me?uid=${uid}`);
+    if (!res.ok) {
+      console.warn('Volunteer profile not found for this UID. Dispatch will be disabled.');
+      return;
+    }
+    currentVolunteer = await res.json();
+
+    // Show badge in header
+    const badge   = document.getElementById('dispatcher-badge');
+    const dbName  = document.getElementById('db-name');
+    const dbAvatar= document.getElementById('db-avatar');
+    badge.style.display   = 'flex';
+    dbName.textContent    = currentVolunteer.Name;
+    dbAvatar.textContent  = currentVolunteer.Name.charAt(0).toUpperCase();
+
+    // Fill strip
+    document.getElementById('strip-name').textContent   = currentVolunteer.Name;
+    document.getElementById('strip-avatar').textContent = currentVolunteer.Name.charAt(0).toUpperCase();
+  } catch (err) {
+    console.error('Could not load volunteer profile:', err);
+  }
+});
 
 // ─── Map ───
 function initMap() {
   if (map) return;
-  map = L.map('detail-map', { zoomControl: true, attributionControl: false })
+  map = L.map('detail-map', { zoomControl: false, attributionControl: false })
     .setView([23.8103, 90.4125], 13);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 }
@@ -742,99 +720,90 @@ function initMap() {
 // ─── Load Requests ───
 async function loadRequests() {
   try {
-    const res = await fetch('/api/requests');
-    const requests = await res.json();
+    const data = await fetch('/api/requests').then(r => r.json());
     const feed = document.getElementById('request-feed');
     feed.innerHTML = '';
 
-    // Sort: Pending first (by urgency), then Dispatched
-    const pending = requests.filter(r => r.Status !== 'Dispatched').sort((a,b) => b.UrgencyScore - a.UrgencyScore);
-    const dispatched = requests.filter(r => r.Status === 'Dispatched');
-    const sorted = [...pending, ...dispatched];
+    const pending    = data.filter(r => r.Status !== 'Dispatched').sort((a,b)=>b.UrgencyScore-a.UrgencyScore);
+    const dispatched = data.filter(r => r.Status === 'Dispatched');
 
-    if (sorted.length === 0) {
-      feed.innerHTML = '<div style="color:var(--text-dim);font-style:italic;text-align:center;padding:40px;font-size:13px;">No active SOS reports.</div>';
+    if (!data.length) {
+      feed.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:40px;font-size:12px;font-style:italic;">No SOS requests yet.</div>';
       return;
     }
 
-    sorted.forEach(req => {
-      const isDispatched = req.Status === 'Dispatched';
+    [...pending, ...dispatched].forEach(req => {
+      const isD = req.Status === 'Dispatched';
       const card = document.createElement('div');
-      card.className = 'req-card' + (isDispatched ? ' dispatched' : '');
+      card.className = 'req-card' + (isD ? ' dispatched' : '');
       card.dataset.id = req.RequestID;
 
       card.innerHTML = `
-        <div class="req-header">
+        <div class="req-row">
           <div>
             <div class="req-name">${req.RequestorName}</div>
-            <div class="req-area">📍 ${req.AreaName || 'Unknown Location'}</div>
+            <div class="req-area">📍 ${req.AreaName || '—'}</div>
           </div>
           <span class="urgency-badge">Urgency: ${req.UrgencyScore}</span>
         </div>
-
-        ${!isDispatched ? `
-        <div class="req-msg">"${req.ShortMessage || 'No message provided'}"</div>
-        ` : ''}
-
+        ${!isD ? `<div class="req-msg">"${req.ShortMessage || 'No additional message.'}"</div>` : ''}
         <div class="req-footer">
           <span class="cat-badge">${req.CategoryName}</span>
-          <div class="status-dot">
-            <span class="dot-sm ${isDispatched ? 'dispatched' : ''}"></span>
-            ${isDispatched ? 'DISPATCHED' : 'PENDING'}
+          <div class="status-pill">
+            <span class="dot-sm ${isD ? 'done' : ''}"></span>
+            ${isD ? 'DISPATCHED' : 'PENDING'}
           </div>
         </div>
-
-        ${isDispatched && req.DispatcherName ? `
-        <div class="dispatched-info">
-          <div class="dispatcher-avatar">${req.DispatcherName.charAt(0)}</div>
-          <p><b>${req.DispatcherName}</b> dispatched <b>${req.DispatchedItemName || 'supplies'}</b></p>
-        </div>
-        ` : ''}
+        ${isD && req.DispatcherName ? `
+          <div class="dispatched-footer">
+            <b>${req.DispatcherName}</b> dispatched <b>${req.DispatchedItemName || 'supplies'}</b>
+          </div>` : ''}
       `;
 
-      if (!isDispatched) {
-        card.onclick = () => selectRequest(req, card);
-      }
-
+      if (!isD) card.onclick = () => selectRequest(req, card);
       feed.appendChild(card);
     });
 
-    // Update nav stats
-    const pendingCount = pending.length;
-    document.getElementById('nav-active-sos').textContent = pendingCount;
+    document.getElementById('nav-active-sos').textContent = pending.length;
 
   } catch (err) {
-    console.error('Failed to load requests:', err);
     document.getElementById('request-feed').innerHTML =
-      '<div style="color:#ff6b6b;text-align:center;padding:30px;font-size:13px;">Failed to load requests. Check server.</div>';
+      '<div style="color:var(--red);text-align:center;padding:30px;font-size:12px;">Failed to load requests.</div>';
+    console.error(err);
   }
 }
 
-// ─── Select Request ───
+// ─── Select a Request ───
 async function selectRequest(req, cardEl) {
-  selectedRequest = req;
+  // Prevent dispatch if volunteer profile isn't loaded
+  if (!currentVolunteer) {
+    showToast('Your volunteer profile is not loaded yet. Please wait.', true);
+    return;
+  }
+
+  selectedRequest    = req;
   selectedResourceId = null;
-  selectedVolunteerId = null;
 
-  // Highlight selected card
-  document.querySelectorAll('.req-card').forEach(c => c.classList.remove('active-selected'));
-  if (cardEl) cardEl.classList.add('active-selected');
+  // Highlight card
+  document.querySelectorAll('.req-card').forEach(c => c.classList.remove('selected'));
+  cardEl?.classList.add('selected');
 
-  // Update dispatch panel header
-  document.getElementById('dispatch-panel-status').textContent = req.RequestorName;
+  // Update panel header
+  document.getElementById('dispatch-panel-sub').textContent = req.RequestorName;
 
-  // Show detailed view
-  document.getElementById('empty-state').style.display = 'none';
+  // Switch views
+  document.getElementById('empty-state').style.display   = 'none';
   document.getElementById('detailed-view').style.display = 'flex';
-  document.getElementById('dispatch-actions').style.display = 'none';
+  document.getElementById('dispatch-action-area').style.display = 'none';
 
   // Fill hero
-  document.getElementById('detail-name').textContent = req.RequestorName;
-  document.getElementById('detail-coords').textContent =
+  document.getElementById('detail-name').textContent          = req.RequestorName;
+  document.getElementById('detail-category-badge').textContent= req.CategoryName;
+  document.getElementById('detail-urgency').textContent       = `Urgency: ${req.UrgencyScore}`;
+  document.getElementById('detail-coords').textContent        =
     `${parseFloat(req.Latitude).toFixed(4)}° N, ${parseFloat(req.Longitude).toFixed(4)}° E`;
   document.getElementById('detail-message').textContent =
     `"${req.ShortMessage || 'Needs urgent assistance with ' + req.CategoryName + '.'}"`;
-  document.getElementById('detail-status-badge').textContent = req.Status;
 
   // Map
   initMap();
@@ -844,193 +813,116 @@ async function selectRequest(req, cardEl) {
   else mapMarker = L.marker(pos, {
     icon: L.divIcon({
       className: '',
-      html: `<div style="width:14px;height:14px;background:#ff6b6b;border:2px solid white;border-radius:50%;box-shadow:0 0 0 4px rgba(255,107,107,0.3);"></div>`,
-      iconSize: [14, 14], iconAnchor: [7, 7]
+      html: `<div style="width:14px;height:14px;background:var(--red);border:2.5px solid white;border-radius:50%;box-shadow:0 0 0 5px rgba(255,107,107,0.25);"></div>`,
+      iconSize: [14,14], iconAnchor: [7,7]
     })
   }).addTo(map);
-  setTimeout(() => map.invalidateSize(), 50);
+  setTimeout(() => map.invalidateSize(), 60);
 
-  // Load nearest assets
-  await loadNearestAssets(req);
+  // Load supplies
+  await loadNearestResources(req);
 }
 
-// ─── Load Nearest Assets ───
-async function loadNearestAssets(req) {
-  // Resources
-  const resContainer = document.getElementById('nearest-resources');
-  resContainer.innerHTML = '<div class="asset-empty">Loading nearby supplies…</div>';
+// ─── Load Nearest Resources ───
+async function loadNearestResources(req) {
+  const container = document.getElementById('nearest-resources');
+  container.innerHTML = '<div class="supply-empty">Loading nearby supplies…</div>';
 
   try {
-    const r = await fetch(`/api/nearest-resources?lat=${req.Latitude}&lon=${req.Longitude}&categoryId=${req.CategoryID}`);
-    const resources = await r.json();
-    resContainer.innerHTML = '';
+    const data = await fetch(
+      `/api/nearest-resources?lat=${req.Latitude}&lon=${req.Longitude}&categoryId=${req.CategoryID}`
+    ).then(r => r.json());
 
-    if (!resources.length) {
-      resContainer.innerHTML = `<div class="asset-empty" style="color:#ff6b6b;border-color:rgba(255,107,107,0.3);">No ${req.CategoryName} available in nearby inventory!</div>`;
-    } else {
-      resources.forEach(res => {
-        const el = document.createElement('div');
-        el.className = 'asset-item';
-        el.dataset.id = res.ResourceID;
-        el.innerHTML = `
-          <div>
-            <div class="asset-name">${res.CategoryName}</div>
-            <div class="asset-sub">${res.AreaName} &bull; ${parseFloat(res.distance).toFixed(1)} km away</div>
-          </div>
-          <span class="asset-qty">Qty: ${res.Quantity}</span>
-        `;
-        el.onclick = () => selectAsset('resource', el, res.ResourceID);
-        resContainer.appendChild(el);
-      });
+    container.innerHTML = '';
+
+    if (!data.length) {
+      container.innerHTML = `<div class="supply-empty" style="color:var(--red);border-color:rgba(255,107,107,0.3);">
+        No ${req.CategoryName} available in nearby inventory.
+      </div>`;
+      return;
     }
+
+    data.forEach(res => {
+      const el = document.createElement('div');
+      el.className = 'supply-item';
+      el.dataset.id = res.ResourceID;
+      el.innerHTML = `
+        <div class="supply-left">
+          <div class="supply-name">${res.CategoryName}</div>
+          <div class="supply-sub">${res.AreaName} &bull; ${parseFloat(res.distance).toFixed(1)} km away</div>
+        </div>
+        <span class="supply-qty">Qty: ${res.Quantity}</span>
+      `;
+      el.onclick = () => selectSupply(el, res.ResourceID);
+      container.appendChild(el);
+    });
+
   } catch (e) {
-    resContainer.innerHTML = '<div class="asset-empty">Failed to load resources.</div>';
-  }
-
-  // Volunteers
-  const volContainer = document.getElementById('nearest-volunteers');
-  volContainer.innerHTML = '<div class="asset-empty">Loading available volunteers…</div>';
-
-  try {
-    const v = await fetch(`/api/nearest-volunteers?lat=${req.Latitude}&lon=${req.Longitude}`);
-    const volunteers = await v.json();
-    volContainer.innerHTML = '';
-
-    if (!volunteers.length) {
-      volContainer.innerHTML = '<div class="asset-empty">No available volunteers in the system.</div>';
-    } else {
-      volunteers.forEach(vol => {
-        const el = document.createElement('div');
-        el.className = 'asset-item';
-        el.dataset.id = vol.VolunteerID;
-        el.innerHTML = `
-          <div class="vol-avatar">${vol.Name.charAt(0)}</div>
-          <div>
-            <div class="asset-name">${vol.Name}</div>
-            <div class="asset-sub">${vol.Role} &bull; ${vol.Location || 'Field'}</div>
-          </div>
-        `;
-        el.onclick = () => selectAsset('volunteer', el, vol.VolunteerID);
-        volContainer.appendChild(el);
-      });
-    }
-  } catch (e) {
-    volContainer.innerHTML = '<div class="asset-empty">Failed to load volunteers.</div>';
+    container.innerHTML = '<div class="supply-empty">Error loading supplies. Check connection.</div>';
+    console.error(e);
   }
 }
 
-// ─── Asset Selection ───
-function selectAsset(type, el, id) {
-  if (type === 'resource') {
-    selectedResourceId = id;
-    document.querySelectorAll('#nearest-resources .asset-item').forEach(i => i.classList.remove('selected-resource'));
-    el.classList.add('selected-resource');
-  } else {
-    selectedVolunteerId = id;
-    document.querySelectorAll('#nearest-volunteers .asset-item').forEach(i => i.classList.remove('selected-volunteer'));
-    el.classList.add('selected-volunteer');
-  }
-
-  // Show dispatch button if both selected
-  if (selectedResourceId && selectedVolunteerId) {
-    document.getElementById('dispatch-actions').style.display = 'block';
-  }
+// ─── Select a Supply ───
+function selectSupply(el, resourceId) {
+  selectedResourceId = resourceId;
+  document.querySelectorAll('.supply-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  // Show dispatch area
+  document.getElementById('dispatch-action-area').style.display = 'flex';
 }
 
-// ─── Confirm Dispatch ───
+// ─── Confirm & Execute Dispatch ───
 async function confirmDispatch() {
-  if (!selectedRequest || !selectedResourceId || !selectedVolunteerId) return;
+  if (!selectedRequest || !selectedResourceId || !currentVolunteer) return;
 
-  const reqName = selectedRequest.RequestorName;
+  const reqName  = selectedRequest.RequestorName;
+  const supplyEl = document.querySelector('.supply-item.selected');
+  const supplyName = supplyEl ? supplyEl.querySelector('.supply-name').textContent : 'selected supplies';
 
-  // Get selected resource name for confirmation
-  const resEl = document.querySelector('#nearest-resources .asset-item.selected-resource');
-  const volEl = document.querySelector('#nearest-volunteers .asset-item.selected-volunteer');
-  const resName = resEl ? resEl.querySelector('.asset-name').textContent : 'selected supplies';
-  const volName = volEl ? volEl.querySelector('.asset-name').textContent : 'selected volunteer';
-
-  const confirmed = confirm(
-    `⚠️ DISPATCH CONFIRMATION\n\n` +
-    `Requester: ${reqName}\n` +
-    `Resource: ${resName}\n` +
-    `Volunteer: ${volName}\n\n` +
+  const ok = confirm(
+    `DISPATCH CONFIRMATION\n\n` +
+    `  Requester : ${reqName}\n` +
+    `  Supply    : ${supplyName}\n` +
+    `  Dispatcher: ${currentVolunteer.Name}\n\n` +
     `This will:\n` +
-    `• Mark the request as Dispatched\n` +
-    `• Reduce the resource quantity by 1\n` +
-    `• Assign ${volName} to this mission\n\n` +
-    `Proceed?`
+    `  • Mark the request as "Dispatched"\n` +
+    `  • Reduce ${supplyName} stock by 1\n` +
+    `  • Record your name as the dispatcher\n\n` +
+    `Confirm dispatch?`
   );
-
-  if (!confirmed) return;
+  if (!ok) return;
 
   try {
-    const response = await fetch('/api/dispatch', {
+    const res = await fetch('/api/dispatch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        requestId: selectedRequest.RequestID,
-        resourceId: selectedResourceId,
-        volunteerId: selectedVolunteerId
+        requestId  : selectedRequest.RequestID,
+        resourceId : selectedResourceId,
+        volunteerId: currentVolunteer.VolunteerID
       })
     });
 
-    if (response.ok) {
-      showToast(`✅ Dispatched! ${volName} is delivering ${resName} to ${reqName}.`);
-
-      // Reset dispatch panel
-      document.getElementById('detailed-view').style.display = 'none';
-      document.getElementById('empty-state').style.display = 'flex';
-      document.getElementById('dispatch-actions').style.display = 'none';
-      document.getElementById('dispatch-panel-status').textContent = 'Awaiting Selection';
-
-      // Remove active highlight from card
-      document.querySelectorAll('.req-card').forEach(c => c.classList.remove('active-selected'));
-
-      selectedRequest = null;
-      selectedResourceId = null;
-      selectedVolunteerId = null;
-
-      // Reload feed and stats
+    if (res.ok) {
+      showToast(`✅ Dispatched! ${supplyName} is on the way to ${reqName}.`);
+      // Reset right panel
+      document.getElementById('detailed-view').style.display        = 'none';
+      document.getElementById('empty-state').style.display          = 'flex';
+      document.getElementById('dispatch-action-area').style.display = 'none';
+      document.getElementById('dispatch-panel-sub').textContent     = 'Select a request';
+      document.querySelectorAll('.req-card').forEach(c => c.classList.remove('selected'));
+      selectedRequest = selectedResourceId = null;
+      // Refresh
       await loadRequests();
       await fetchGlobalStats();
-
     } else {
-      const err = await response.json();
+      const err = await res.json();
       showToast(`❌ Dispatch failed: ${err.error || 'Unknown error'}`, true);
     }
   } catch (e) {
-    console.error('Dispatch Error:', e);
+    console.error(e);
     showToast('❌ Network error during dispatch.', true);
-  }
-}
-
-// ─── Export Registry PDF ───
-async function exportRegistry() {
-  showToast('Generating Registry PDF…');
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  try {
-    const [vols, res, shelters] = await Promise.all([
-      fetch('/api/volunteers').then(r => r.json()),
-      fetch('/api/resources').then(r => r.json()),
-      fetch('/api/shelters').then(r => r.json())
-    ]);
-    doc.setFontSize(22);
-    doc.text('Geo-Aid Hub: Global Registry Report', 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
-    doc.setFontSize(16); doc.text('1. Volunteer Fleet', 14, 45);
-    doc.autoTable({ startY: 50, head:[['ID','Name','Role','Status','Location']], body: vols.map(v=>[v.VolunteerID,v.Name,v.Role,v.Status,v.Location]), theme:'grid', headStyles:{fillColor:[254,87,51]} });
-    let y = doc.lastAutoTable.finalY + 15;
-    doc.text('2. Resource Inventory', 14, y);
-    doc.autoTable({ startY: y+5, head:[['Item','Qty','Unit','Location','Status']], body: res.map(r=>[r.CategoryName,r.Quantity,r.UnitOfMeasure,r.CurrentLocation,r.Status]), theme:'grid', headStyles:{fillColor:[56,106,55]} });
-    y = doc.lastAutoTable.finalY + 15;
-    doc.text('3. Shelter Occupancy', 14, y);
-    doc.autoTable({ startY: y+5, head:[['Name','Capacity','Occupancy','Status','Area']], body: shelters.map(s=>[s.ShelterName,s.TotalCapacity,s.CurrentOccupancy,s.Status,s.AreaName]), theme:'grid', headStyles:{fillColor:[0,104,116]} });
-    doc.save(`GeoAid_Registry_${new Date().toISOString().split('T')[0]}.pdf`);
-    showToast('✅ PDF Export Complete!');
-  } catch (e) {
-    showToast('❌ Failed to export registry', true);
   }
 }
 
@@ -1038,17 +930,42 @@ async function exportRegistry() {
 async function fetchGlobalStats() {
   try {
     const data = await fetch('/api/stats').then(r => r.json());
-    document.getElementById('nav-active-sos').textContent = data.pendingSOS ?? '0';
+    document.getElementById('nav-active-sos').textContent        = data.pendingSOS ?? '0';
     document.getElementById('nav-active-volunteers').textContent = data.activeVolunteers ?? '0';
-  } catch (e) { console.error('Stats error:', e); }
+  } catch (e) { /* silent */ }
 }
 
-// ─── Theme Toggle ───
+// ─── Export PDF ───
+async function exportRegistry() {
+  showToast('Generating registry PDF…');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  try {
+    const [vols, res, shelters] = await Promise.all([
+      fetch('/api/volunteers').then(r=>r.json()),
+      fetch('/api/resources').then(r=>r.json()),
+      fetch('/api/shelters').then(r=>r.json())
+    ]);
+    doc.setFontSize(22); doc.text('Geo-Aid Hub: Global Registry Report', 14, 20);
+    doc.setFontSize(10); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
+    doc.setFontSize(16); doc.text('1. Volunteer Fleet', 14, 44);
+    doc.autoTable({ startY:49, head:[['ID','Name','Role','Status','Location']], body:vols.map(v=>[v.VolunteerID,v.Name,v.Role,v.Status,v.Location]), theme:'grid', headStyles:{fillColor:[254,87,51]} });
+    let y = doc.lastAutoTable.finalY+14;
+    doc.setFontSize(16); doc.text('2. Resource Inventory', 14, y);
+    doc.autoTable({ startY:y+5, head:[['Item','Qty','Unit','Location','Status']], body:res.map(r=>[r.CategoryName,r.Quantity,r.UnitOfMeasure,r.CurrentLocation,r.Status]), theme:'grid', headStyles:{fillColor:[56,106,55]} });
+    y = doc.lastAutoTable.finalY+14;
+    doc.setFontSize(16); doc.text('3. Shelter Occupancy', 14, y);
+    doc.autoTable({ startY:y+5, head:[['Name','Capacity','Occupancy','Status','Area']], body:shelters.map(s=>[s.ShelterName,s.TotalCapacity,s.CurrentOccupancy,s.Status,s.AreaName]), theme:'grid', headStyles:{fillColor:[0,104,116]} });
+    doc.save(`GeoAid_Registry_${new Date().toISOString().split('T')[0]}.pdf`);
+    showToast('✅ PDF exported!');
+  } catch(e) { showToast('❌ Export failed.', true); }
+}
+
+// ─── Theme toggle ───
 document.getElementById('theme-toggle-btn').addEventListener('click', () => {
-  const html = document.documentElement;
-  html.classList.toggle('dark');
-  const icon = document.getElementById('theme-icon');
-  icon.textContent = html.classList.contains('dark') ? 'light_mode' : 'dark_mode';
+  document.documentElement.classList.toggle('dark');
+  document.getElementById('theme-icon').textContent =
+    document.documentElement.classList.contains('dark') ? 'light_mode' : 'dark_mode';
 });
 
 // ─── Init ───

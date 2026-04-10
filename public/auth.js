@@ -104,6 +104,9 @@ export function logout() {
 // Listen for auth state changes – redirect unauthenticated users to login
 export function monitorAuth() {
   onAuthStateChanged(auth, (user) => {
+    // Always expose current user globally so other scripts can read UID
+    window.currentFirebaseUser = user || null;
+
     const isPublicPage = window.location.pathname.endsWith("welcome.html") || 
                          window.location.pathname.endsWith("login.html") || 
                          window.location.pathname.endsWith("signup.html") ||
@@ -117,6 +120,8 @@ export function monitorAuth() {
       if (isPublicPage) {
         window.location.href = "index.html";
       }
+      // Fire a custom event so non-module scripts know auth is ready
+      window.dispatchEvent(new CustomEvent("authReady", { detail: { uid: user.uid } }));
     }
   });
 }
