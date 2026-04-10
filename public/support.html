@@ -17,51 +17,27 @@
                     colors: {
                         "inverse-on-surface": "#2f3034",
                         "on-secondary": "#003909",
-                        "background": "#111316",
-                        "secondary": "#88d982",
-                        "on-secondary-fixed": "#002204",
-                        "outline": "#ad897e",
-                        "inverse-primary": "#b72301",
-                        "on-secondary-container": "#81d27c",
-                        "secondary-container": "#005b14",
-                        "surface-container-high": "#282a2d",
-                        "surface-container": "#1e2023",
+                        "background": "var(--background)",
+                        "secondary": "var(--secondary)",
+                        "outline": "var(--outline)",
+                        "surface-container-high": "var(--surface-container-high)",
+                        "surface-container": "var(--surface-container)",
                         "error-container": "#93000a",
-                        "on-primary": "#630e00",
-                        "tertiary-container": "#009fb3",
                         "on-error": "#690005",
-                        "tertiary-fixed-dim": "#55d7ed",
-                        "surface": "#111316",
+                        "surface": "var(--surface)",
                         "surface-bright": "#37393d",
                         "surface-variant": "#333538",
                         "inverse-surface": "#e2e2e6",
-                        "on-tertiary": "#00363e",
-                        "on-error-container": "#ffdad6",
-                        "on-surface-variant": "#e6beb2",
-                        "surface-container-low": "#1a1c1f",
-                        "on-primary-fixed": "#3d0600",
-                        "primary": "#ffb4a4",
-                        "outline-variant": "#5c4037",
-                        "secondary-fixed": "#a3f69c",
-                        "primary-fixed": "#ffdad3",
-                        "primary-fixed-dim": "#ffb4a4",
-                        "on-tertiary-fixed": "#001f24",
-                        "on-primary-fixed-variant": "#8c1800",
-                        "error": "#ffb4ab",
-                        "on-tertiary-fixed-variant": "#004e59",
-                        "surface-dim": "#111316",
-                        "on-tertiary-container": "#002f36",
-                        "on-background": "#e2e2e6",
-                        "surface-container-highest": "#333538",
-                        "surface-tint": "#ffb4a4",
-                        "surface-container-lowest": "#0c0e11",
-                        "on-surface": "#e2e2e6",
-                        "on-primary-container": "#570b00",
-                        "tertiary-fixed": "#9eefff",
-                        "on-secondary-fixed-variant": "#005312",
-                        "secondary-fixed-dim": "#88d982",
-                        "tertiary": "#55d7ed",
-                        "primary-container": "#fe5733"
+                        "on-surface-variant": "var(--on-surface-variant)",
+                        "surface-container-low": "var(--surface-container-low)",
+                        "primary": "var(--primary)",
+                        "error": "var(--error)",
+                        "surface-dim": "var(--surface-dim)",
+                        "on-background": "var(--on-surface)",
+                        "surface-container-highest": "var(--surface-container-highest)",
+                        "on-surface": "var(--on-surface)",
+                        "tertiary": "var(--tertiary)",
+                        "primary-container": "var(--primary-container)"
                     },
                     fontFamily: {
                         "headline": ["Manrope"],
@@ -74,21 +50,60 @@
         }
     </script>
     <style>
+        :root {
+            --background: #111316;
+            --surface: #111316;
+            --surface-container: #1e2023;
+            --surface-container-low: #1a1c1f;
+            --surface-container-high: #282a2d;
+            --surface-container-highest: #333538;
+            --on-surface: #e2e2e6;
+            --on-surface-variant: #e6beb2;
+            --primary: #ffb4a4;
+            --primary-container: #fe5733;
+            --on-primary-container: #570b00;
+            --secondary: #88d982;
+            --secondary-container: #005b14;
+            --tertiary: #55d7ed;
+            --error: #ffb4ab;
+            --outline: #ad897e;
+        }
+
+        :root:not(.dark) {
+            --background: #fdfdfd;
+            --surface: #f9f9f9;
+            --surface-container: #f0f0f0;
+            --surface-container-low: #f5f5f5;
+            --surface-container-high: #e8e8e8;
+            --surface-container-highest: #e0e0e0;
+            --on-surface: #1b1b1b;
+            --on-surface-variant: #44474e;
+            --primary: #fe5733;
+            --primary-container: #ffdad3;
+            --on-primary-container: #3d0600;
+            --secondary: #386a37;
+            --secondary-container: #b9f0b2;
+            --tertiary: #006874;
+            --error: #ba1a1a;
+            --outline: #74777f;
+        }
+
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             vertical-align: middle;
         }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #333538; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #5c4037; }
+        ::-webkit-scrollbar-thumb { background: var(--surface-container-highest); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
     </style>
+    <script src="./mobile-menu.js"></script>
     <script src="./theme.js"></script>
 </head>
 <body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen flex overflow-hidden">
     
     <!-- TopNavBar -->
-    <header class="fixed top-0 left-0 lg:left-64 right-0 z-50 bg-zinc-950/80 backdrop-blur-xl shadow-2xl shadow-black/50 font-['Manrope'] antialiased tracking-tight flex justify-between items-center px-4 lg:px-8 h-20">
+    <header class="fixed top-0 left-0 lg:left-64 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-outline/10 font-['Manrope'] antialiased tracking-tight flex justify-between items-center px-4 lg:px-8 h-20">
         <div class="flex items-center gap-4 lg:gap-8">
             <button id="mobile-menu-toggle" class="lg:hidden p-2 text-zinc-400 hover:bg-zinc-800 rounded-lg transition-colors">
                 <span class="material-symbols-outlined">menu</span>
@@ -102,23 +117,23 @@
         </div>
         <div class="flex items-center gap-4">
             <div class="flex items-center gap-2">
-                <button id="theme-toggle-btn" class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
+                <button id="theme-toggle-btn" class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all duration-300 active:scale-95 relative group">
                     <span id="theme-toggle-icon" class="material-symbols-outlined">light_mode</span>
-                    <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-xs text-zinc-300 px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-white/5 font-medium z-[60]">Toggle Theme</div>
+                    <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-surface-container-highest text-xs text-on-surface px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-outline/10 font-medium z-[60]">Toggle Theme</div>
                 </button>
-                <button class="p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-full transition-all duration-300 active:scale-95 relative group">
+                <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all duration-300 active:scale-95 relative group">
                     <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
-                    <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-zinc-800 text-xs text-zinc-300 px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-white/5 font-medium z-[60]">Will be implemented later</div>
+                    <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-surface-container-highest text-xs text-on-surface px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-outline/10 font-medium z-[60]">Will be implemented later</div>
                 </button>
             </div>
         </div>
     </header>
 
     <!-- SideNavBar -->
-    <aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-zinc-900 font-['Inter'] text-sm font-medium flex flex-col py-8 gap-4">
+    <aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-low font-['Inter'] text-sm font-medium flex flex-col py-8 gap-4 transition-transform duration-300 -translate-x-full lg:translate-x-0 border-r border-outline/10">
         <div class="px-6 mb-4">
-            <h1 class="text-lg font-black text-orange-500 tracking-tighter">Geo-Aid Central</h1>
-            <p class="text-xs text-zinc-500">Regional Command</p>
+            <h1 class="text-lg font-black text-primary tracking-tighter">Geo-Aid Central</h1>
+            <p class="text-xs text-on-surface-variant">Regional Command</p>
         </div>
         <nav class="flex-1 space-y-1">
             <a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:text-zinc-200 hover:bg-zinc-800 transition-colors group" href="index.html">
@@ -138,8 +153,8 @@
                 <span>Volunteer Fleet</span>
             </a>
         </nav>
-        <div class="px-4 mt-auto space-y-1 pt-6 border-t border-zinc-800/30">
-            <a class="flex items-center gap-3 bg-zinc-800/80 text-orange-400 rounded-lg px-4 py-3 ml-2 mr-2 group" href="support.html">
+        <div class="px-4 mt-auto space-y-1 pt-6 border-t border-outline/10">
+            <a class="flex items-center gap-3 bg-primary/10 text-primary rounded-lg px-4 py-3 ml-2 mr-2 group" href="support.html">
                 <span class="material-symbols-outlined" data-icon="help">help</span>
                 <span>Support</span>
             </a>
@@ -151,19 +166,19 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 ml-64 min-h-screen relative p-12 overflow-y-auto">
-        <div class="max-w-2xl mx-auto pt-16">
-            <div class="bg-surface-container rounded-3xl p-10 border border-zinc-800/50 shadow-2xl relative overflow-hidden group">
+    <main class="flex-1 lg:ml-64 min-h-screen relative p-4 lg:p-12 overflow-y-auto pt-24 lg:pt-32">
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-surface-container rounded-3xl p-6 lg:p-10 border border-outline/10 shadow-2xl relative overflow-hidden group">
                 <!-- Glossy gradient effect -->
                 <div class="absolute inset-0 bg-gradient-to-br from-primary-container/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
-                <h2 class="text-3xl font-headline font-black mb-2 tracking-tight text-white relative z-10">Project Support</h2>
+                <h2 class="text-3xl font-headline font-black mb-2 tracking-tight text-on-surface relative z-10">Project Support</h2>
                 <p class="text-on-surface-variant mb-8 text-lg relative z-10">Connect with the development team for help, bug reports, and contributions.</p>
                 
-                <div class="flex items-start gap-6 border-t border-zinc-800 pt-8 relative z-10">
-                    <img src="https://github.com/istiaqueahmed231.png" alt="Istiaque Ahmed" class="w-24 h-24 rounded-2xl shadow-lg border border-zinc-700 object-cover">
+                <div class="flex items-start gap-6 border-t border-outline/10 pt-8 relative z-10">
+                    <img src="https://github.com/istiaqueahmed231.png" alt="Istiaque Ahmed" class="w-24 h-24 rounded-2xl shadow-lg border border-outline/10 object-cover">
                     <div class="flex-1">
-                        <h3 class="text-xl font-bold text-white mb-1">Istiaque Ahmed</h3>
+                        <h3 class="text-xl font-bold text-on-surface mb-1">Istiaque Ahmed</h3>
                         <p class="text-primary font-medium mb-3">Lead Developer & Maintainer</p>
                         <p class="text-zinc-400 text-sm leading-relaxed mb-4">
                             Passionate about building scalable technology to aid during disasters. 

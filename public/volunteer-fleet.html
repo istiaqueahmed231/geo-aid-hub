@@ -16,27 +16,27 @@
                     colors: {
                         "inverse-on-surface": "#2f3034",
                         "on-secondary": "#003909",
-                        "background": "#111316",
-                        "secondary": "#88d982",
-                        "outline": "#ad897e",
-                        "surface-container-high": "#282a2d",
-                        "surface-container": "#1e2023",
+                        "background": "var(--background)",
+                        "secondary": "var(--secondary)",
+                        "outline": "var(--outline)",
+                        "surface-container-high": "var(--surface-container-high)",
+                        "surface-container": "var(--surface-container)",
                         "error-container": "#93000a",
                         "on-error": "#690005",
-                        "surface": "#111316",
+                        "surface": "var(--surface)",
                         "surface-bright": "#37393d",
                         "surface-variant": "#333538",
                         "inverse-surface": "#e2e2e6",
-                        "on-surface-variant": "#e6beb2",
-                        "surface-container-low": "#1a1c1f",
-                        "primary": "#ffb4a4",
-                        "error": "#ffb4ab",
-                        "surface-dim": "#111316",
-                        "on-background": "#e2e2e6",
-                        "surface-container-highest": "#333538",
-                        "on-surface": "#e2e2e6",
-                        "tertiary": "#55d7ed",
-                        "primary-container": "#fe5733"
+                        "on-surface-variant": "var(--on-surface-variant)",
+                        "surface-container-low": "var(--surface-container-low)",
+                        "primary": "var(--primary)",
+                        "error": "var(--error)",
+                        "surface-dim": "var(--surface-dim)",
+                        "on-background": "var(--on-surface)",
+                        "surface-container-highest": "var(--surface-container-highest)",
+                        "on-surface": "var(--on-surface)",
+                        "tertiary": "var(--tertiary)",
+                        "primary-container": "var(--primary-container)"
                     },
                     fontFamily: {
                         "headline": ["Manrope"],
@@ -47,7 +47,45 @@
             },
         }
     </script>
-    <style>
+        <style>
+        :root {
+            --background: #111316;
+            --surface: #111316;
+            --surface-container: #1e2023;
+            --surface-container-low: #1a1c1f;
+            --surface-container-high: #282a2d;
+            --surface-container-highest: #333538;
+            --on-surface: #e2e2e6;
+            --on-surface-variant: #e6beb2;
+            --primary: #ffb4a4;
+            --primary-container: #fe5733;
+            --on-primary-container: #570b00;
+            --secondary: #88d982;
+            --secondary-container: #005b14;
+            --tertiary: #55d7ed;
+            --error: #ffb4ab;
+            --outline: #ad897e;
+        }
+
+        :root:not(.dark) {
+            --background: #fdfdfd;
+            --surface: #f9f9f9;
+            --surface-container: #f0f0f0;
+            --surface-container-low: #f5f5f5;
+            --surface-container-high: #e8e8e8;
+            --surface-container-highest: #e0e0e0;
+            --on-surface: #1b1b1b;
+            --on-surface-variant: #44474e;
+            --primary: #fe5733;
+            --primary-container: #ffdad3;
+            --on-primary-container: #3d0600;
+            --secondary: #386a37;
+            --secondary-container: #b9f0b2;
+            --tertiary: #006874;
+            --error: #ba1a1a;
+            --outline: #74777f;
+        }
+
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             vertical-align: middle;
@@ -60,11 +98,11 @@
             background: rgba(255, 255, 255, 0.05); 
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1); 
+            background: var(--surface-container-highest); 
             border-radius: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2); 
+            background: var(--primary); 
         }
     </style>
     <script src="./mobile-menu.js"></script>

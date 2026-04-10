@@ -12,7 +12,16 @@ app.use(express.json()); // Allows us to read JSON data
 app.use(express.static('public', { index: 'welcome.html' })); // Tells the server to host files from a folder named 'public' and load welcome.html by default
 
 // 3. Connect to the Aiven Database
-const db = mysql.createConnection(process.env.DATABASE_URL);
+const dbURL = process.env.DATABASE_URL;
+// Aiven requires SSL. We'll strip the ?ssl-mode=REQUIRED if present and add the ssl object manually for mysql2
+const cleanedURL = dbURL.split('?')[0];
+
+const db = mysql.createConnection({
+    uri: cleanedURL,
+    ssl: {
+        rejectUnauthorized: false // Required for Aiven unless you have the CA cert locally
+    }
+});
 
 db.connect((err) => {
     if (err) {
@@ -30,13 +39,20 @@ app.get('/', (req, res) => {
 
 // --- OUR NEW API ROUTE ---
 app.get('/api/requests', (req, res) => {
-    // This SQL query joins 3 tables together to get readable names instead of just ID numbers
+    // Join with Volunteers and Resources to show who is helping and what was sent
     const sql = `
-        SELECT r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage, c.CategoryName, l.AreaName, l.Latitude, l.Longitude
+        SELECT 
+            r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage, 
+            c.CategoryName, l.AreaName, l.Latitude, l.Longitude,
+            v.Name AS DispatcherName, 
+            rc.CategoryName AS DispatchedItemName
         FROM HelpRequests r
         JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
         JOIN Locations l ON r.LocationID = l.LocationID
-        ORDER BY r.UrgencyScore DESC;
+        LEFT JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID
+        LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
+        LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
+        ORDER BY FIELD(r.Status, 'Pending') DESC, r.UrgencyScore DESC;
     `;
 
     db.query(sql, (err, results) => {
@@ -44,7 +60,6 @@ app.get('/api/requests', (req, res) => {
             console.error("Error fetching requests:", err);
             return res.status(500).json({ error: "Failed to fetch data" });
         }
-        // Send the data back to the browser as JSON
         res.json(results);
     });
 });
@@ -160,9 +175,15 @@ app.get('/api/stats', (req, res) => {
     const volSql = `SELECT COUNT(*) AS count FROM Volunteers WHERE Status = 'Active' AND UID IS NOT NULL AND Email IS NOT NULL`;
 
     db.query(sosSql, (err, sosResult) => {
-        if (err) return res.status(500).json({ error: "Failed to fetch SOS stats" });
+        if (err) {
+            console.error("SOS Stats Query Error:", err);
+            return res.status(500).json({ error: "Failed to fetch SOS stats" });
+        }
         db.query(volSql, (err, volResult) => {
-            if (err) return res.status(500).json({ error: "Failed to fetch Volunteer stats" });
+            if (err) {
+                console.error("Volunteer Stats Query Error:", err);
+                return res.status(500).json({ error: "Failed to fetch Volunteer stats" });
+            }
             res.json({
                 pendingSOS: sosResult[0].count,
                 activeVolunteers: volResult[0].count
@@ -170,24 +191,68 @@ app.get('/api/stats', (req, res) => {
         });
     });
 });
+// --- PROXIMITY APIS FOR DISPATCH ---
+
+// Get nearest available resources for a specific category
+app.get('/api/nearest-resources', (req, res) => {
+    const { lat, lon, categoryId } = req.query;
+    if (!lat || !lon || !categoryId) return res.status(400).json({ error: "Missing parameters" });
+
+    const sql = `
+        SELECT r.ResourceID, c.CategoryName, r.Quantity, l.AreaName, l.Latitude, l.Longitude,
+        (6371 * acos(cos(radians(?)) * cos(radians(l.Latitude)) * cos(radians(l.Longitude) - radians(?)) + sin(radians(?)) * sin(radians(l.Latitude)))) AS distance
+        FROM Resources r
+        JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
+        JOIN Locations l ON r.CurrentLocationID = l.LocationID
+        WHERE r.CategoryID = ? AND r.Quantity > 0 AND r.Status = 'Available'
+        ORDER BY distance ASC
+        LIMIT 5;
+    `;
+
+    db.query(sql, [lat, lon, lat, categoryId], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+// Get nearest available volunteers
+app.get('/api/nearest-volunteers', (req, res) => {
+    const { lat, lon } = req.query;
+    // Note: Volunteers table currently has a 'Location' string, not lat/lon. 
+    // For now, we'll just return available ones. In a real app we'd geocode their last known location.
+    const sql = `
+        SELECT VolunteerID, Name, Role, Location, Status
+        FROM Volunteers
+        WHERE Status = 'Available'
+        LIMIT 10;
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
 app.post('/api/dispatch', (req, res) => {
-    const { volunteerId, resourceId, requestId, notes } = req.body;
+    const { volunteerId, resourceId, requestId } = req.body;
     if (!volunteerId || !resourceId || !requestId) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
-    // Example: Update volunteer status to Assigned
-    const updateVolunteerSql = `UPDATE Volunteers SET Status = 'Assigned' WHERE VolunteerID = ?`;
-    // Example: Decrement resource quantity
-    const updateResourceSql = `UPDATE Resources SET Quantity = Quantity - 1 WHERE ResourceID = ? AND Quantity > 0`;
-    // Example: Update request status to Dispatched and link volunteer/resource
-    const updateRequestSql = `UPDATE HelpRequests SET Status = 'Assigned', AssignedVolunteerID = ?, AssignedResourceID = ? WHERE RequestID = ?`;
-    db.query(updateVolunteerSql, [volunteerId], (err) => {
-        if (err) return res.status(500).json({ error: 'Failed to update volunteer' });
-        db.query(updateResourceSql, [resourceId], (err) => {
-            if (err) return res.status(500).json({ error: 'Failed to update resource' });
-            db.query(updateRequestSql, [volunteerId, resourceId, requestId], (err) => {
-                if (err) return res.status(500).json({ error: 'Failed to update request' });
-                res.json({ message: 'Dispatch successful', notes: notes || null });
+
+    // Use a simplified multi-step update for now
+    const updateV = "UPDATE Volunteers SET Status = 'Active' WHERE VolunteerID = ?";
+    const updateR = "UPDATE Resources SET Quantity = Quantity - 1 WHERE ResourceID = ? AND Quantity > 0";
+    const updateReq = "UPDATE HelpRequests SET Status = 'Dispatched', AssignedVolunteerID = ?, AssignedResourceID = ?, DispatchedAt = NOW() WHERE RequestID = ?";
+
+    db.query(updateV, [volunteerId], (err) => {
+        if (err) return res.status(500).json({ error: 'Volunteer update failed' });
+        
+        db.query(updateR, [resourceId], (err) => {
+            if (err) return res.status(500).json({ error: 'Resource update failed' });
+            
+            db.query(updateReq, [volunteerId, resourceId, requestId], (err) => {
+                if (err) return res.status(500).json({ error: 'Request update failed' });
+                res.json({ message: 'Dispatch successful! Field assets have been deployed.' });
             });
         });
     });

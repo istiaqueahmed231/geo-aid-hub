@@ -15,10 +15,20 @@
       theme: {
         extend: {
           colors: {
-            "background": "#111316",
-            "surface-container": "#1e2023",
-            "secondary": "#88d982",
-            "tertiary-container": "#009fb3"
+            "background": "var(--background)",
+            "surface-container": "var(--surface-container)",
+            "surface-container-low": "var(--surface-container-low)",
+            "surface-container-high": "var(--surface-container-high)",
+            "surface-container-highest": "var(--surface-container-highest)",
+            "on-surface": "var(--on-surface)",
+            "on-surface-variant": "var(--on-surface-variant)",
+            "primary": "var(--primary)",
+            "primary-container": "var(--primary-container)",
+            "secondary": "var(--secondary)",
+            "secondary-container": "var(--secondary-container)",
+            "tertiary": "var(--tertiary)",
+            "error": "var(--error)",
+            "outline": "var(--outline)"
           },
           fontFamily: {
             sans: ['Inter', 'sans-serif'],
@@ -28,31 +38,85 @@
       }
     }
   </script>
+  <script src="./theme.js"></script>
+  <style>
+    :root {
+        --background: #111316;
+        --surface: #111316;
+        --surface-container: #1e2023;
+        --surface-container-low: #1a1c1f;
+        --surface-container-high: #282a2d;
+        --surface-container-highest: #333538;
+        --on-surface: #e2e2e6;
+        --on-surface-variant: #e6beb2;
+        --primary: #ffb4a4;
+        --primary-container: #fe5733;
+        --on-primary-container: #570b00;
+        --secondary: #88d982;
+        --secondary-container: #005b14;
+        --tertiary: #55d7ed;
+        --error: #ffb4ab;
+        --outline: #ad897e;
+    }
+
+    :root:not(.dark) {
+        --background: #fdfdfd;
+        --surface: #f9f9f9;
+        --surface-container: #f0f0f0;
+        --surface-container-low: #f5f5f5;
+        --surface-container-high: #e8e8e8;
+        --surface-container-highest: #e0e0e0;
+        --on-surface: #1b1b1b;
+        --on-surface-variant: #44474e;
+        --primary: #fe5733;
+        --primary-container: #ffdad3;
+        --on-primary-container: #3d0600;
+        --secondary: #386a37;
+        --secondary-container: #b9f0b2;
+        --tertiary: #006874;
+        --error: #ba1a1a;
+        --outline: #74777f;
+    }
+    
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        vertical-align: middle;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
-<body class="bg-background text-zinc-300 font-sans min-h-screen flex items-center justify-center relative overflow-hidden" style="background-image: radial-gradient(circle at 10% 20%, rgba(136, 217, 130, 0.05) 0%, transparent 20%), radial-gradient(circle at 90% 80%, rgba(0, 159, 179, 0.05) 0%, transparent 20%);">
+<body class="bg-background text-on-surface font-sans min-h-screen flex items-center justify-center relative overflow-hidden" style="background-image: radial-gradient(circle at 10% 20%, var(--secondary-container), transparent 25%), radial-gradient(circle at 90% 80%, var(--primary-container), transparent 25%); background-blend-mode: soft-light;">
   
   <!-- Top Left Logo -->
   <div class="absolute top-6 left-6 md:left-8 flex items-center gap-3 select-none">
-    <div class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-surface-container/80 backdrop-blur border border-zinc-700/50 shadow-lg">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-surface-container/80 backdrop-blur border border-outline/10 shadow-lg">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     </div>
     <div>
-      <h1 class="text-lg font-black text-white tracking-tighter leading-none">Geo-Aid <span class="text-orange-500">Central</span></h1>
+      <h1 class="text-lg font-black text-on-surface tracking-tighter leading-none">Geo-Aid <span class="text-primary">Central</span></h1>
     </div>
   </div>
 
-  <div class="relative z-10 w-full max-w-md p-8 md:p-10 bg-surface-container/50 backdrop-blur-xl border border-zinc-800/50 rounded-3xl shadow-2xl space-y-8 animate-fade-in-up">
+  <!-- Theme Toggle in Top Right -->
+  <div class="absolute top-6 right-6 md:right-8 flex items-center gap-2">
+    <button id="theme-toggle-btn" class="p-2.5 text-on-surface-variant hover:bg-surface-container/80 backdrop-blur border border-outline/10 rounded-xl transition-all duration-300 active:scale-95 shadow-lg group relative">
+       <span id="theme-toggle-icon" class="material-symbols-outlined !text-xl">light_mode</span>
+       <div class="absolute -bottom-10 right-0 bg-surface-container-highest text-xs text-on-surface px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-xl border border-outline/10 font-medium z-50">Toggle Theme</div>
+    </button>
+  </div>
+
+  <div class="relative z-10 w-full max-w-md p-8 md:p-10 bg-surface-container/50 backdrop-blur-xl border border-outline/10 rounded-3xl shadow-2xl space-y-8 animate-fade-in-up">
     <!-- Header -->
     <div class="text-center space-y-3">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 mb-2">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-container/50 border border-outline/10 mb-2">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
-      <h1 class="text-3xl font-display font-bold text-white tracking-tight">Geo-Aid Hub</h1>
-      <p class="text-zinc-400">Join our network of volunteers and coordinate disaster relief efforts efficiently.</p>
+      <h1 class="text-3xl font-display font-bold text-on-surface tracking-tight">Geo-Aid Hub</h1>
+      <p class="text-on-surface-variant">Join our network of volunteers and coordinate disaster relief efforts efficiently.</p>
     </div>
 
     <!-- Actions -->
@@ -67,14 +131,14 @@
         <div class="flex-grow border-t border-zinc-800"></div>
       </div>
 
-      <a href="signup.html" class="flex items-center justify-center w-full py-3.5 px-4 bg-zinc-800 text-white hover:bg-zinc-700 font-medium rounded-xl border border-zinc-700/50 transition-all duration-300 transform active:scale-[0.98]">
+      <a href="signup.html" class="flex items-center justify-center w-full py-3.5 px-4 bg-surface-container-high text-on-surface hover:bg-surface-container-highest font-medium rounded-xl border border-outline/10 transition-all duration-300 transform active:scale-[0.98]">
         Create an Account
       </a>
     </div>
 
     <!-- Footer -->
-    <div class="text-center pt-4 border-t border-zinc-800/50">
-        <p class="text-xs text-zinc-500">By logging in, you agree to our Terms of Service & Privacy Policy.</p>
+    <div class="text-center pt-4 border-t border-outline/10">
+        <p class="text-xs text-on-surface-variant">By logging in, you agree to our Terms of Service & Privacy Policy.</p>
     </div>
   </div>
 
