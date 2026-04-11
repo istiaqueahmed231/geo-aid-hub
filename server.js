@@ -93,7 +93,7 @@ app.get('/api/resource-categories', (req, res) => {
 });
 
 app.get('/api/locations', (req, res) => {
-    db.query('SELECT LocationID, AreaName FROM Locations ORDER BY AreaName', (err, results) => {
+    db.query("SELECT LocationID, AreaName FROM Locations WHERE AreaName != 'Live SOS Location' ORDER BY AreaName", (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(results);
     });
@@ -114,14 +114,14 @@ app.post('/api/resources', (req, res) => {
 
         if (results.length > 0) {
             // Update existing row
-            const updateSql = 'UPDATE Resources SET Quantity = Quantity + ?, Status = "Available" WHERE ResourceID = ?';
+            const updateSql = "UPDATE Resources SET Quantity = Quantity + ?, Status = 'Available' WHERE ResourceID = ?";
             db.query(updateSql, [qty, results[0].ResourceID], (err) => {
                 if (err) return res.status(500).json({ error: err.message });
                 res.json({ message: "Resource quantity updated and status set to Available." });
             });
         } else {
             // Insert new row
-            const insertSql = 'INSERT INTO Resources (CategoryID, CurrentLocationID, Quantity, Status) VALUES (?, ?, ?, "Available")';
+            const insertSql = "INSERT INTO Resources (CategoryID, CurrentLocationID, Quantity, Status) VALUES (?, ?, ?, 'Available')";
             db.query(insertSql, [categoryId, locationId, qty], (err) => {
                 if (err) return res.status(500).json({ error: err.message });
                 res.status(201).json({ message: "New resource added successfully." });
