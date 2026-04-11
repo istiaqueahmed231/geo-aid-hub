@@ -123,7 +123,8 @@
                     </p>
                 </div>
                 <div class="flex gap-4">
-                    <button class="bg-primary-container px-4 py-2 rounded-lg text-sm text-white font-bold hover:bg-primary-container/90 transition shadow-lg shadow-primary/20">
+                    <button id="add-resource-btn" class="bg-primary px-4 py-2 rounded-lg text-sm text-white font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">add</span>
                         Add Resource
                     </button>
                 </div>
@@ -303,6 +304,177 @@
             }
         }
         fetchGlobalStats();
+    </script>
+
+    <!-- Add Resource Modal -->
+    <div id="add-resource-modal" class="fixed inset-0 z-[100] hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        
+        <!-- Modal Content -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-6">
+            <div class="bg-surface border border-white/10 rounded-2xl shadow-2xl overflow-hidden glass">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">add_box</span>
+                        Initialize Resource
+                    </h3>
+                    <button id="close-modal-btn" class="text-zinc-500 hover:text-white transition">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                
+                <form id="add-resource-form" class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5 pl-1">Category</label>
+                        <select id="res-category" required class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition appearance-none">
+                            <option value="">Select Category...</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5 pl-1">Dispatch Location / Hub</label>
+                        <select id="res-location" required class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition appearance-none">
+                            <option value="">Select Location...</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1.5 pl-1">Batch Quantity</label>
+                        <input type="number" id="res-quantity" required min="1" placeholder="Enter amount..." 
+                            class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition"/>
+                    </div>
+
+                    <div class="pt-4 flex gap-3">
+                        <button type="button" id="cancel-modal-btn" class="flex-1 px-4 py-3 rounded-xl border border-white/10 text-zinc-400 font-bold hover:bg-white/5 transition">
+                            Cancel
+                        </button>
+                        <button type="submit" class="flex-1 px-4 py-3 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20">
+                            Confirm Add
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-8 right-8 z-[200] transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-zinc-900 border border-white/10 rounded-xl p-4 flex items-center gap-3 shadow-2xl">
+            <div id="toast-icon-bg" class="w-8 h-8 rounded-full flex items-center justify-center">
+                <span id="toast-icon" class="material-symbols-outlined text-[18px]"></span>
+            </div>
+            <div>
+                <div id="toast-title" class="text-sm font-bold text-white leading-tight"></div>
+                <div id="toast-message" class="text-xs text-zinc-400"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('add-resource-modal');
+        const addBtn = document.getElementById('add-resource-btn');
+        const closeBtn = document.getElementById('close-modal-btn');
+        const cancelBtn = document.getElementById('cancel-modal-btn');
+        const form = document.getElementById('add-resource-form');
+        const categorySelect = document.getElementById('res-category');
+        const locationSelect = document.getElementById('res-location');
+
+        function showToast(title, message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const iconBg = document.getElementById('toast-icon-bg');
+            const icon = document.getElementById('toast-icon');
+            const titleEl = document.getElementById('toast-title');
+            const msgEl = document.getElementById('toast-message');
+
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+
+            if (type === 'success') {
+                iconBg.className = 'w-8 h-8 rounded-full flex items-center justify-center bg-green-500/20';
+                icon.className = 'material-symbols-outlined text-[18px] text-green-400';
+                icon.textContent = 'check_circle';
+            } else {
+                iconBg.className = 'w-8 h-8 rounded-full flex items-center justify-center bg-red-500/20';
+                icon.className = 'material-symbols-outlined text-[18px] text-red-400';
+                icon.textContent = 'error';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        async function openModal() {
+            modal.classList.remove('hidden');
+            // Fetch categories and locations if they haven't been loaded yet
+            if (categorySelect.options.length <= 1) {
+                try {
+                    const [catRes, locRes] = await Promise.all([
+                        fetch('/api/resource-categories'),
+                        fetch('/api/locations')
+                    ]);
+                    const categories = await catRes.json();
+                    const locations = await locRes.json();
+
+                    categories.forEach(cat => {
+                        const opt = document.createElement('option');
+                        opt.value = cat.CategoryID;
+                        opt.textContent = `${cat.CategoryName} (${cat.UnitOfMeasure})`;
+                        categorySelect.appendChild(opt);
+                    });
+
+                    locations.forEach(loc => {
+                        const opt = document.createElement('option');
+                        opt.value = loc.LocationID;
+                        opt.textContent = loc.AreaName;
+                        locationSelect.appendChild(opt);
+                    });
+                } catch (err) {
+                    console.error("Failed to populate dropdowns:", err);
+                }
+            }
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            form.reset();
+        }
+
+        addBtn.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                categoryId: document.getElementById('res-category').value,
+                locationId: document.getElementById('res-location').value,
+                quantity: document.getElementById('res-quantity').value
+            };
+
+            try {
+                const response = await fetch('/api/resources', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    closeModal();
+                    showToast('Resource Added', result.message || 'Inventory updated successfully.', 'success');
+                    loadResources(); // Refresh table and map
+                } else {
+                    const error = await response.json();
+                    showToast('Action Failed', error.error || 'Check server connection.', 'error');
+                }
+            } catch (err) {
+                console.error("Submission error:", err);
+                showToast('System Error', 'Failed to communicate with the command server.', 'error');
+            }
+        });
     </script>
 </body>
 </html>

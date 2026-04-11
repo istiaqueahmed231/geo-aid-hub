@@ -84,6 +84,51 @@ app.get('/api/resources', (req, res) => {
         res.json(results);
     });
 });
+
+app.get('/api/resource-categories', (req, res) => {
+    db.query('SELECT CategoryID, CategoryName, UnitOfMeasure FROM ResourceCategories ORDER BY CategoryName', (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+app.get('/api/locations', (req, res) => {
+    db.query('SELECT LocationID, AreaName FROM Locations ORDER BY AreaName', (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+app.post('/api/resources', (req, res) => {
+    const { categoryId, locationId, quantity } = req.body;
+    const qty = parseInt(quantity);
+
+    if (!categoryId || !locationId || isNaN(qty)) {
+        return res.status(400).json({ error: "Missing or invalid fields" });
+    }
+
+    // Check if a resource of this category already exists at this location
+    const checkSql = 'SELECT ResourceID FROM Resources WHERE CategoryID = ? AND CurrentLocationID = ? LIMIT 1';
+    db.query(checkSql, [categoryId, locationId], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        if (results.length > 0) {
+            // Update existing row
+            const updateSql = 'UPDATE Resources SET Quantity = Quantity + ?, Status = "Available" WHERE ResourceID = ?';
+            db.query(updateSql, [qty, results[0].ResourceID], (err) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json({ message: "Resource quantity updated and status set to Available." });
+            });
+        } else {
+            // Insert new row
+            const insertSql = 'INSERT INTO Resources (CategoryID, CurrentLocationID, Quantity, Status) VALUES (?, ?, ?, "Available")';
+            db.query(insertSql, [categoryId, locationId, qty], (err) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.status(201).json({ message: "New resource added successfully." });
+            });
+        }
+    });
+});
 // -------------------------
 
 // --- SHELTERS API ROUTE ---
