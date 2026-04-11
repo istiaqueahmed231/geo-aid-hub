@@ -1,15 +1,32 @@
-// 1. Import our tools
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
-require('dotenv').config(); // This loads your secret .env file
+const http = require('http'); // Node.js http module
+const { Server } = require('socket.io'); // Socket.io
+require('dotenv').config(); 
 
 // 2. Set up the server
 const app = express();
-app.use(cors()); // Allows your frontend to talk to this backend
-app.use(express.json()); // Allows us to read JSON data
+const server = http.createServer(app); // Wrap express with http
+const io = new Server(server, {
+    cors: {
+        origin: "*", // Adjust this in production for security
+        methods: ["GET", "POST"]
+    }
+});
 
-app.use(express.static('public', { index: 'welcome.html' })); // Tells the server to host files from a folder named 'public' and load welcome.html by default
+app.use(cors()); 
+app.use(express.json()); 
+
+// Socket.io Connection logic
+io.on('connection', (socket) => {
+    console.log('📡 A dispatcher/client connected:', socket.id);
+    socket.on('disconnect', () => {
+        console.log('📡 Client disconnected:', socket.id);
+    });
+});
+
+app.use(express.static('public', { index: 'welcome.html' })); 
 
 // 3. Connect to the Aiven Database
 const dbURL = process.env.DATABASE_URL;
@@ -174,6 +191,21 @@ app.post('/api/sos', (req, res) => {
         db.query(insertRequestSql, [RequestorName, newLocationId, CategoryID, UrgencyScore, ShortMessage], (err, reqResult) => {
             if (err) return res.status(500).json({ error: "Failed to save SOS request" });
             
+            // --- SOCKET.IO EMISSION ---
+            // Notify all connected dashboards about the new emergency
+            io.emit('new_sos', {
+                RequestID: reqResult.insertId,
+                RequestorName,
+                CategoryID,
+                UrgencyScore,
+                ShortMessage,
+                Latitude,
+                Longitude,
+                Status: 'Pending',
+                CreatedAt: new Date()
+            });
+            // ---------------------------
+
             res.status(201).json({ message: "SOS Received successfully!" });
         });
     });
@@ -217,22 +249,32 @@ app.post('/api/volunteers', (req, res) => {
 });
 // --- GLOBAL STATS API ROUTE ---
 app.get('/api/stats', (req, res) => {
-    const sosSql = `SELECT COUNT(*) AS count FROM HelpRequests WHERE Status = 'Pending'`;
-    const volSql = `SELECT COUNT(*) AS count FROM Volunteers WHERE Status = 'Active' AND UID IS NOT NULL AND Email IS NOT NULL`;
+    const sosSql = `SELECT Status, COUNT(*) AS count FROM HelpRequests GROUP BY Status`;
+    const volSql = `SELECT COUNT(*) AS count FROM Volunteers WHERE Status = 'Available' AND UID IS NOT NULL AND Email IS NOT NULL`;
+    const stockSql = `SELECT COUNT(*) AS count FROM Resources WHERE Quantity < 50 AND Status = 'Available'`;
 
-    db.query(sosSql, (err, sosResult) => {
-        if (err) {
-            console.error("SOS Stats Query Error:", err);
-            return res.status(500).json({ error: "Failed to fetch SOS stats" });
-        }
+    db.query(sosSql, (err, sosResults) => {
+        if (err) return res.status(500).json({ error: err.message });
+        
         db.query(volSql, (err, volResult) => {
-            if (err) {
-                console.error("Volunteer Stats Query Error:", err);
-                return res.status(500).json({ error: "Failed to fetch Volunteer stats" });
-            }
-            res.json({
-                pendingSOS: sosResult[0].count,
-                activeVolunteers: volResult[0].count
+            if (err) return res.status(500).json({ error: err.message });
+            
+            db.query(stockSql, (err, stockResult) => {
+                if (err) return res.status(500).json({ error: err.message });
+
+                const stats = {
+                    pending: 0,
+                    dispatched: 0,
+                    volunteers: volResult[0].count,
+                    lowStockCount: stockResult[0].count
+                };
+
+                sosResults.forEach(r => {
+                    if (r.Status === 'Pending') stats.pending = r.count;
+                    if (r.Status === 'Dispatched') stats.dispatched = r.count;
+                });
+
+                res.json(stats);
             });
         });
     });
@@ -256,7 +298,15 @@ app.get('/api/me', (req, res) => {
 });
 // -------------------------------------------------------
 
-// --- PROXIMITY APIS FOR DISPATCH ---
+// --- PROXIMITY & SKILL APIS FOR DISPATCH ---
+
+// Mapping SOS Categories to Recommended Volunteer Roles
+const ROLE_MAPPING = {
+    1: ['Medical Aid', 'First Responder'],         // Medical Kits
+    2: ['Logistics', 'Supply Coordinator'],       // Drinking Water
+    3: ['Logistics', 'Supply Coordinator'],       // Dry Food Rations
+    4: ['Rescue Driver', 'First Responder']        // Rescue Boats
+};
 
 // Get nearest available resources for a specific category
 app.get('/api/nearest-resources', (req, res) => {
@@ -277,6 +327,34 @@ app.get('/api/nearest-resources', (req, res) => {
     db.query(sql, [lat, lon, lat, categoryId], (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(results);
+    });
+});
+
+// Get available volunteers (with skill prioritization)
+app.get('/api/nearest-volunteers', (req, res) => {
+    const { categoryId } = req.query;
+    
+    const sql = `
+        SELECT VolunteerID, Name, Role, Location, Status
+        FROM Volunteers
+        WHERE Status = 'Available'
+        ORDER BY VolunteerID ASC;
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        // Add recommendation flag based on category mapping
+        const recommendedRoles = ROLE_MAPPING[categoryId] || [];
+        const enrichedResults = results.map(v => ({
+            ...v,
+            isRecommended: recommendedRoles.includes(v.Role)
+        }));
+
+        // Sort by recommendation first
+        enrichedResults.sort((a, b) => (b.isRecommended === a.isRecommended) ? 0 : b.isRecommended ? 1 : -1);
+
+        res.json(enrichedResults);
     });
 });
 
@@ -354,6 +432,6 @@ app.post('/api/dispatch', (req, res) => {
 
 // 5. Start the server
 const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server is running on http://localhost:${PORT}`);
+server.listen(PORT, () => {
+    console.log(`🚀 Real-time Command Server is running on http://localhost:${PORT}`);
 });

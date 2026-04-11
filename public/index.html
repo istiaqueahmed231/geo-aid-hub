@@ -12,10 +12,14 @@
 <!-- Leaflet Map -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
 <!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+<!-- Socket.io Client -->
+<script src="/socket.io/socket.io.js"></script>
 
 <!-- Firebase Auth (module) -->
 <script type="module" src="./firebase-config.js"></script>
@@ -59,6 +63,24 @@
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
+  }
+  .supply-qty.low-stock { color: var(--red); animation: pulse-warning 2s infinite; }
+  
+  @keyframes pulse-warning {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
+  }
+
+  .low-stock-badge {
+    background: rgba(255,107,107,0.1);
+    color: var(--red);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 800;
+    margin-left: 8px;
+    border: 1px solid rgba(255,107,107,0.2);
   }
   .panel-header h2 {
     font-family: 'Manrope', sans-serif;
@@ -270,6 +292,39 @@
     border-radius: 8px;
   }
 
+  /* Volunteer Selection */
+  #nearest-volunteers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .volunteer-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.14s;
+  }
+  .volunteer-item:hover { border-color: rgba(136,217,130,0.35); background: var(--surface-hi); }
+  .volunteer-item.selected { border-color: var(--green); background: rgba(136,217,130,0.05); }
+  .volunteer-info { display: flex; flex-direction: column; gap: 2px; }
+  .volunteer-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .volunteer-role { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+  .rec-badge {
+    font-size: 9px; font-weight: 800;
+    background: linear-gradient(135deg, #ffd700, #ffa500);
+    color: #000;
+    padding: 1px 6px; border-radius: 4px;
+    display: flex; align-items: center; gap: 3px;
+    margin-top: 2px;
+  }
+
   /* Dispatch action area */
   #dispatch-action-area {
     padding: 16px 18px;
@@ -389,6 +444,10 @@
           <span style="color:var(--red);">Active SOS: <strong id="nav-active-sos">…</strong></span>
         </div>
         <div class="stat-item">
+          <span class="stat-dot orange"></span>
+          <span style="color:var(--orange);">Low Stock: <strong id="nav-low-stock">0</strong></span>
+        </div>
+        <div class="stat-item">
           <span class="stat-dot green"></span>
           <span style="color:var(--green);">Volunteers: <strong id="nav-active-volunteers">…</strong></span>
         </div>
@@ -430,8 +489,20 @@
     <!-- ══ RIGHT: DISPATCH OPTION ══ -->
     <div class="panel" id="panel-dispatch">
       <div class="panel-header">
-        <h2>Dispatch Option</h2>
-        <span class="panel-header-sub" id="dispatch-panel-sub">Select a request</span>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="material-symbols-outlined" style="color:var(--orange)">map</span>
+          <div>
+            <h2>LIVE DISPATCH MAP</h2>
+            <div class="panel-header-sub">Tactical Proximity View</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button onclick="toggleHeatmap()" class="action-btn" id="heatmap-toggle" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); padding: 2px 10px; border-radius: 6px; display: flex; align-items: center; gap: 5px; cursor: pointer; color: var(--text); font-size: 11px; font-weight: 700;">
+            <span class="material-symbols-outlined" style="font-size:16px;">local_fire_department</span>
+            HEATMAP
+          </button>
+          <div class="active-pulse"></div>
+        </div>
       </div>
 
       <!-- Empty state -->
@@ -461,13 +532,21 @@
         <!-- ─ Live Map ─ -->
         <div id="detail-map"></div>
 
-        <!-- ─ Available Supplies ─ -->
         <div class="supply-section">
           <div class="supply-section-title">
             <span class="material-symbols-outlined">inventory_2</span>
             Available Supplies — Select one to dispatch
           </div>
           <div id="nearest-resources"></div>
+        </div>
+
+        <!-- ─ Field Responders (Skill-Based) ─ -->
+        <div class="supply-section" style="border-bottom:none;">
+          <div class="supply-section-title">
+            <span class="material-symbols-outlined">person_pin</span>
+            Field Responders — Recommended by Skill
+          </div>
+          <div id="nearest-volunteers-list"></div>
         </div>
 
         <!-- ─ Dispatch Action ─ -->
@@ -512,10 +591,29 @@
 <!-- ══════════════════════════════════════════ SCRIPTS -->
 <script>
 // ─── Globals ───
+const socket = io(); // Initialize Socket.io
 let map = null, mapMarker = null;
+let heatmapLayer = null; // Layer for SOS heatmap
+let isHeatmapActive = false;
 let selectedRequest  = null;
 let selectedResourceId = null;
+let selectedVolunteerId = null; // New global for responder selection
 let currentVolunteer = null;   // { VolunteerID, Name, Role, … }
+
+// ─── Real-time SOS Listener ───
+socket.on('new_sos', (sos) => {
+  console.log('🚨 NEW SOS RECEIVED:', sos);
+  
+  // 1. Show a special SOS toast
+  showToast(`🚨 URGENT: New SOS from ${sos.RequestorName}!`, true);
+  
+  // 2. Play a subtle alert sound (optional, but good for real-time)
+  // new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(()=> {});
+
+  // 3. Refresh the requests list and stats
+  loadRequests();
+  fetchGlobalStats();
+});
 
 // ─── Toast ───
 function showToast(msg, isError = false) {
@@ -666,8 +764,60 @@ async function selectRequest(req, cardEl) {
   }).addTo(map);
   setTimeout(() => map.invalidateSize(), 60);
 
-  // Load supplies
-  await loadNearestResources(req);
+  // Load supplies and volunteers
+  await Promise.all([
+    loadNearestResources(req),
+    loadNearestVolunteers(req.CategoryID)
+  ]);
+}
+
+// ─── Load Volunteers (Skill-Based) ───
+async function loadNearestVolunteers(categoryId) {
+  const container = document.getElementById('nearest-volunteers-list');
+  container.innerHTML = '<div class="supply-empty">Finding responders…</div>';
+  
+  try {
+    const data = await fetch(`/api/nearest-volunteers?categoryId=${categoryId}`).then(r => r.json());
+    container.innerHTML = '';
+
+    if (!data.length) {
+      container.innerHTML = '<div class="supply-empty">No available volunteers found.</div>';
+      return;
+    }
+
+    data.forEach(v => {
+      const el = document.createElement('div');
+      el.className = 'volunteer-item';
+      if (v.VolunteerID === selectedVolunteerId) el.classList.add('selected');
+      
+      el.innerHTML = `
+        <div class="volunteer-info">
+          <div class="volunteer-name">${v.Name} ${v.VolunteerID === currentVolunteer?.VolunteerID ? '(You)' : ''}</div>
+          <div class="volunteer-role">${v.Role} &bull; ${v.Location || 'Field'}</div>
+          ${v.isRecommended ? `<span class="rec-badge"><span class="material-symbols-outlined" style="font-size:11px;">star</span> RECOMMENDED</span>` : ''}
+        </div>
+      `;
+      el.onclick = () => selectVolunteer(v.VolunteerID, v.Name, el);
+      container.appendChild(el);
+    });
+  } catch (err) {
+    container.innerHTML = '<div class="supply-empty">Error loading volunteers.</div>';
+    console.error(err);
+  }
+}
+
+function selectVolunteer(id, name, el) {
+  selectedVolunteerId = id;
+  window._selectedVolunteerName = name;
+  document.querySelectorAll('.volunteer-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  checkDispatchReady();
+}
+
+function checkDispatchReady() {
+  if (selectedResourceId && selectedVolunteerId) {
+    document.getElementById('dispatch-action-area').style.display = 'flex';
+  }
 }
 
 // ─── Load All Available Resources ───
@@ -692,13 +842,17 @@ async function loadNearestResources(req) {
     data.forEach(res => {
       const el = document.createElement('div');
       el.className = 'supply-item';
+      if (res.ResourceID === selectedResourceId) el.classList.add('selected');
       el.dataset.id = res.ResourceID;
       el.innerHTML = `
         <div class="supply-left">
-          <div class="supply-name">${res.CategoryName}</div>
+          <div class="supply-name">
+            ${res.CategoryName}
+            ${res.Quantity < 50 ? '<span class="low-stock-badge">CRITICAL</span>' : ''}
+          </div>
           <div class="supply-sub">${res.AreaName} &bull; ${parseFloat(res.distance).toFixed(1)} km away &bull; ${res.UnitOfMeasure || 'units'}</div>
         </div>
-        <span class="supply-qty">Qty: ${res.Quantity}</span>
+        <span class="supply-qty ${res.Quantity < 50 ? 'low-stock' : ''}">Qty: ${res.Quantity}</span>
       `;
       el.onclick = () => selectSupply(el, res.ResourceID, res.CategoryName, res.Quantity);
       container.appendChild(el);
@@ -722,27 +876,27 @@ function selectSupply(el, resourceId, supplyName, availableQty) {
 
   document.querySelectorAll('.supply-item').forEach(i => i.classList.remove('selected'));
   el.classList.add('selected');
-  // Show dispatch area
-  document.getElementById('dispatch-action-area').style.display = 'flex';
+  checkDispatchReady();
 }
 
 // ─── Confirm & Execute Dispatch ───
 async function confirmDispatch() {
-  if (!selectedRequest || !selectedResourceId || !currentVolunteer) return;
+  if (!selectedRequest || !selectedResourceId || !selectedVolunteerId) return;
 
   const reqName    = selectedRequest.RequestorName;
   const supplyName = window._selectedSupplyName || 'selected supply';
+  const responderName = window._selectedVolunteerName || 'Assigned Responder';
   const quantity = parseInt(document.getElementById('dispatch-quantity').value) || 1;
 
   const ok = confirm(
     `DISPATCH CONFIRMATION\n\n` +
     `  Requester : ${reqName}\n` +
     `  Supply    : ${supplyName} (x${quantity})\n` +
-    `  Dispatcher: ${currentVolunteer.Name}\n\n` +
+    `  Responder : ${responderName}\n\n` +
     `This will:\n` +
     `  • Mark the request as "Dispatched"\n` +
     `  • Reduce ${supplyName} stock by ${quantity}\n` +
-    `  • Record your name as the dispatcher\n\n` +
+    `  • Log ${responderName} as the active responder\n\n` +
     `Confirm dispatch?`
   );
   if (!ok) return;
@@ -754,7 +908,8 @@ async function confirmDispatch() {
       body: JSON.stringify({
         requestId  : selectedRequest.RequestID,
         resourceId : selectedResourceId,
-        volunteerId: currentVolunteer.VolunteerID
+        volunteerId: selectedVolunteerId,
+        quantity   : quantity
       })
     });
 
@@ -784,8 +939,9 @@ async function confirmDispatch() {
 async function fetchGlobalStats() {
   try {
     const data = await fetch('/api/stats').then(r => r.json());
-    document.getElementById('nav-active-sos').textContent        = data.pendingSOS ?? '0';
-    document.getElementById('nav-active-volunteers').textContent = data.activeVolunteers ?? '0';
+    document.getElementById('nav-active-sos').textContent        = data.pending ?? '0';
+    document.getElementById('nav-low-stock').textContent         = data.lowStockCount ?? '0';
+    document.getElementById('nav-active-volunteers').textContent = data.volunteers ?? '0';
   } catch (e) { /* silent */ }
 }
 
