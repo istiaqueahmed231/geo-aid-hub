@@ -1,162 +1,215 @@
-<!DOCTYPE html>
+<!doctype html>
 <html class="dark" lang="en">
-<head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Geo-Aid Hub | Volunteer Fleet</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <link rel="stylesheet" href="./app.css"/>
-    <script src="./mobile-menu.js"></script>
-    <script src="./theme.js"></script>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "background": "var(--bg)",
-                        "surface": "var(--bg-panel)",
-                        "primary": "var(--orange)",
-                        "secondary": "var(--green)",
-                        "error": "var(--red)",
-                        "outline": "var(--border)",
-                        "surface-container": "var(--surface)",
-                        "on-surface": "var(--text)",
-                        "on-surface-variant": "var(--text-dim)",
-                    },
-                    fontFamily: {
-                        "headline": ["Manrope"],
-                        "body": ["Inter"],
+    <head>
+        <meta charset="utf-8" />
+        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+        <title>Geo-Aid Hub | Volunteer Fleet</title>
+        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="./app.css" />
+        <script src="./mobile-menu.js"></script>
+        <script src="./theme.js"></script>
+        <script id="tailwind-config">
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            background: "var(--bg)",
+                            surface: "var(--bg-panel)",
+                            primary: "var(--orange)",
+                            secondary: "var(--green)",
+                            error: "var(--red)",
+                            outline: "var(--border)",
+                            "surface-container": "var(--surface)",
+                            "on-surface": "var(--text)",
+                            "on-surface-variant": "var(--text-dim)",
+                        },
+                        fontFamily: {
+                            headline: ["Manrope"],
+                            body: ["Inter"],
+                        },
                     },
                 },
-            },
-        }
-    </script>
-</head>
-<body class="bg-background text-on-surface font-body">
-    <!-- Standard Sidebar -->
-    <div id="sidebar">
-        <div class="sidebar-brand">
-            <div class="sidebar-brand-name">Geo-Aid <span>HUB</span></div>
-            <div class="sidebar-brand-sub">National Command Center</div>
-        </div>
-        <nav class="sidebar-nav">
-            <a href="index.html" class="nav-link">
-                <span class="material-symbols-outlined">dashboard</span>
-                Dashboard
-            </a>
-            <a href="map-view.html" class="nav-link">
-                <span class="material-symbols-outlined">map</span>
-                Map View
-            </a>
-            <a href="resource-log.html" class="nav-link">
-                <span class="material-symbols-outlined">inventory_2</span>
-                Resource Log
-            </a>
-            <a href="volunteer-fleet.html" class="nav-link active">
-                <span class="material-symbols-outlined">group</span>
-                Volunteer Fleet
-            </a>
-            <a href="support.html" class="nav-link">
-                <span class="material-symbols-outlined">support</span>
-                Support & Info
-            </a>
-        </nav>
-        <div class="sidebar-footer">
-            <a href="welcome.html" class="nav-link">
-                <span class="material-symbols-outlined">logout</span>
-                Logout
-            </a>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div id="main">
-        <!-- Standard Header -->
-        <header id="header">
-            <div class="header-left">
-                <div class="header-title">GEO-AID <span>HUB</span></div>
-                <div class="header-divider"></div>
-                <div class="header-stats">
-                    <div class="stat-item">
-                        <div class="stat-dot red"></div>
-                        <span id="nav-active-sos">Active SOS: ...</span>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-dot green"></div>
-                        <span id="nav-active-volunteers">Available Volunteers: ...</span>
-                    </div>
-                </div>
+            };
+        </script>
+    </head>
+    <body class="bg-background text-on-surface font-body">
+        <!-- Standard Sidebar -->
+        <div id="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-name">Geo-Aid <span>HUB</span></div>
+                <div class="sidebar-brand-sub">National Command Center</div>
             </div>
-            <div class="header-right">
-                <button id="theme-toggle-btn" class="icon-btn">
-                    <span id="theme-toggle-icon" class="material-symbols-outlined">light_mode</span>
-                </button>
-                <div class="header-divider"></div>
-                <!-- Profile Placeholder -->
-                <div style="width: 30px; height: 30px; border-radius: 50%; overflow: hidden; border: 1px solid var(--border);">
-                    <img src="https://ui-avatars.com/api/?name=Admin&background=fe5733&color=fff" style="width: 100%; height: 100%; object-fit: cover;"/>
-                </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-link">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    Dashboard
+                </a>
+                <a href="map-view.html" class="nav-link">
+                    <span class="material-symbols-outlined">map</span>
+                    Map View
+                </a>
+                <a href="resource-log.html" class="nav-link">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    Resource Log
+                </a>
+                <a href="volunteer-fleet.html" class="nav-link active">
+                    <span class="material-symbols-outlined">group</span>
+                    Volunteer Fleet
+                </a>
+                <a href="support.html" class="nav-link">
+                    <span class="material-symbols-outlined">support</span>
+                    Support & Info
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="welcome.html" class="nav-link">
+                    <span class="material-symbols-outlined">logout</span>
+                    Logout
+                </a>
             </div>
-        </header>
+        </div>
 
-        <!-- Content Section -->
-        <div class="mt-20 flex-1 p-4 lg:p-8 flex flex-col overflow-y-auto lg:overflow-hidden">
-            
-            <!-- Context / User Friendly Text -->
-            <div class="mb-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                <div>
-                    <h2 class="text-3xl font-black text-white tracking-tight mb-2">Volunteer Fleet Command</h2>
-                    <p class="text-zinc-400 max-w-3xl leading-relaxed text-sm">
-                        Coordinate active field responders, medical aids, and logisticians. Only verified volunteers synced 
-                        with Firebase authentication are displayed in this registry.
-                    </p>
+        <!-- Main Content -->
+        <div id="main">
+            <!-- Standard Header -->
+            <header id="header">
+                <div class="header-left">
+                    <div class="header-title">GEO-AID <span>HUB</span></div>
+                    <div class="header-divider"></div>
+                    <div class="header-stats">
+                        <div class="stat-item">
+                            <div class="stat-dot red"></div>
+                            <span id="nav-active-sos">Active SOS: ...</span>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-dot green"></div>
+                            <span id="nav-active-volunteers"
+                                >Available Volunteers: ...</span
+                            >
+                        </div>
+                    </div>
                 </div>
-                <div class="flex gap-4">
-                    <button id="btn-export-registry" class="bg-primary-container/20 border border-primary-container/50 px-4 py-2 rounded-lg text-sm text-primary font-bold hover:bg-primary-container/40 transition flex items-center justify-center min-w-[140px]">
-                        Export Registry
+                <div class="header-right">
+                    <button id="theme-toggle-btn" class="icon-btn">
+                        <span
+                            id="theme-toggle-icon"
+                            class="material-symbols-outlined"
+                            >light_mode</span
+                        >
                     </button>
+                    <div class="header-divider"></div>
+                    <!-- Profile Placeholder -->
+                    <div
+                        style="
+                            width: 30px;
+                            height: 30px;
+                            border-radius: 50%;
+                            overflow: hidden;
+                            border: 1px solid var(--border);
+                        "
+                    >
+                        <img
+                            src="https://ui-avatars.com/api/?name=Admin&background=fe5733&color=fff"
+                            style="width: 100%; height: 100%; object-fit: cover"
+                        />
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Section -->
+            <div id="view">
+                <div
+                    class="mt-20 flex-1 p-4 lg:p-8 flex flex-col overflow-y-auto lg:overflow-hidden"
+                >
+                    <!-- Context / User Friendly Text -->
+                    <div
+                        class="mb-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-4"
+                    >
+                        <div>
+                            <h2
+                                class="text-3xl font-black text-white tracking-tight mb-2"
+                            >
+                                Volunteer Fleet Command
+                            </h2>
+                            <p
+                                class="text-zinc-400 max-w-3xl leading-relaxed text-sm"
+                            >
+                                Coordinate active field responders, medical
+                                aids, and logisticians. Only verified volunteers
+                                synced with Firebase authentication are
+                                displayed in this registry.
+                            </p>
+                        </div>
+                        <div class="flex gap-4">
+                            <button
+                                id="btn-export-registry"
+                                class="bg-primary-container/20 border border-primary-container/50 px-4 py-2 rounded-lg text-sm text-primary font-bold hover:bg-primary-container/40 transition flex items-center justify-center min-w-[140px]"
+                            >
+                                Export Registry
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Grid container -->
+                    <div class="overflow-y-auto custom-scrollbar flex-1 pb-10">
+                        <div
+                            id="volunteer-grid"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                        >
+                            <!-- Cards will be populated by JS -->
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-
-
-            <!-- Grid container -->
-            <div class="overflow-y-auto custom-scrollbar flex-1 pb-10">
-                <div id="volunteer-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    <!-- Cards will be populated by JS -->
-                </div>
-            </div>
-            
+            <!-- /#view -->
         </div>
-    </main>
+        <!-- /#main -->
 
-    <script>
-        async function loadVolunteers() {
-            try {
-                const response = await fetch('/api/volunteers');
-                const volunteers = await response.json();
-                
-                const grid = document.getElementById('volunteer-grid');
-                grid.innerHTML = '';
+        <script>
+            async function loadVolunteers() {
+                try {
+                    const response = await fetch("/api/volunteers");
+                    const volunteers = await response.json();
 
-                volunteers.forEach(vol => {
-                    const statusColor = vol.Status === 'Active' ? 'bg-secondary/20 text-secondary' : 
-                                        vol.Status === 'Pending' ? 'bg-yellow-500/20 text-yellow-500' : 
-                                        'bg-zinc-500/20 text-zinc-400';
-                                        
-                    const icon = vol.Role.includes('Medical') ? 'health_and_safety' :
-                                 vol.Role.includes('Rescue') ? 'emergency' :
-                                 vol.Role.includes('Supply') ? 'local_shipping' :
-                                 vol.Role.includes('Communication') ? 'wifi_tethering' : 'person';
+                    const grid = document.getElementById("volunteer-grid");
+                    grid.innerHTML = "";
 
-                    const card = document.createElement('div');
-                    card.className = "bg-surface-container border border-surface-bright rounded-xl p-5 hover:border-zinc-500 transition-colors duration-300 flex flex-col gap-3 group";
-                    
-                    card.innerHTML = `
+                    volunteers.forEach((vol) => {
+                        const statusColor =
+                            vol.Status === "Active"
+                                ? "bg-secondary/20 text-secondary"
+                                : vol.Status === "Pending"
+                                  ? "bg-yellow-500/20 text-yellow-500"
+                                  : "bg-zinc-500/20 text-zinc-400";
+
+                        const icon = vol.Role.includes("Medical")
+                            ? "health_and_safety"
+                            : vol.Role.includes("Rescue")
+                              ? "emergency"
+                              : vol.Role.includes("Supply")
+                                ? "local_shipping"
+                                : vol.Role.includes("Communication")
+                                  ? "wifi_tethering"
+                                  : "person";
+
+                        const card = document.createElement("div");
+                        card.className =
+                            "bg-surface-container border border-surface-bright rounded-xl p-5 hover:border-zinc-500 transition-colors duration-300 flex flex-col gap-3 group";
+
+                        card.innerHTML = `
                         <div class="flex justify-between items-start">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
@@ -171,7 +224,7 @@
                                 ${vol.Status}
                             </span>
                         </div>
-                        
+
                         <div class="grid grid-cols-2 gap-2 mt-2">
                             <div class="bg-zinc-900/50 rounded-lg p-2 flex flex-col gap-1">
                                 <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Age & Gender</span>
@@ -185,111 +238,182 @@
                             </div>
                         </div>
                     `;
-                    grid.appendChild(card);
-                });
-            } catch (error) {
-                console.error("Failed to load volunteers:", error);
-                const grid = document.getElementById('volunteer-grid');
-                grid.innerHTML = '<div class="col-span-full py-8 text-center text-error">Failed to load data. Make sure the server is running.</div>';
+                        grid.appendChild(card);
+                    });
+                } catch (error) {
+                    console.error("Failed to load volunteers:", error);
+                    const grid = document.getElementById("volunteer-grid");
+                    grid.innerHTML =
+                        '<div class="col-span-full py-8 text-center text-error">Failed to load data. Make sure the server is running.</div>';
+                }
             }
-        }
 
-        loadVolunteers();
-    </script>
-    <script>
-        async function fetchGlobalStats() {
-            try {
-                const response = await fetch('/api/stats');
-                const data = await response.json();
-                const sosEl = document.getElementById('nav-active-sos');
-                const volEl = document.getElementById('nav-active-volunteers');
-                if (sosEl) sosEl.textContent = `Active SOS: ${data.pendingSOS}`;
-                if (volEl) volEl.textContent = `Available Volunteers: ${data.activeVolunteers}`;
-            } catch (err) {
-                console.error("Failed to load global stats:", err);
+            loadVolunteers();
+        </script>
+        <script>
+            async function fetchGlobalStats() {
+                try {
+                    const response = await fetch("/api/stats");
+                    const data = await response.json();
+                    const sosEl = document.getElementById("nav-active-sos");
+                    const volEl = document.getElementById(
+                        "nav-active-volunteers",
+                    );
+                    if (sosEl)
+                        sosEl.textContent = `Active SOS: ${data.pendingSOS}`;
+                    if (volEl)
+                        volEl.textContent = `Available Volunteers: ${data.activeVolunteers}`;
+                } catch (err) {
+                    console.error("Failed to load global stats:", err);
+                }
             }
-        }
-        fetchGlobalStats();
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script>
-        document.getElementById('btn-export-registry').addEventListener('click', async (e) => {
-            const btn = e.currentTarget;
-            const originalText = btn.innerText;
-            btn.innerText = 'Exporting...';
-            btn.disabled = true;
-            try {
-                // Fetch all data
-                const [volRes, resourcesRes, sheltersRes] = await Promise.all([
-                    fetch('/api/volunteers'),
-                    fetch('/api/resources'),
-                    fetch('/api/shelters')
-                ]);
-                
-                const volunteers = await volRes.json();
-                const resources = await resourcesRes.json();
-                const shelters = await sheltersRes.json();
-                
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                doc.setFontSize(22);
-                doc.setTextColor(254, 87, 51); // primary-container
-                doc.text('Geo-Aid Central Registry', 14, 20);
-                
-                doc.setFontSize(10);
-                doc.setTextColor(100);
-                doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
-                
-                // Volunteers Table
-                doc.setFontSize(14);
-                doc.setTextColor(40);
-                doc.text('Volunteer Fleet', 14, 40);
-                doc.autoTable({
-                    startY: 45,
-                    head: [['ID', 'Name', 'Role', 'Status', 'Location', 'Age', 'Gender']],
-                    body: volunteers.map(v => [v.VolunteerID, v.Name, v.Role, v.Status, v.Location, v.Age, v.Gender]),
-                    theme: 'grid',
-                    headStyles: { fillColor: [254, 87, 51] },
-                    styles: { fontSize: 8 }
+            fetchGlobalStats();
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+        <script>
+            document
+                .getElementById("btn-export-registry")
+                .addEventListener("click", async (e) => {
+                    const btn = e.currentTarget;
+                    const originalText = btn.innerText;
+                    btn.innerText = "Exporting...";
+                    btn.disabled = true;
+                    try {
+                        // Fetch all data
+                        const [volRes, resourcesRes, sheltersRes] =
+                            await Promise.all([
+                                fetch("/api/volunteers"),
+                                fetch("/api/resources"),
+                                fetch("/api/shelters"),
+                            ]);
+
+                        const volunteers = await volRes.json();
+                        const resources = await resourcesRes.json();
+                        const shelters = await sheltersRes.json();
+
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
+
+                        doc.setFontSize(22);
+                        doc.setTextColor(254, 87, 51); // primary-container
+                        doc.text("Geo-Aid Central Registry", 14, 20);
+
+                        doc.setFontSize(10);
+                        doc.setTextColor(100);
+                        doc.text(
+                            `Generated on: ${new Date().toLocaleString()}`,
+                            14,
+                            28,
+                        );
+
+                        // Volunteers Table
+                        doc.setFontSize(14);
+                        doc.setTextColor(40);
+                        doc.text("Volunteer Fleet", 14, 40);
+                        doc.autoTable({
+                            startY: 45,
+                            head: [
+                                [
+                                    "ID",
+                                    "Name",
+                                    "Role",
+                                    "Status",
+                                    "Location",
+                                    "Age",
+                                    "Gender",
+                                ],
+                            ],
+                            body: volunteers.map((v) => [
+                                v.VolunteerID,
+                                v.Name,
+                                v.Role,
+                                v.Status,
+                                v.Location,
+                                v.Age,
+                                v.Gender,
+                            ]),
+                            theme: "grid",
+                            headStyles: { fillColor: [254, 87, 51] },
+                            styles: { fontSize: 8 },
+                        });
+
+                        // Resources Table
+                        doc.setFontSize(14);
+                        doc.setTextColor(40);
+                        doc.text(
+                            "Emergency Resources",
+                            14,
+                            doc.lastAutoTable.finalY + 15,
+                        );
+                        doc.autoTable({
+                            startY: doc.lastAutoTable.finalY + 20,
+                            head: [
+                                [
+                                    "ID",
+                                    "Category",
+                                    "Quantity",
+                                    "Status",
+                                    "Location",
+                                    "Coordinates",
+                                ],
+                            ],
+                            body: resources.map((r) => [
+                                r.ResourceID,
+                                r.CategoryName,
+                                `${r.Quantity} ${r.UnitOfMeasure}`,
+                                r.Status,
+                                r.CurrentLocation,
+                                `${r.Latitude}, ${r.Longitude}`,
+                            ]),
+                            theme: "grid",
+                            headStyles: { fillColor: [254, 87, 51] },
+                            styles: { fontSize: 8 },
+                        });
+
+                        // Shelters Table
+                        doc.setFontSize(14);
+                        doc.setTextColor(40);
+                        doc.text(
+                            "Active Shelters",
+                            14,
+                            doc.lastAutoTable.finalY + 15,
+                        );
+                        doc.autoTable({
+                            startY: doc.lastAutoTable.finalY + 20,
+                            head: [
+                                [
+                                    "Name",
+                                    "Capacity",
+                                    "Occupancy",
+                                    "Status",
+                                    "Area",
+                                    "Type",
+                                ],
+                            ],
+                            body: shelters.map((s) => [
+                                s.ShelterName,
+                                s.TotalCapacity,
+                                s.CurrentOccupancy,
+                                s.Status,
+                                s.AreaName,
+                                s.ZoneType,
+                            ]),
+                            theme: "grid",
+                            headStyles: { fillColor: [254, 87, 51] },
+                            styles: { fontSize: 8 },
+                        });
+
+                        doc.save("geo-aid-registry.pdf");
+                    } catch (err) {
+                        console.error("Export failed:", err);
+                        alert("Export failed. Check the console for details.");
+                    } finally {
+                        btn.innerText = originalText;
+                        btn.disabled = false;
+                    }
                 });
-                
-                // Resources Table
-                doc.setFontSize(14);
-                doc.setTextColor(40);
-                doc.text('Emergency Resources', 14, doc.lastAutoTable.finalY + 15);
-                doc.autoTable({
-                    startY: doc.lastAutoTable.finalY + 20,
-                    head: [['ID', 'Category', 'Quantity', 'Status', 'Location', 'Coordinates']],
-                    body: resources.map(r => [r.ResourceID, r.CategoryName, `${r.Quantity} ${r.UnitOfMeasure}`, r.Status, r.CurrentLocation, `${r.Latitude}, ${r.Longitude}`]),
-                    theme: 'grid',
-                    headStyles: { fillColor: [254, 87, 51] },
-                    styles: { fontSize: 8 }
-                });
-                
-                // Shelters Table
-                doc.setFontSize(14);
-                doc.setTextColor(40);
-                doc.text('Active Shelters', 14, doc.lastAutoTable.finalY + 15);
-                doc.autoTable({
-                    startY: doc.lastAutoTable.finalY + 20,
-                    head: [['Name', 'Capacity', 'Occupancy', 'Status', 'Area', 'Type']],
-                    body: shelters.map(s => [s.ShelterName, s.TotalCapacity, s.CurrentOccupancy, s.Status, s.AreaName, s.ZoneType]),
-                    theme: 'grid',
-                    headStyles: { fillColor: [254, 87, 51] },
-                    styles: { fontSize: 8 }
-                });
-                
-                doc.save('geo-aid-registry.pdf');
-            } catch (err) {
-                console.error('Export failed:', err);
-                alert('Export failed. Check the console for details.');
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
-        });
-    </script>
-</body>
+        </script>
+        <script src="./router.js"></script>
+    </body>
 </html>
