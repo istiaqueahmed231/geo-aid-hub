@@ -21,6 +21,34 @@ app.use(express.json());
 // Socket.io Connection logic
 io.on('connection', (socket) => {
     console.log('📡 A dispatcher/client connected:', socket.id);
+    
+    // Join a specific request room for chat & live updates
+    socket.on('join_request', (requestId) => {
+        socket.join(`request_${requestId}`);
+        console.log(`📡 Client joined room: request_${requestId}`);
+    });
+
+    // Handle incoming chat messages
+    socket.on('send_message', (data) => {
+        // data: { requestId, senderRole, senderId, text }
+        const sql = `INSERT INTO Messages (RequestID, SenderRole, SenderID, MessageText) VALUES (?, ?, ?, ?)`;
+        db.query(sql, [data.requestId, data.senderRole, data.senderId, data.text], (err, result) => {
+            if (err) {
+                console.error("Failed to save message:", err.message);
+                return;
+            }
+            // Emit to everyone in the room
+            io.to(`request_${data.requestId}`).emit('new_message', {
+                MessageID: result.insertId,
+                RequestID: data.requestId,
+                SenderRole: data.senderRole,
+                SenderID: data.senderId,
+                MessageText: data.text,
+                SentAt: new Date()
+            });
+        });
+    });
+
     socket.on('disconnect', () => {
         console.log('📡 Client disconnected:', socket.id);
     });
@@ -45,6 +73,36 @@ db.connect((err) => {
         console.error('❌ Database connection failed:', err.message);
     } else {
         console.log('✅ Successfully connected to the Aiven Cloud Database!');
+
+        // --- Auto-Migrations for New Features ---
+        const migrations = [
+            `CREATE TABLE IF NOT EXISTS Admins (
+                AdminID INT AUTO_INCREMENT PRIMARY KEY,
+                Email VARCHAR(255) NOT NULL UNIQUE,
+                AddedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`,
+            `CREATE TABLE IF NOT EXISTS Messages (
+                MessageID INT AUTO_INCREMENT PRIMARY KEY,
+                RequestID INT NOT NULL,
+                SenderRole ENUM('Volunteer', 'Victim', 'Admin') NOT NULL,
+                SenderID VARCHAR(255) NOT NULL,
+                MessageText TEXT NOT NULL,
+                SentAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`
+        ];
+
+        migrations.forEach(sql => {
+            db.query(sql, (err) => {
+                if (err) console.error("Migration failed:", err.message);
+            });
+        });
+
+        db.query(`ALTER TABLE Volunteers ADD COLUMN Latitude DOUBLE, ADD COLUMN Longitude DOUBLE`, (err) => {
+            if (err && err.code !== 'ER_DUP_FIELDNAME') {
+                console.error("Alter Volunteers failed:", err.message);
+            }
+        });
+        // ----------------------------------------
     }
 });
 
@@ -206,14 +264,14 @@ app.post('/api/sos', (req, res) => {
             });
             // ---------------------------
 
-            res.status(201).json({ message: "SOS Received successfully!" });
+            res.status(201).json({ message: "SOS Received successfully!", requestId: reqResult.insertId });
         });
     });
 });
 // --- VOLUNTEER FLEET API ROUTE ---
 app.get('/api/volunteers', (req, res) => {
     const sql = `
-        SELECT VolunteerID, Name, Gender, Age, Location, Role, Status
+        SELECT VolunteerID, Name, Gender, Age, Location, Latitude, Longitude, Role, Status
         FROM Volunteers
         WHERE UID IS NOT NULL AND Email IS NOT NULL
         ORDER BY VolunteerID ASC;
@@ -224,6 +282,91 @@ app.get('/api/volunteers', (req, res) => {
             return res.status(500).json({ error: "Failed to fetch data" });
         }
         res.json(results);
+    });
+});
+
+// --- GET SPECIFIC REQUEST (For Tracking Web/App) ---
+app.get('/api/requests/:requestId', (req, res) => {
+    const { requestId } = req.params;
+    const sql = `
+        SELECT r.*, v.Name AS VolunteerName, v.Latitude AS VolLat, v.Longitude AS VolLon 
+        FROM HelpRequests r 
+        LEFT JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID 
+        WHERE r.RequestID = ?
+    `;
+    db.query(sql, [requestId], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (results.length === 0) return res.status(404).json({ error: 'Not found' });
+        res.json(results[0]);
+    });
+});
+
+// --- NEW CHAT/MESSAGES ROUTE ---
+app.get('/api/messages/:requestId', (req, res) => {
+    const { requestId } = req.params;
+    const sql = `SELECT * FROM Messages WHERE RequestID = ? ORDER BY SentAt ASC`;
+    db.query(sql, [requestId], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+app.post('/api/messages', (req, res) => {
+    const { requestId, senderRole, senderId, text } = req.body;
+    const sql = `INSERT INTO Messages (RequestID, SenderRole, SenderID, MessageText) VALUES (?, ?, ?, ?)`;
+    db.query(sql, [requestId, senderRole, senderId, text], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        // Also emit via socket.io for the web app
+        io.to(`request_${requestId}`).emit('new_message', {
+            MessageID: result.insertId,
+            RequestID: requestId,
+            SenderRole: senderRole,
+            SenderID: senderId,
+            MessageText: text,
+            SentAt: new Date()
+        });
+
+        res.status(201).json({ success: true });
+    });
+});
+
+// --- ADMIN VERIFY ROUTE ---
+app.get('/api/admin/verify', (req, res) => {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ error: "Missing email parameter" });
+    
+    // We check if this email exists in the Admins table
+    const sql = `SELECT AdminID FROM Admins WHERE Email = ? LIMIT 1`;
+    db.query(sql, [email], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (results.length > 0) {
+            res.json({ isAdmin: true });
+        } else {
+            res.json({ isAdmin: false });
+        }
+    });
+});
+
+// --- VOLUNTEER LOCATION UPDATE ---
+app.post('/api/volunteer/location', (req, res) => {
+    const { uid, latitude, longitude, status } = req.body;
+    if (!uid) return res.status(400).json({ error: "Missing uid" });
+    
+    // Update location and optionally status (e.g. 'Available')
+    let sql = `UPDATE Volunteers SET Latitude = ?, Longitude = ?`;
+    let params = [latitude, longitude];
+    
+    if (status) {
+        sql += `, Status = ?`;
+        params.push(status);
+    }
+    sql += ` WHERE UID = ?`;
+    params.push(uid);
+
+    db.query(sql, params, (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: "Location updated" });
     });
 });
 
@@ -386,19 +529,34 @@ app.get('/api/available-resources', (req, res) => {
 // Get nearest available volunteers
 app.get('/api/nearest-volunteers', (req, res) => {
     const { lat, lon } = req.query;
-    // Note: Volunteers table currently has a 'Location' string, not lat/lon. 
-    // For now, we'll just return available ones. In a real app we'd geocode their last known location.
-    const sql = `
-        SELECT VolunteerID, Name, Role, Location, Status
+    let sql = `
+        SELECT VolunteerID, Name, Role, Location, Latitude, Longitude, Status
         FROM Volunteers
         WHERE Status = 'Available'
-        LIMIT 10;
     `;
-
-    db.query(sql, (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(results);
-    });
+    
+    if (lat && lon) {
+        sql = `
+            SELECT VolunteerID, Name, Role, Location, Latitude, Longitude, Status,
+            (6371 * acos(
+                cos(radians(?)) * cos(radians(Latitude)) * cos(radians(Longitude) - radians(?))
+                + sin(radians(?)) * sin(radians(Latitude))
+            )) AS distance
+            FROM Volunteers
+            WHERE Status = 'Available' AND Latitude IS NOT NULL AND Longitude IS NOT NULL
+            ORDER BY distance ASC
+            LIMIT 10;
+        `;
+        db.query(sql, [lat, lon, lat], (err, results) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(results);
+        });
+    } else {
+        db.query(sql + ' LIMIT 10', (err, results) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(results);
+        });
+    }
 });
 
 app.post('/api/dispatch', (req, res) => {
@@ -423,6 +581,16 @@ app.post('/api/dispatch', (req, res) => {
             
             db.query(updateReq, [volunteerId, resourceId, dispatchQty, requestId], (err) => {
                 if (err) return res.status(500).json({ error: 'Request update failed' });
+                
+                // Notify via Socket.IO
+                io.emit('dispatch_assigned', {
+                    RequestID: requestId,
+                    VolunteerID: volunteerId,
+                    ResourceID: resourceId,
+                    DispatchedQuantity: dispatchQty,
+                    DispatchedAt: new Date()
+                });
+                
                 res.json({ message: `Dispatch successful! ${dispatchQty} units have been deployed.` });
             });
         });

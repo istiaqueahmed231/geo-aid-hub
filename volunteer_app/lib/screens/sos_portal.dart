@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/api_service.dart';
-import 'tracking_screen.dart';
 
 class SosPortal extends StatefulWidget {
   const SosPortal({super.key});
@@ -67,7 +66,7 @@ class _SosPortalState extends State<SosPortal> {
       // 3. Send to backend via ApiService
       final response = await ApiService.sendSosAlert(sosData);
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
+      if (response.statusCode == 201) {
         if (mounted) {
           showDialog(
             context: context,
@@ -81,10 +80,6 @@ class _SosPortalState extends State<SosPortal> {
                     _nameController.clear();
                     _messageController.clear();
                     setState(() => _selectedCategory = 1);
-                    
-                    final responseData = jsonDecode(response.body);
-                    final requestId = responseData['requestId'];
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => TrackingScreen(requestId: requestId)));
                   },
                   child: const Text('OK'),
                 ),

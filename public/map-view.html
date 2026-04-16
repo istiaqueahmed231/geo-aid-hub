@@ -156,18 +156,12 @@
                         <h2
                             class="text-3xl font-black text-white tracking-tight mb-2"
                         >
-                            Regional Safe Zones
+                            Real-Time Emergency Map
                         </h2>
                         <p
                             class="text-zinc-400 max-w-3xl leading-relaxed text-sm"
                         >
-                            This interactive map displays currently available
-                            safe zones and shelters across the region. You can
-                            monitor real-time shelter statuses, current
-                            capacities, and deployment locations. Select a
-                            marker on the map for detailed metrics or use the
-                            directory on the right to quickly view all shelter
-                            statuses at a glance.
+                            This interactive map displays undispatched SOS requests (Red) and available Volunteers (Green) in real-time. Use this view to coordinate dispatch efforts.
                         </p>
                     </div>
 
@@ -182,7 +176,7 @@
                             <div id="map" class="w-full h-full"></div>
                         </div>
 
-                        <!-- Shelter Table (Right, 1/3 width) -->
+                        <!-- Active Units Table (Right, 1/3 width) -->
                         <div
                             class="lg:col-span-1 border border-white/10 bg-surface-container/50 rounded-2xl p-4 flex flex-col shadow-2xl overflow-hidden backdrop-blur-md"
                         >
@@ -195,14 +189,14 @@
                                     <span
                                         class="material-symbols-outlined text-primary"
                                         style="font-size: 20px"
-                                        >home_work</span
+                                        >emergency</span
                                     >
-                                    Shelter Directory
+                                    Active Units
                                 </h3>
                                 <span
                                     class="bg-primary/20 text-primary text-xs font-bold px-2 py-1 rounded-full"
-                                    id="shelter-count"
-                                    >0 Active</span
+                                    id="map-entities-count"
+                                    >0 Units</span
                                 >
                             </div>
 
@@ -219,27 +213,22 @@
                                             <th
                                                 class="py-3 px-3 font-semibold uppercase tracking-wider text-[10px]"
                                             >
-                                                Shelter
-                                            </th>
-                                            <th
-                                                class="py-3 px-3 text-right font-semibold uppercase tracking-wider text-[10px]"
-                                            >
-                                                Cap.
+                                                Entity
                                             </th>
                                             <th
                                                 class="py-3 px-3 font-semibold uppercase tracking-wider text-[10px] pl-4"
                                             >
-                                                Status
+                                                Type
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody
-                                        id="shelter-table-body"
+                                        id="map-table-body"
                                         class="divide-y divide-white/5 text-zinc-300"
                                     >
                                         <tr>
                                             <td
-                                                colspan="3"
+                                                colspan="2"
                                                 class="text-center py-8 text-zinc-500"
                                             >
                                                 Loading directory...
@@ -274,120 +263,101 @@
                 attribution: "© OpenStreetMap contributors",
             }).addTo(map);
 
-            // Fetch shelter data from DB and plot them
-            async function loadShelterMap() {
+            // Fetch requests and volunteers to plot
+            async function loadEmergencyMap() {
                 try {
-                    const response = await fetch("/api/shelters");
-                    const shelters = await response.json();
+                    const [reqRes, volRes] = await Promise.all([
+                        fetch('/api/requests'),
+                        fetch('/api/volunteers')
+                    ]);
+                    const requests = await reqRes.json();
+                    const volunteers = await volRes.json();
 
-                    const tableBody =
-                        document.getElementById("shelter-table-body");
-                    const shelterCount =
-                        document.getElementById("shelter-count");
+                    const tableBody = document.getElementById("map-table-body");
+                    const mapCount = document.getElementById("map-entities-count");
                     tableBody.innerHTML = "";
 
-                    // Keep track of locations to potentially fit bounds
                     const bounds = [];
                     let activeCount = 0;
 
-                    shelters.forEach((shelter) => {
+                    // Plot Pending SOS Requests (RED)
+                    requests.filter(r => r.Status === 'Pending').forEach(req => {
                         activeCount++;
-
-                        // -- Build Table Row --
-                        let badgeClass = "bg-blue-500/20 text-blue-400";
-                        let colorStr = "#3b82f6"; // blue-500
-                        if (shelter.Status === "Full") {
-                            badgeClass = "bg-red-500/20 text-red-400";
-                            colorStr = "#ef4444"; // red-500
-                        }
-                        if (shelter.Status === "Closed") {
-                            badgeClass = "bg-zinc-500/20 text-zinc-400";
-                            colorStr = "#71717a"; // zinc-500
-                        }
+                        let colorStr = "#ef4444"; // red-500
+                        const lat = parseFloat(req.Latitude);
+                        const lng = parseFloat(req.Longitude);
 
                         const row = document.createElement("tr");
-                        row.className =
-                            "hover:bg-white/5 transition-colors cursor-pointer group";
+                        row.className = "hover:bg-white/5 transition-colors cursor-pointer group";
                         row.innerHTML = `
                         <td class="py-3 px-3">
-                            <div class="font-bold text-zinc-200 group-hover:text-primary transition-colors">${shelter.ShelterName}</div>
-                            <div class="text-[10px] text-zinc-500">${shelter.AreaName}</div>
-                        </td>
-                        <td class="py-3 px-3 text-right font-mono text-xs text-zinc-400">
-                            ${shelter.CurrentOccupancy}/${shelter.TotalCapacity}
+                            <div class="font-bold text-red-400 group-hover:text-red-300 transition-colors">SOS: ${req.RequestorName}</div>
+                            <div class="text-[10px] text-zinc-500">${req.CategoryName}</div>
                         </td>
                         <td class="py-3 px-3 pl-4">
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeClass}">
-                                ${shelter.Status}
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-400">
+                                Pending
                             </span>
                         </td>
-                    `;
-
-                        let marker = null;
-                        if (shelter.Latitude && shelter.Longitude) {
-                            const lat = parseFloat(shelter.Latitude);
-                            const lng = parseFloat(shelter.Longitude);
-
-                            // Custom pin marker via Leaflet DIV Icon
-                            const markerHtml = `<div style="
-                            width: 18px;
-                            height: 18px;
-                            background: ${colorStr};
-                            border-radius: 50%;
-                            border: 3px solid white;
-                            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-                        "></div>`;
-
-                            const customIcon = L.divIcon({
-                                className: "custom-icon",
-                                html: markerHtml,
-                                iconSize: [18, 18],
-                                iconAnchor: [9, 9],
-                            });
-
-                            marker = L.marker([lat, lng], {
-                                icon: customIcon,
-                            }).addTo(map);
-
-                            const popupContent = `
-                            <div style="font-family: 'Inter', sans-serif; color: #111;">
-                                <h3 style="margin: 0; font-weight: bold; font-size: 14px;">${shelter.ShelterName}</h3>
-                                <p style="margin: 4px 0 0; font-size: 12px; color: #666;">${shelter.AreaName} (${shelter.ZoneType})</p>
-                                <div style="margin-top: 8px; border-top: 1px solid #ddd; padding-top: 8px;">
-                                    <p style="margin: 2px 0; font-size: 12px;"><strong>Capacity:</strong> ${shelter.CurrentOccupancy} / ${shelter.TotalCapacity}</p>
-                                    <p style="margin: 2px 0; font-size: 12px;"><strong>Status:</strong> ${shelter.Status}</p>
-                                    <p style="margin: 2px 0; font-size: 10px; color: #999;">Lat: ${lat}, Lng: ${lng}</p>
-                                </div>
-                            </div>
                         `;
+                        const markerHtml = `<div style="width: 18px;height: 18px;background: ${colorStr};border-radius: 50%;border: 3px solid white;box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`;
+                        const customIcon = L.divIcon({ className: "custom-icon", html: markerHtml, iconSize: [18, 18], iconAnchor: [9, 9] });
+                        const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+                        
+                        marker.bindPopup(`<div style="font-family: 'Inter', sans-serif; color: #111;">
+                            <h3 style="margin: 0; font-weight: bold; font-size: 14px;">SOS Request</h3>
+                            <p style="margin: 4px 0 0; font-size: 12px; color: #666;">${req.RequestorName} - ${req.CategoryName}</p>
+                        </div>`);
 
-                            marker.bindPopup(popupContent);
-
-                            // Click on row to move map and open popup
-                            row.onclick = () => {
-                                if (marker.isPopupOpen()) return;
-                                map.flyTo([lat, lng], 13);
-                                marker.openPopup();
-                            };
-
-                            bounds.push([lat, lng]);
-                        }
-
+                        row.onclick = () => { if (marker.isPopupOpen()) return; map.flyTo([lat, lng], 13); marker.openPopup(); };
+                        bounds.push([lat, lng]);
                         tableBody.appendChild(row);
                     });
 
-                    shelterCount.textContent = `${activeCount} Shelters`;
+                    // Plot Available Volunteers (GREEN)
+                    volunteers.filter(v => v.Status === 'Available' && v.Latitude && v.Longitude).forEach(vol => {
+                        activeCount++;
+                        let colorStr = "#22c55e"; // green-500
+                        const lat = parseFloat(vol.Latitude);
+                        const lng = parseFloat(vol.Longitude);
 
-                    // Auto-zoom to fit all shelters if we found any
+                        const row = document.createElement("tr");
+                        row.className = "hover:bg-white/5 transition-colors cursor-pointer group";
+                        row.innerHTML = `
+                        <td class="py-3 px-3">
+                            <div class="font-bold text-green-400 group-hover:text-green-300 transition-colors">Vol: ${vol.Name}</div>
+                        </td>
+                        <td class="py-3 px-3 pl-4">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/20 text-green-400">
+                                Available
+                            </span>
+                        </td>
+                        `;
+                        const markerHtml = `<div style="width: 18px;height: 18px;background: ${colorStr};border-radius: 50%;border: 3px solid white;box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`;
+                        const customIcon = L.divIcon({ className: "custom-icon", html: markerHtml, iconSize: [18, 18], iconAnchor: [9, 9] });
+                        const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+                        
+                        marker.bindPopup(`<div style="font-family: 'Inter', sans-serif; color: #111;">
+                            <h3 style="margin: 0; font-weight: bold; font-size: 14px;">Volunteer</h3>
+                            <p style="margin: 4px 0 0; font-size: 12px; color: #666;">${vol.Name} (${vol.Role})</p>
+                        </div>`);
+
+                        row.onclick = () => { if (marker.isPopupOpen()) return; map.flyTo([lat, lng], 13); marker.openPopup(); };
+                        bounds.push([lat, lng]);
+                        tableBody.appendChild(row);
+                    });
+
+                    mapCount.textContent = `${activeCount} Units`;
+
                     if (bounds.length > 0) {
                         map.fitBounds(bounds, { padding: [50, 50] });
                     }
                 } catch (err) {
-                    console.error("Failed to load map data from backend:", err);
+                    console.error("Failed to load map data", err);
                 }
             }
 
-            loadShelterMap();
+            loadEmergencyMap();
             })(); // end IIFE
             </script>
             </div>

@@ -27,9 +27,23 @@ export function login() {
   }
   signInWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
-      toast("Login successful");
-      // Redirect to main dashboard (index.html)
-      window.location.href = "index.html";
+      // Check Admin status before allowing dashboard entry
+      fetch(`/api/admin/verify?email=${encodeURIComponent(email)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.isAdmin) {
+                toast("Admin Login successful");
+                window.location.href = "index.html";
+            } else {
+                toast("Access Denied: You are not registered as an Admin.", true);
+                signOut(auth); // force logout
+            }
+        })
+        .catch(err => {
+            console.error("Admin verification failed:", err);
+            toast("Could not verify Admin status.", true);
+            signOut(auth);
+        });
     })
     .catch((error) => {
       toast(error.message, true);
@@ -117,8 +131,17 @@ export function monitorAuth() {
         window.location.href = "welcome.html";
       }
     } else {
+      // If already on a public page, don't just blindly redirect to index.html without
+      // verifying Admin, but for simplicity of state monitoring, if we are on login.html 
+      // the manual login() function handles the auth+admin_check.
+      // If they somehow have a session, we verify again just in case:
       if (isPublicPage) {
-        window.location.href = "index.html";
+          fetch(`/api/admin/verify?email=${encodeURIComponent(user.email)}`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.isAdmin) window.location.href = "index.html";
+                else signOut(auth);
+            }).catch(() => signOut(auth));
       }
       // Fire a custom event so non-module scripts know auth is ready
       window.dispatchEvent(new CustomEvent("authReady", { detail: { uid: user.uid } }));
