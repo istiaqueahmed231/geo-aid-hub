@@ -252,16 +252,21 @@
                     </div>
                 </div>
             </div>
-            <!-- /#view -->
-        </div>
-        <!-- /#main -->
 
-        <script>
+            <script>
             // Init Leaflet map centered on Bangladesh
+            // Clean up stale Leaflet state if re-injected by router
+            (function() {
+            const mapContainer = document.getElementById("map");
+            if (mapContainer && mapContainer._leaflet_id) {
+                delete mapContainer._leaflet_id;
+                mapContainer.innerHTML = "";
+            }
             const map = L.map("map", {
                 fullscreenControl: true,
                 fullscreenControlOptions: { position: "topleft" },
             }).setView([23.685, 90.3563], 7);
+            if (window.registerLeafletMap) window.registerLeafletMap(map);
 
             // Add OpenStreetMap tiles
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -383,26 +388,13 @@
             }
 
             loadShelterMap();
-        </script>
-        <script>
-            async function fetchGlobalStats() {
-                try {
-                    const response = await fetch("/api/stats");
-                    const data = await response.json();
-                    const sosEl = document.getElementById("nav-active-sos");
-                    const volEl = document.getElementById(
-                        "nav-active-volunteers",
-                    );
-                    if (sosEl)
-                        sosEl.textContent = `Active SOS: ${data.pendingSOS}`;
-                    if (volEl)
-                        volEl.textContent = `Available Volunteers: ${data.activeVolunteers}`;
-                } catch (err) {
-                    console.error("Failed to load global stats:", err);
-                }
-            }
-            fetchGlobalStats();
-        </script>
+            })(); // end IIFE
+            </script>
+            </div>
+            <!-- /#view -->
+        </div>
+        <!-- /#main -->
+
         <script src="./router.js"></script>
     </body>
 </html>

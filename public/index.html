@@ -981,7 +981,11 @@
             <!-- ══════════════════════════════════════════ SCRIPTS -->
             <script>
                 // ─── Globals ───
-                const socket = io(); // Initialize Socket.io
+                // Only connect socket once (avoid duplicate connections on re-injection)
+                if (!window._dashboardSocket) {
+                    window._dashboardSocket = io();
+                }
+                const socket = window._dashboardSocket;
                 let map = null,
                     mapMarker = null;
                 let heatmapLayer = null; // Layer for SOS heatmap
@@ -992,6 +996,8 @@
                 let currentVolunteer = null; // { VolunteerID, Name, Role, … }
 
                 // ─── Real-time SOS Listener ───
+                // Remove previous listener before re-adding to avoid duplicates
+                socket.off("new_sos");
                 socket.on("new_sos", (sos) => {
                     console.log("🚨 NEW SOS RECEIVED:", sos);
 
@@ -1059,6 +1065,13 @@
                 // ─── Map ───
                 function initMap() {
                     if (map) return;
+                    const container = document.getElementById("detail-map");
+                    if (!container) return;
+                    // Clear any stale Leaflet state on the container
+                    if (container._leaflet_id) {
+                        delete container._leaflet_id;
+                        container.innerHTML = "";
+                    }
                     map = L.map("detail-map", {
                         zoomControl: false,
                         attributionControl: false,
@@ -1066,6 +1079,9 @@
                     L.tileLayer(
                         "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
                     ).addTo(map);
+                    // Register with router for cleanup
+                    if (window.registerLeafletMap)
+                        window.registerLeafletMap(map);
                 }
 
                 // ─── Load Requests ───
@@ -1157,9 +1173,10 @@
                         .forEach((c) => c.classList.remove("selected"));
                     cardEl?.classList.add("selected");
 
-                    // Update panel header
-                    document.getElementById("dispatch-panel-sub").textContent =
-                        req.RequestorName;
+                    // Update panel header (optional element — may not exist in all layouts)
+                    const panelSub =
+                        document.getElementById("dispatch-panel-sub");
+                    if (panelSub) panelSub.textContent = req.RequestorName;
 
                     // Switch views
                     document.getElementById("empty-state").style.display =
@@ -1406,9 +1423,9 @@
                             document.getElementById(
                                 "dispatch-action-area",
                             ).style.display = "none";
-                            document.getElementById(
-                                "dispatch-panel-sub",
-                            ).textContent = "Select a request";
+                            const pSub =
+                                document.getElementById("dispatch-panel-sub");
+                            if (pSub) pSub.textContent = "Select a request";
                             document
                                 .querySelectorAll(".req-card")
                                 .forEach((c) => c.classList.remove("selected"));
@@ -1534,17 +1551,6 @@
                     }
                 }
 
-                // ─── Theme toggle ───
-                document
-                    .getElementById("theme-toggle-btn")
-                    .addEventListener("click", () => {
-                        document.documentElement.classList.toggle("dark");
-                        document.getElementById("theme-icon").textContent =
-                            document.documentElement.classList.contains("dark")
-                                ? "light_mode"
-                                : "dark_mode";
-                    });
-
                 // ─── Init ───
                 loadRequests();
                 fetchGlobalStats();
@@ -1552,6 +1558,13 @@
                     loadRequests();
                     fetchGlobalStats();
                 }, 30000);
+
+                // Register the detail map with the router so it gets cleaned up on navigation
+                window.addEventListener("_mapInitialized", () => {
+                    if (window.map && window.registerLeafletMap) {
+                        window.registerLeafletMap(window.map);
+                    }
+                });
             </script>
         </div>
         <!-- /#view -->

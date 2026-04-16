@@ -266,11 +266,9 @@
                     </div>
                 </div>
             </div>
-            <!-- /#view -->
-        </div>
-        <!-- /#main -->
 
-        <script>
+            <script>
+            (function() {
             // Use an icon mapping for categories
             const categoryIcons = {
                 "Drinking Water": "water_drop",
@@ -285,11 +283,19 @@
                 return categoryIcons[categoryName] || "inventory_2";
             };
 
+            // Clean up stale Leaflet state if re-injected by router
+            const mapContainer = document.getElementById("map");
+            if (mapContainer && mapContainer._leaflet_id) {
+                delete mapContainer._leaflet_id;
+                mapContainer.innerHTML = "";
+            }
+
             // Init Leaflet map centered on Bangladesh
             const map = L.map("map", {
                 fullscreenControl: true,
                 fullscreenControlOptions: { position: "topleft" },
             }).setView([23.685, 90.3563], 7);
+            if (window.registerLeafletMap) window.registerLeafletMap(map);
 
             // Add OpenStreetMap tiles
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -411,29 +417,11 @@
             }
 
             loadResources();
-        </script>
-        <script>
-            async function fetchGlobalStats() {
-                try {
-                    const response = await fetch("/api/stats");
-                    const data = await response.json();
-                    const sosEl = document.getElementById("nav-active-sos");
-                    const volEl = document.getElementById(
-                        "nav-active-volunteers",
-                    );
-                    if (sosEl)
-                        sosEl.textContent = `Active SOS: ${data.pendingSOS}`;
-                    if (volEl)
-                        volEl.textContent = `Available Volunteers: ${data.activeVolunteers}`;
-                } catch (err) {
-                    console.error("Failed to load global stats:", err);
-                }
-            }
-            fetchGlobalStats();
-        </script>
+            })(); // end IIFE
+            </script>
 
-        <!-- Add Resource Modal -->
-        <div id="add-resource-modal" class="fixed inset-0 z-[100] hidden">
+            <!-- Add Resource Modal -->
+            <div id="add-resource-modal" class="fixed inset-0 z-[100] hidden">
             <!-- Backdrop -->
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
@@ -525,13 +513,13 @@
                     </form>
                 </div>
             </div>
-        </div>
+            </div>
 
-        <!-- Notification Toast -->
-        <div
-            id="toast"
-            class="fixed bottom-8 right-8 z-[200] transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none"
-        >
+            <!-- Notification Toast -->
+            <div
+                id="toast"
+                class="fixed bottom-8 right-8 z-[200] transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none"
+            >
             <div
                 class="bg-zinc-900 border border-white/10 rounded-xl p-4 flex items-center gap-3 shadow-2xl"
             >
@@ -552,9 +540,10 @@
                     <div id="toast-message" class="text-xs text-zinc-400"></div>
                 </div>
             </div>
-        </div>
+            </div>
 
-        <script>
+            <script>
+            (function() {
             const modal = document.getElementById("add-resource-modal");
             const addBtn = document.getElementById("add-resource-btn");
             const closeBtn = document.getElementById("close-modal-btn");
@@ -674,7 +663,14 @@
                     );
                 }
             });
-        </script>
+            })(); // end IIFE
+            </script>
+
+            </div>
+            <!-- /#view -->
+        </div>
+        <!-- /#main -->
+
         <script src="./router.js"></script>
     </body>
 </html>

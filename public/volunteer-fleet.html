@@ -174,246 +174,183 @@
                     </div>
                 </div>
             </div>
-            <!-- /#view -->
-        </div>
-        <!-- /#main -->
 
-        <script>
-            async function loadVolunteers() {
-                try {
-                    const response = await fetch("/api/volunteers");
-                    const volunteers = await response.json();
+            <script>
+            (function() {
+                async function loadVolunteers() {
+                    try {
+                        const response = await fetch("/api/volunteers");
+                        const volunteers = await response.json();
 
-                    const grid = document.getElementById("volunteer-grid");
-                    grid.innerHTML = "";
+                        const grid = document.getElementById("volunteer-grid");
+                        grid.innerHTML = "";
 
-                    volunteers.forEach((vol) => {
-                        const statusColor =
-                            vol.Status === "Active"
-                                ? "bg-secondary/20 text-secondary"
-                                : vol.Status === "Pending"
-                                  ? "bg-yellow-500/20 text-yellow-500"
-                                  : "bg-zinc-500/20 text-zinc-400";
+                        volunteers.forEach((vol) => {
+                            const statusColor =
+                                vol.Status === "Active"
+                                    ? "bg-secondary/20 text-secondary"
+                                    : vol.Status === "Pending"
+                                      ? "bg-yellow-500/20 text-yellow-500"
+                                      : "bg-zinc-500/20 text-zinc-400";
 
-                        const icon = vol.Role.includes("Medical")
-                            ? "health_and_safety"
-                            : vol.Role.includes("Rescue")
-                              ? "emergency"
-                              : vol.Role.includes("Supply")
-                                ? "local_shipping"
-                                : vol.Role.includes("Communication")
-                                  ? "wifi_tethering"
-                                  : "person";
+                            const icon = vol.Role.includes("Medical")
+                                ? "health_and_safety"
+                                : vol.Role.includes("Rescue")
+                                  ? "emergency"
+                                  : vol.Role.includes("Supply")
+                                    ? "local_shipping"
+                                    : vol.Role.includes("Communication")
+                                      ? "wifi_tethering"
+                                      : "person";
 
-                        const card = document.createElement("div");
-                        card.className =
-                            "bg-surface-container border border-surface-bright rounded-xl p-5 hover:border-zinc-500 transition-colors duration-300 flex flex-col gap-3 group";
+                            const card = document.createElement("div");
+                            card.className =
+                                "bg-surface-container border border-surface-bright rounded-xl p-5 hover:border-zinc-500 transition-colors duration-300 flex flex-col gap-3 group";
 
-                        card.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
-                                    <span class="material-symbols-outlined text-xl">${icon}</span>
+                            card.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
+                                        <span class="material-symbols-outlined text-xl">${icon}</span>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-zinc-100">${vol.Name}</h3>
+                                        <div class="text-xs text-zinc-500">${vol.Role}</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 class="font-bold text-zinc-100">${vol.Name}</h3>
-                                    <div class="text-xs text-zinc-500">${vol.Role}</div>
-                                </div>
-                            </div>
-                            <span class="text-[10px] font-bold px-2 py-1 rounded-full uppercase ${statusColor}">
-                                ${vol.Status}
-                            </span>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2 mt-2">
-                            <div class="bg-zinc-900/50 rounded-lg p-2 flex flex-col gap-1">
-                                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Age & Gender</span>
-                                <span class="text-sm font-medium text-zinc-300">${vol.Age} y/o &bull; ${vol.Gender}</span>
-                            </div>
-                            <div class="bg-zinc-900/50 rounded-lg p-2 flex flex-col gap-1">
-                                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Location</span>
-                                <span class="text-sm font-medium text-zinc-300 flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-[14px]">pin_drop</span> ${vol.Location}
+                                <span class="text-[10px] font-bold px-2 py-1 rounded-full uppercase ${statusColor}">
+                                    ${vol.Status}
                                 </span>
                             </div>
-                        </div>
-                    `;
-                        grid.appendChild(card);
-                    });
-                } catch (error) {
-                    console.error("Failed to load volunteers:", error);
-                    const grid = document.getElementById("volunteer-grid");
-                    grid.innerHTML =
-                        '<div class="col-span-full py-8 text-center text-error">Failed to load data. Make sure the server is running.</div>';
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <div class="bg-zinc-900/50 rounded-lg p-2 flex flex-col gap-1">
+                                    <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Age & Gender</span>
+                                    <span class="text-sm font-medium text-zinc-300">${vol.Age} y/o &bull; ${vol.Gender}</span>
+                                </div>
+                                <div class="bg-zinc-900/50 rounded-lg p-2 flex flex-col gap-1">
+                                    <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Location</span>
+                                    <span class="text-sm font-medium text-zinc-300 flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[14px]">pin_drop</span> ${vol.Location}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                            grid.appendChild(card);
+                        });
+                    } catch (error) {
+                        console.error("Failed to load volunteers:", error);
+                        const grid = document.getElementById("volunteer-grid");
+                        grid.innerHTML =
+                            '<div class="col-span-full py-8 text-center text-error">Failed to load data. Make sure the server is running.</div>';
+                    }
                 }
-            }
 
-            loadVolunteers();
-        </script>
-        <script>
-            async function fetchGlobalStats() {
-                try {
-                    const response = await fetch("/api/stats");
-                    const data = await response.json();
-                    const sosEl = document.getElementById("nav-active-sos");
-                    const volEl = document.getElementById(
-                        "nav-active-volunteers",
-                    );
-                    if (sosEl)
-                        sosEl.textContent = `Active SOS: ${data.pendingSOS}`;
-                    if (volEl)
-                        volEl.textContent = `Available Volunteers: ${data.activeVolunteers}`;
-                } catch (err) {
-                    console.error("Failed to load global stats:", err);
-                }
-            }
-            fetchGlobalStats();
-        </script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-        <script>
-            document
-                .getElementById("btn-export-registry")
-                .addEventListener("click", async (e) => {
-                    const btn = e.currentTarget;
-                    const originalText = btn.innerText;
-                    btn.innerText = "Exporting...";
-                    btn.disabled = true;
-                    try {
-                        // Fetch all data
-                        const [volRes, resourcesRes, sheltersRes] =
-                            await Promise.all([
+                loadVolunteers();
+
+                // Export Registry button — load jsPDF on demand then export
+                const exportBtn = document.getElementById("btn-export-registry");
+                if (exportBtn) {
+                    exportBtn.addEventListener("click", async (e) => {
+                        const btn = e.currentTarget;
+                        const originalText = btn.innerText;
+                        btn.innerText = "Exporting...";
+                        btn.disabled = true;
+
+                        // Dynamically load jsPDF if not already loaded
+                        async function ensureJsPDF() {
+                            if (window.jspdf) return;
+                            await new Promise((resolve, reject) => {
+                                const s1 = document.createElement("script");
+                                s1.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+                                s1.onload = () => {
+                                    const s2 = document.createElement("script");
+                                    s2.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js";
+                                    s2.onload = resolve;
+                                    s2.onerror = reject;
+                                    document.body.appendChild(s2);
+                                };
+                                s1.onerror = reject;
+                                document.body.appendChild(s1);
+                            });
+                        }
+
+                        try {
+                            await ensureJsPDF();
+
+                            const [volRes, resourcesRes, sheltersRes] = await Promise.all([
                                 fetch("/api/volunteers"),
                                 fetch("/api/resources"),
                                 fetch("/api/shelters"),
                             ]);
 
-                        const volunteers = await volRes.json();
-                        const resources = await resourcesRes.json();
-                        const shelters = await sheltersRes.json();
+                            const volunteers = await volRes.json();
+                            const resources = await resourcesRes.json();
+                            const shelters = await sheltersRes.json();
 
-                        const { jsPDF } = window.jspdf;
-                        const doc = new jsPDF();
+                            const { jsPDF } = window.jspdf;
+                            const doc = new jsPDF();
 
-                        doc.setFontSize(22);
-                        doc.setTextColor(254, 87, 51); // primary-container
-                        doc.text("Geo-Aid Central Registry", 14, 20);
+                            doc.setFontSize(22);
+                            doc.setTextColor(254, 87, 51);
+                            doc.text("Geo-Aid Central Registry", 14, 20);
+                            doc.setFontSize(10);
+                            doc.setTextColor(100);
+                            doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
 
-                        doc.setFontSize(10);
-                        doc.setTextColor(100);
-                        doc.text(
-                            `Generated on: ${new Date().toLocaleString()}`,
-                            14,
-                            28,
-                        );
+                            doc.setFontSize(14);
+                            doc.setTextColor(40);
+                            doc.text("Volunteer Fleet", 14, 40);
+                            doc.autoTable({
+                                startY: 45,
+                                head: [["ID", "Name", "Role", "Status", "Location", "Age", "Gender"]],
+                                body: volunteers.map((v) => [v.VolunteerID, v.Name, v.Role, v.Status, v.Location, v.Age, v.Gender]),
+                                theme: "grid",
+                                headStyles: { fillColor: [254, 87, 51] },
+                                styles: { fontSize: 8 },
+                            });
 
-                        // Volunteers Table
-                        doc.setFontSize(14);
-                        doc.setTextColor(40);
-                        doc.text("Volunteer Fleet", 14, 40);
-                        doc.autoTable({
-                            startY: 45,
-                            head: [
-                                [
-                                    "ID",
-                                    "Name",
-                                    "Role",
-                                    "Status",
-                                    "Location",
-                                    "Age",
-                                    "Gender",
-                                ],
-                            ],
-                            body: volunteers.map((v) => [
-                                v.VolunteerID,
-                                v.Name,
-                                v.Role,
-                                v.Status,
-                                v.Location,
-                                v.Age,
-                                v.Gender,
-                            ]),
-                            theme: "grid",
-                            headStyles: { fillColor: [254, 87, 51] },
-                            styles: { fontSize: 8 },
-                        });
+                            doc.setFontSize(14);
+                            doc.setTextColor(40);
+                            doc.text("Emergency Resources", 14, doc.lastAutoTable.finalY + 15);
+                            doc.autoTable({
+                                startY: doc.lastAutoTable.finalY + 20,
+                                head: [["ID", "Category", "Quantity", "Status", "Location", "Coordinates"]],
+                                body: resources.map((r) => [r.ResourceID, r.CategoryName, `${r.Quantity} ${r.UnitOfMeasure}`, r.Status, r.CurrentLocation, `${r.Latitude}, ${r.Longitude}`]),
+                                theme: "grid",
+                                headStyles: { fillColor: [254, 87, 51] },
+                                styles: { fontSize: 8 },
+                            });
 
-                        // Resources Table
-                        doc.setFontSize(14);
-                        doc.setTextColor(40);
-                        doc.text(
-                            "Emergency Resources",
-                            14,
-                            doc.lastAutoTable.finalY + 15,
-                        );
-                        doc.autoTable({
-                            startY: doc.lastAutoTable.finalY + 20,
-                            head: [
-                                [
-                                    "ID",
-                                    "Category",
-                                    "Quantity",
-                                    "Status",
-                                    "Location",
-                                    "Coordinates",
-                                ],
-                            ],
-                            body: resources.map((r) => [
-                                r.ResourceID,
-                                r.CategoryName,
-                                `${r.Quantity} ${r.UnitOfMeasure}`,
-                                r.Status,
-                                r.CurrentLocation,
-                                `${r.Latitude}, ${r.Longitude}`,
-                            ]),
-                            theme: "grid",
-                            headStyles: { fillColor: [254, 87, 51] },
-                            styles: { fontSize: 8 },
-                        });
+                            doc.setFontSize(14);
+                            doc.setTextColor(40);
+                            doc.text("Active Shelters", 14, doc.lastAutoTable.finalY + 15);
+                            doc.autoTable({
+                                startY: doc.lastAutoTable.finalY + 20,
+                                head: [["Name", "Capacity", "Occupancy", "Status", "Area", "Type"]],
+                                body: shelters.map((s) => [s.ShelterName, s.TotalCapacity, s.CurrentOccupancy, s.Status, s.AreaName, s.ZoneType]),
+                                theme: "grid",
+                                headStyles: { fillColor: [254, 87, 51] },
+                                styles: { fontSize: 8 },
+                            });
 
-                        // Shelters Table
-                        doc.setFontSize(14);
-                        doc.setTextColor(40);
-                        doc.text(
-                            "Active Shelters",
-                            14,
-                            doc.lastAutoTable.finalY + 15,
-                        );
-                        doc.autoTable({
-                            startY: doc.lastAutoTable.finalY + 20,
-                            head: [
-                                [
-                                    "Name",
-                                    "Capacity",
-                                    "Occupancy",
-                                    "Status",
-                                    "Area",
-                                    "Type",
-                                ],
-                            ],
-                            body: shelters.map((s) => [
-                                s.ShelterName,
-                                s.TotalCapacity,
-                                s.CurrentOccupancy,
-                                s.Status,
-                                s.AreaName,
-                                s.ZoneType,
-                            ]),
-                            theme: "grid",
-                            headStyles: { fillColor: [254, 87, 51] },
-                            styles: { fontSize: 8 },
-                        });
+                            doc.save("geo-aid-registry.pdf");
+                        } catch (err) {
+                            console.error("Export failed:", err);
+                            alert("Export failed. Check the console for details.");
+                        } finally {
+                            btn.innerText = originalText;
+                            btn.disabled = false;
+                        }
+                    });
+                }
+            })(); // end IIFE
+            </script>
 
-                        doc.save("geo-aid-registry.pdf");
-                    } catch (err) {
-                        console.error("Export failed:", err);
-                        alert("Export failed. Check the console for details.");
-                    } finally {
-                        btn.innerText = originalText;
-                        btn.disabled = false;
-                    }
-                });
-        </script>
+            </div>
+            <!-- /#view -->
+        </div>
+        <!-- /#main -->
+
         <script src="./router.js"></script>
     </body>
 </html>
