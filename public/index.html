@@ -23,6 +23,10 @@
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
+        <!-- Leaflet Fullscreen Plugin -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/3.0.0/Control.FullScreen.min.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/3.0.0/Control.FullScreen.min.js"></script>
+
         <!-- jsPDF -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -1102,9 +1106,14 @@
                     map = L.map("detail-map", {
                         zoomControl: false,
                         attributionControl: false,
+                        fullscreenControl: true,
+                        fullscreenControlOptions: { position: "topleft" },
                     }).setView([23.8103, 90.4125], 13);
                     L.tileLayer(
-                        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+                        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                            maxZoom: 19,
+                            attribution: "© OpenStreetMap contributors"
+                        }
                     ).addTo(map);
                     // Register with router for cleanup
                     if (window.registerLeafletMap)
