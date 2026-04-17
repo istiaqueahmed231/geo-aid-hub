@@ -33,7 +33,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _fetchMessages() async {
     try {
-      final res = await http.get(Uri.parse('http://localhost:3000/api/messages/${widget.requestId}'));
+      final res = await http.get(Uri.parse('https://geo-aid-hub.onrender.com/api/messages/${widget.requestId}'));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as List;
         setState(() {
@@ -54,7 +54,7 @@ class _ChatScreenState extends State<ChatScreen> {
     // Assuming backend will have a POST /api/messages route
     try {
       await http.post(
-        Uri.parse('http://localhost:3000/api/messages'),
+          Uri.parse('https://geo-aid-hub.onrender.com/api/messages'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'requestId': widget.requestId,

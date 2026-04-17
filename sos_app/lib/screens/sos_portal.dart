@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/api_service.dart';
@@ -172,7 +174,7 @@ class _SosPortalState extends State<SosPortal> {
               
               // Category Field
               DropdownButtonFormField<int>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 dropdownColor: const Color(0xFF1E1E1E),
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(

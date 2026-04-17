@@ -34,7 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _fetchRequests() async {
     try {
-      final res = await http.get(Uri.parse('http://localhost:3000/api/requests'));
+      final res = await http.get(Uri.parse('https://geo-aid-hub.onrender.com/api/requests'));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as List;
         setState(() {
@@ -53,7 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       try {
         Position pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
         await http.post(
-          Uri.parse('http://localhost:3000/api/volunteer/location'),
+            Uri.parse('https://geo-aid-hub.onrender.com/api/volunteer/location'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'uid': widget.uid,
@@ -95,7 +95,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 const Text('Available for Dispatch?', style: TextStyle(fontSize: 16)),
                 Switch(
-                  activeColor: Colors.greenAccent,
+                  activeThumbColor: Colors.greenAccent,
                   value: _isAvailable,
                   onChanged: _toggleAvailability,
                 )

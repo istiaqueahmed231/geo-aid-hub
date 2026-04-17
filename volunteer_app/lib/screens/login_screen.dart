@@ -53,30 +53,41 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Volunteer Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.security, size: 80, color: Colors.greenAccent),
-            const SizedBox(height: 20),
-            TextField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email')),
-            const SizedBox(height: 10),
-            TextField(controller: _pwController, decoration: const InputDecoration(labelText: 'Password'), obscureText: true),
-            const SizedBox(height: 30),
-            _isLoading ? const CircularProgressIndicator(color: Colors.greenAccent)
-              : ElevatedButton(
-                  onPressed: _login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.greenAccent, 
-                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15)
+        appBar: AppBar(title: const Text('Volunteer Login')),
+        // 1. Wrap the Padding in a Center and SingleChildScrollView
+        body: Center(
+          child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.security, size: 80, color: Colors.greenAccent),
+                  const SizedBox(height: 20),
+                  TextField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(labelText: 'Email')
                   ),
-                  child: const Text('LOGIN', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                )
-          ],
+                  const SizedBox(height: 10),
+                  TextField(
+                      controller: _pwController,
+                      decoration: const InputDecoration(labelText: 'Password'),
+                      obscureText: true
+                  ),
+                  const SizedBox(height: 30),
+                  _isLoading
+                      ? const CircularProgressIndicator(color: Colors.greenAccent)
+                      : ElevatedButton(
+                    onPressed: _login,
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.greenAccent,
+                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15)
+                    ),
+                    child: const Text('LOGIN', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                  )
+                ],
+              )
+          ),
         )
-      )
     );
   }
 }
