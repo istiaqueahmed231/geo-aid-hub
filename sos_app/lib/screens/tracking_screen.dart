@@ -50,11 +50,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
     final status = _requestData?['Status'] ?? 'Pending';
     final isDispatched = status == 'Dispatched';
     
-    final sosLat = _requestData?['Latitude'] != null ? (_requestData!['Latitude'] as num).toDouble() : 0.0;
-    final sosLon = _requestData?['Longitude'] != null ? (_requestData!['Longitude'] as num).toDouble() : 0.0;
+    final sosLat = _requestData?['Latitude'] != null ? double.tryParse(_requestData!['Latitude'].toString()) ?? 0.0 : 0.0;
+    final sosLon = _requestData?['Longitude'] != null ? double.tryParse(_requestData!['Longitude'].toString()) ?? 0.0 : 0.0;
 
-    final volLat = _requestData?['VolLat'] != null ? (_requestData!['VolLat'] as num).toDouble() : null;
-    final volLon = _requestData?['VolLon'] != null ? (_requestData!['VolLon'] as num).toDouble() : null;
+    final volLat = _requestData?['VolLat'] != null ? double.tryParse(_requestData!['VolLat'].toString()) : null;
+    final volLon = _requestData?['VolLon'] != null ? double.tryParse(_requestData!['VolLon'].toString()) : null;
 
     final volName = _requestData?['VolunteerName'] ?? 'Unknown Rescuer';
     final resourceName = _requestData?['DispatchedCategoryName'] ?? 'Resources';

@@ -36,6 +36,32 @@
 
         <link rel="stylesheet" href="./app.css" />
 
+        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <script id="tailwind-config">
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            background: "var(--bg)",
+                            surface: "var(--bg-panel)",
+                            primary: "var(--orange)",
+                            secondary: "var(--green)",
+                            error: "var(--red)",
+                            outline: "var(--border)",
+                            "surface-container": "var(--surface)",
+                            "on-surface": "var(--text)",
+                            "on-surface-variant": "var(--text-dim)",
+                        },
+                        fontFamily: {
+                            headline: ["Manrope"],
+                            body: ["Inter"],
+                        },
+                    },
+                },
+            };
+        </script>
+
         <style>
             /* ─── Dashboard Two-Panel Grid ─── */
             #dashboard-grid {
