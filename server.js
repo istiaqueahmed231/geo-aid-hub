@@ -289,9 +289,14 @@ app.get('/api/volunteers', (req, res) => {
 app.get('/api/requests/:requestId', (req, res) => {
     const { requestId } = req.params;
     const sql = `
-        SELECT r.*, v.Name AS VolunteerName, v.Latitude AS VolLat, v.Longitude AS VolLon 
+        SELECT r.*, v.Name AS VolunteerName, v.Latitude AS VolLat, v.Longitude AS VolLon,
+        c.CategoryName AS DispatchedCategoryName, c.UnitOfMeasure,
+        l.Latitude, l.Longitude
         FROM HelpRequests r 
         LEFT JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID 
+        LEFT JOIN Resources rsc ON r.AssignedResourceID = rsc.ResourceID
+        LEFT JOIN ResourceCategories c ON rsc.CategoryID = c.CategoryID
+        LEFT JOIN Locations l ON r.LocationID = l.LocationID
         WHERE r.RequestID = ?
     `;
     db.query(sql, [requestId], (err, results) => {

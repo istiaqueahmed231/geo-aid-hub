@@ -3,7 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
-import 'chat_screen.dart';
+import 'mission_tracking_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String uid;
@@ -118,7 +118,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ? ElevatedButton(
                             style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent),
                             onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(requestId: req['RequestID'])));
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => MissionTrackingScreen(requestId: req['RequestID'])));
                             },
                             child: const Text('Open Mission', style: TextStyle(color: Colors.black)),
                           )

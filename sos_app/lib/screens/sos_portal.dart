@@ -264,29 +264,69 @@ class _SosPortalState extends State<SosPortal> {
                 ],
               ),
               const SizedBox(height: 40),
-              
+
               // Send Button
               _isSending
                   ? const Center(child: CircularProgressIndicator(color: Colors.redAccent))
                   : ElevatedButton(
-                      onPressed: _sendSosAlert,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                onPressed: _sendSosAlert,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 8,
+                  shadowColor: Colors.redAccent.withOpacity(0.4),
+                ),
+                child: const Text(
+                  'SEND SOS ALERT',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ), // <-- Only one closing bracket needed here
+
+              const SizedBox(height: 24),
+              TextButton.icon(
+// ... rest of your code
+                onPressed: () {
+                  final TextEditingController idController = TextEditingController();
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: const Color(0xFF1E1E1E),
+                      title: const Text('Track Request', style: TextStyle(color: Colors.white)),
+                      content: TextField(
+                        controller: idController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: const InputDecoration(
+                          labelText: 'Enter Request ID',
+                          labelStyle: TextStyle(color: Colors.grey),
+                          enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
                         ),
-                        elevation: 8,
-                        shadowColor: Colors.redAccent.withOpacity(0.4),
                       ),
-                      child: const Text(
-                        'SEND SOS ALERT',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.grey))),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                          onPressed: () {
+                            if (idController.text.isNotEmpty) {
+                              Navigator.pop(ctx);
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => TrackingScreen(requestId: int.parse(idController.text))));
+                            }
+                          },
+                          child: const Text('Track'),
+                        )
+                      ],
+                    )
+                  );
+                },
+                icon: const Icon(Icons.search, color: Colors.grey),
+                label: const Text('Track Existing Request', style: TextStyle(color: Colors.grey)),
+              )
             ],
           ),
         ),
