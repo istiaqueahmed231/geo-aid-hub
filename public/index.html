@@ -1036,11 +1036,12 @@
                         const res = await fetch(`/api/me?uid=${uid}`);
                         if (!res.ok) {
                             console.warn(
-                                "Volunteer profile not found for this UID. Dispatch will be disabled.",
+                                "Volunteer profile not found for this UID. Defaulting to Admin Dispatch.",
                             );
-                            return;
+                            currentVolunteer = { Name: "Admin Desk", Role: "Admin" };
+                        } else {
+                            currentVolunteer = await res.json();
                         }
-                        currentVolunteer = await res.json();
 
                         // Show badge in header
                         const badge =
