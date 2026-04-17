@@ -161,7 +161,7 @@
                         <p
                             class="text-zinc-400 max-w-3xl leading-relaxed text-sm"
                         >
-                            This interactive map displays undispatched SOS requests (Red) and available Volunteers (Green) in real-time. Use this view to coordinate dispatch efforts.
+                            This interactive map displays active Shelters (Red) and available Volunteers (Green) in real-time. Use this view to coordinate dispatch efforts.
                         </p>
                     </div>
 
@@ -265,11 +265,11 @@
             // Fetch requests and volunteers to plot
             async function loadEmergencyMap() {
                 try {
-                    const [reqRes, volRes] = await Promise.all([
-                        fetch('/api/requests'),
+                    const [shelterRes, volRes] = await Promise.all([
+                        fetch('/api/shelters'),
                         fetch('/api/volunteers')
                     ]);
-                    const requests = await reqRes.json();
+                    const shelters = await shelterRes.json();
                     const volunteers = await volRes.json();
 
                     const tableBody = document.getElementById("map-table-body");
@@ -279,23 +279,23 @@
                     const bounds = [];
                     let activeCount = 0;
 
-                    // Plot Pending SOS Requests (RED)
-                    requests.filter(r => r.Status === 'Pending').forEach(req => {
+                    // Plot Shelters (RED)
+                    shelters.filter(s => s.Status !== 'Closed' && s.Latitude && s.Longitude).forEach(shelter => {
                         activeCount++;
                         let colorStr = "#ef4444"; // red-500
-                        const lat = parseFloat(req.Latitude);
-                        const lng = parseFloat(req.Longitude);
+                        const lat = parseFloat(shelter.Latitude);
+                        const lng = parseFloat(shelter.Longitude);
 
                         const row = document.createElement("tr");
                         row.className = "hover:bg-white/5 transition-colors cursor-pointer group";
                         row.innerHTML = `
                         <td class="py-3 px-3">
-                            <div class="font-bold text-red-400 group-hover:text-red-300 transition-colors">SOS: ${req.RequestorName}</div>
-                            <div class="text-[10px] text-zinc-500">${req.CategoryName}</div>
+                            <div class="font-bold text-red-400 group-hover:text-red-300 transition-colors">Shelter: ${shelter.ShelterName}</div>
+                            <div class="text-[10px] text-zinc-500">${shelter.AreaName} (${shelter.CurrentOccupancy}/${shelter.TotalCapacity})</div>
                         </td>
                         <td class="py-3 px-3 pl-4">
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-400">
-                                Pending
+                                ${shelter.Status}
                             </span>
                         </td>
                         `;
@@ -304,8 +304,9 @@
                         const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
                         
                         marker.bindPopup(`<div style="font-family: 'Inter', sans-serif; color: #111;">
-                            <h3 style="margin: 0; font-weight: bold; font-size: 14px;">SOS Request</h3>
-                            <p style="margin: 4px 0 0; font-size: 12px; color: #666;">${req.RequestorName} - ${req.CategoryName}</p>
+                            <h3 style="margin: 0; font-weight: bold; font-size: 14px;">Shelter</h3>
+                            <p style="margin: 4px 0 0; font-size: 12px; color: #666;">${shelter.ShelterName}</p>
+                            <p style="margin: 2px 0 0; font-size: 12px; color: #666;">Occupancy: ${shelter.CurrentOccupancy}/${shelter.TotalCapacity}</p>
                         </div>`);
 
                         row.onclick = () => { if (marker.isPopupOpen()) return; map.flyTo([lat, lng], 13); marker.openPopup(); };
