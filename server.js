@@ -4,6 +4,18 @@ const cors = require('cors');
 const http = require('http'); // Node.js http module
 const { Server } = require('socket.io'); // Socket.io
 require('dotenv').config(); 
+const admin = require("firebase-admin");
+
+// Try initializing Firebase Admin
+try {
+    const serviceAccount = require("./serviceAccountKey.json");
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log("✅ Firebase Admin initialized for Push Notifications.");
+} catch(e) {
+    console.log("⚠️ Push notifications disabled: serviceAccountKey.json not found.");
+} 
 
 // 2. Set up the server
 const app = express();
@@ -100,6 +112,11 @@ db.connect((err) => {
         db.query(`ALTER TABLE Volunteers ADD COLUMN Latitude DOUBLE, ADD COLUMN Longitude DOUBLE`, (err) => {
             if (err && err.code !== 'ER_DUP_FIELDNAME') {
                 console.error("Alter Volunteers failed:", err.message);
+            }
+        });
+        db.query(`ALTER TABLE HelpRequests ADD COLUMN FCMToken VARCHAR(255)`, (err) => {
+            if (err && err.code !== 'ER_DUP_FIELDNAME') {
+                console.error("Alter HelpRequests failed:", err.message);
             }
         });
         // ----------------------------------------
@@ -227,7 +244,7 @@ app.get('/api/shelters', (req, res) => {
 
 // --- RECEIVE SOS FROM FLUTTER APP ---
 app.post('/api/sos', (req, res) => {
-    const { RequestorName, CategoryID, UrgencyScore, Latitude, Longitude, ShortMessage } = req.body;
+    const { RequestorName, CategoryID, UrgencyScore, Latitude, Longitude, ShortMessage, FCMToken } = req.body;
 
     // 1. First, save the new GPS location to the Locations table
     const insertLocationSql = `
@@ -242,11 +259,11 @@ app.post('/api/sos', (req, res) => {
 
         // 2. Then, save the actual SOS request linked to that new location
         const insertRequestSql = `
-            INSERT INTO HelpRequests (RequestorName, LocationID, CategoryID, UrgencyScore, Status, ShortMessage) 
-            VALUES (?, ?, ?, ?, 'Pending', ?);
+            INSERT INTO HelpRequests (RequestorName, LocationID, CategoryID, UrgencyScore, Status, ShortMessage, FCMToken) 
+            VALUES (?, ?, ?, ?, 'Pending', ?, ?);
         `;
 
-        db.query(insertRequestSql, [RequestorName, newLocationId, CategoryID, UrgencyScore, ShortMessage], (err, reqResult) => {
+        db.query(insertRequestSql, [RequestorName, newLocationId, CategoryID, UrgencyScore, ShortMessage, FCMToken || null], (err, reqResult) => {
             if (err) return res.status(500).json({ error: "Failed to save SOS request" });
             
             // --- SOCKET.IO EMISSION ---
@@ -596,6 +613,21 @@ app.post('/api/dispatch', (req, res) => {
                     DispatchedAt: new Date()
                 });
                 
+                // Fetch FCM Token and send Push Notification if available
+                db.query("SELECT FCMToken FROM HelpRequests WHERE RequestID = ?", [requestId], (err, reqRes) => {
+                    if (!err && reqRes.length > 0 && reqRes[0].FCMToken) {
+                        if (admin.apps.length > 0) { // Check if Firebase Admin is initialized
+                            admin.messaging().send({
+                                token: reqRes[0].FCMToken,
+                                notification: {
+                                    title: "🚨 Rescue Dispatched!",
+                                    body: `Help is on the way! Your SOS request #${requestId} has been dispatched.`
+                                }
+                            }).catch(e => console.error("FCM Send Error:", e));
+                        }
+                    }
+                });
+
                 res.json({ message: `Dispatch successful! ${dispatchQty} units have been deployed.` });
             });
         });

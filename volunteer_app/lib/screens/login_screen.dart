@@ -20,21 +20,20 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       const apiKey = "AIzaSyDwnQj_7B2-cp7qz4wVLOW92AGMXBAuA9Q";
       final res = await http.post(
-        Uri.parse('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$apiKey'),
-        body: jsonEncode({
-          'email': _emailController.text,
-          'password': _pwController.text,
-          'returnSecureToken': true
-        }),
-        headers: {'Content-Type': 'application/json'}
+          Uri.parse('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$apiKey'),
+          body: jsonEncode({
+            'email': _emailController.text,
+            'password': _pwController.text,
+            'returnSecureToken': true
+          }),
+          headers: {'Content-Type': 'application/json'}
       );
 
       final data = jsonDecode(res.body);
       if (data['error'] != null) {
         throw Exception(data['error']['message']);
       }
-      
-      // Successfully logged in, navigate
+
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -53,39 +52,79 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text('Volunteer Login')),
-        // 1. Wrap the Padding in a Center and SingleChildScrollView
-        body: Center(
-          child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.security, size: 80, color: Colors.greenAccent),
-                  const SizedBox(height: 20),
-                  TextField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(labelText: 'Email')
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                      controller: _pwController,
-                      decoration: const InputDecoration(labelText: 'Password'),
-                      obscureText: true
-                  ),
-                  const SizedBox(height: 30),
-                  _isLoading
-                      ? const CircularProgressIndicator(color: Colors.greenAccent)
-                      : ElevatedButton(
-                    onPressed: _login,
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.greenAccent,
-                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15)
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF0B0F19), Color(0xFF111827)],
+            ),
+          ),
+          child: Center(
+            child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Glowing Icon Effect
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.greenAccent.withOpacity(0.1),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.greenAccent.withOpacity(0.2),
+                              blurRadius: 40,
+                              spreadRadius: 10,
+                            )
+                          ]
+                      ),
+                      child: const Icon(Icons.security_rounded, size: 80, color: Colors.greenAccent),
                     ),
-                    child: const Text('LOGIN', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                  )
-                ],
-              )
+                    const SizedBox(height: 32),
+                    const Text(
+                      'VOLUNTEER PORTAL',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.white),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Authenticate to access missions',
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
+                    const SizedBox(height: 48),
+
+                    TextField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Email Address',
+                          prefixIcon: Icon(Icons.email_outlined, color: Colors.greenAccent),
+                        )
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _pwController,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: Icon(Icons.lock_outline, color: Colors.greenAccent),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator(color: Colors.greenAccent))
+                          : ElevatedButton(
+                        onPressed: _login,
+                        child: const Text('SECURE LOGIN'),
+                      ),
+                    )
+                  ],
+                )
+            ),
           ),
         )
     );

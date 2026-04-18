@@ -34,7 +34,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   Future<void> _fetchStatus() async {
     try {
-      final res = await http.get(Uri.parse('https://geo-aid-hub.onrender.com/api/requests/${widget.requestId}')); 
+      final res = await http.get(Uri.parse('https://geo-aid-hub.onrender.com/api/requests/${widget.requestId}'));
       if (res.statusCode == 200) {
         setState(() {
           _requestData = jsonDecode(res.body);
@@ -49,7 +49,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   Widget build(BuildContext context) {
     final status = _requestData?['Status'] ?? 'Pending';
     final isDispatched = status == 'Dispatched';
-    
+
     final sosLat = _requestData?['Latitude'] != null ? double.tryParse(_requestData!['Latitude'].toString()) ?? 0.0 : 0.0;
     final sosLon = _requestData?['Longitude'] != null ? double.tryParse(_requestData!['Longitude'].toString()) ?? 0.0 : 0.0;
 
@@ -62,117 +62,138 @@ class _TrackingScreenState extends State<TrackingScreen> {
     final unit = _requestData?['UnitOfMeasure'] ?? 'units';
 
     return Scaffold(
-      appBar: AppBar(title: Text('Request #${widget.requestId}')),
-      body: _requestData == null
-          ? const Center(child: CircularProgressIndicator(color: Colors.redAccent))
-          : Column(
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: FlutterMap(
-                    options: MapOptions(
-                      initialCenter: volLat != null && volLon != null ? LatLng(volLat, volLon) : LatLng(sosLat, sosLon),
-                      initialZoom: 14.0,
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-                        subdomains: const ['a', 'b', 'c'],
+        appBar: AppBar(title: Text('MISSION #${widget.requestId}')),
+        body: _requestData == null
+            ? const Center(child: CircularProgressIndicator(color: Colors.redAccent))
+            : Column(
+          children: [
+            Expanded(
+              flex: 5,
+              child: FlutterMap(
+                options: MapOptions(
+                  initialCenter: volLat != null && volLon != null ? LatLng(volLat, volLon) : LatLng(sosLat, sosLon),
+                  initialZoom: 14.0,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                    subdomains: const ['a', 'b', 'c'],
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: LatLng(sosLat, sosLon),
+                        width: 80,
+                        height: 80,
+                        child: const Icon(Icons.my_location, color: Colors.redAccent, size: 40),
                       ),
-                      MarkerLayer(
-                        markers: [
-                          // SOS Location
-                          Marker(
-                            point: LatLng(sosLat, sosLon),
-                            width: 80,
-                            height: 80,
-                            child: const Icon(Icons.location_on, color: Colors.redAccent, size: 40),
-                          ),
-                          // Volunteer Location
-                          if (volLat != null && volLon != null)
-                            Marker(
-                              point: LatLng(volLat, volLon),
-                              width: 80,
-                              height: 80,
-                              child: const Icon(Icons.directions_run, color: Colors.greenAccent, size: 40),
-                            ),
-                        ],
-                      ),
+                      if (volLat != null && volLon != null)
+                        Marker(
+                          point: LatLng(volLat, volLon),
+                          width: 80,
+                          height: 80,
+                          child: const Icon(Icons.navigation, color: Colors.orangeAccent, size: 40),
+                        ),
                     ],
                   ),
-                ),
-                Expanded(
-                  flex: 4,
-                  child: Container(
-                    padding: const EdgeInsets.all(24.0),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF1E1E1E),
-                      boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 10, offset: Offset(0, -5))]
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
+                ],
+              ),
+            ),
+            Expanded(
+                flex: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(24.0),
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withOpacity(0.5),
+                            blurRadius: 20,
+                            offset: const Offset(0, -5)
+                        )
+                      ]
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                            color: isDispatched ? Colors.orangeAccent.withOpacity(0.1) : Colors.white10,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: isDispatched ? Colors.orangeAccent.withOpacity(0.3) : Colors.transparent)
+                        ),
+                        child: Row(
                           children: [
                             Icon(
-                              isDispatched ? Icons.check_circle : Icons.hourglass_empty,
-                              color: isDispatched ? Colors.greenAccent : Colors.orangeAccent,
+                              isDispatched ? Icons.radar : Icons.satellite_alt,
+                              color: isDispatched ? Colors.orangeAccent : Colors.grey,
                               size: 32,
                             ),
-                            const SizedBox(width: 12),
-                            Text(
-                              isDispatched ? 'Rescue En Route' : 'Finding Nearest Help...',
-                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                isDispatched ? 'Rescue Unit En Route' : 'Broadcasting Signal...',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDispatched ? Colors.orangeAccent : Colors.white
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        const Divider(height: 32, color: Colors.white24),
-                        if (isDispatched) ...[
-                          _buildDetailRow(Icons.person, 'Volunteer', volName),
-                          const SizedBox(height: 12),
-                          _buildDetailRow(Icons.medical_services, 'Deploying', '$quantity $unit of $resourceName'),
-                          const Spacer(),
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.chat),
-                            label: const Text('Contact Volunteer', style: TextStyle(fontSize: 16)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.redAccent,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
-                            ),
-                            onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(requestId: widget.requestId)));
-                            },
-                          )
-                        ] else ...[
-                          const Expanded(
+                      ),
+                      const SizedBox(height: 24),
+                      if (isDispatched) ...[
+                        _buildDetailRow(Icons.badge, 'Dispatched Rescuer', volName),
+                        const SizedBox(height: 16),
+                        _buildDetailRow(Icons.inventory_2, 'Incoming Supplies', '$quantity $unit of $resourceName'),
+                        const Spacer(),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.chat_bubble_outline),
+                          label: const Text('ESTABLISH COMMS'),
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(requestId: widget.requestId)));
+                          },
+                        )
+                      ] else ...[
+                        const Expanded(
                             child: Center(
-                              child: Text(
-                                'Awaiting Command Center Dispatch',
-                                style: TextStyle(color: Colors.grey, fontSize: 16),
-                              )
+                                child: Text(
+                                  'Awaiting confirmation from central command.',
+                                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                                )
                             )
-                          )
-                        ]
-                      ],
-                    ),
-                  )
+                        )
+                      ]
+                    ],
+                  ),
                 )
-              ],
             )
+          ],
+        )
     );
   }
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, color: Colors.grey, size: 20),
-        const SizedBox(width: 12),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12)
+          ),
+          child: Icon(icon, color: Colors.grey, size: 24),
+        ),
+        const SizedBox(width: 16),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-            Text(value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12, letterSpacing: 1)),
+            Text(value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         )
       ],
