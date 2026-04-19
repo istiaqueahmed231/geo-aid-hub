@@ -7,16 +7,23 @@ require("dotenv").config();
 const admin = require("firebase-admin");
 
 // Try initializing Firebase Admin
+// On Render (production): set the FIREBASE_SERVICE_ACCOUNT env variable to the full JSON string of serviceAccountKey.json
+// Locally: falls back to reading the file directly
 try {
-  const serviceAccount = require("./serviceAccountKey.json");
+  let serviceAccount;
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    console.log("✅ Firebase Admin: loading credentials from env variable.");
+  } else {
+    serviceAccount = require("./serviceAccountKey.json");
+    console.log("✅ Firebase Admin: loading credentials from local file.");
+  }
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
   console.log("✅ Firebase Admin initialized for Push Notifications.");
 } catch (e) {
-  console.log(
-    "⚠️ Push notifications disabled: serviceAccountKey.json not found.",
-  );
+  console.error("⚠️ Push notifications disabled. Reason:", e.message);
 }
 
 // 2. Set up the server
