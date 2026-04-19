@@ -138,6 +138,14 @@ db.connect((err) => {
         }
       },
     );
+    db.query(
+      `ALTER TABLE Volunteers ADD COLUMN FCMToken VARCHAR(255)`,
+      (err) => {
+        if (err && err.code !== "ER_DUP_FIELDNAME") {
+          console.error("Alter Volunteers FCMToken failed:", err.message);
+        }
+      },
+    );
     // ----------------------------------------
   }
 });
@@ -460,6 +468,21 @@ app.post("/api/volunteer/location", (req, res) => {
   });
 });
 
+// --- STORE VOLUNTEER FCM TOKEN ---
+app.post("/api/volunteer/fcm-token", (req, res) => {
+  const { uid, fcmToken } = req.body;
+  if (!uid || !fcmToken) {
+    return res.status(400).json({ error: "Missing uid or fcmToken" });
+  }
+  const sql = `UPDATE Volunteers SET FCMToken = ? WHERE UID = ?`;
+  db.query(sql, [fcmToken, uid], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.affectedRows === 0)
+      return res.status(404).json({ error: "Volunteer not found" });
+    res.json({ message: "FCM token saved" });
+  });
+});
+
 app.post("/api/volunteers", (req, res) => {
   const { uid, email, name, status, location, age, gender } = req.body;
 
@@ -766,6 +789,62 @@ app.post("/api/dispatch", (req, res) => {
                               `🗑️ Cleared invalid FCM token for request #${requestId}`,
                             );
                           },
+                        );
+                      }
+                    });
+                }
+              }
+            },
+          );
+
+          // Notify the assigned volunteer
+          db.query(
+            "SELECT FCMToken FROM Volunteers WHERE VolunteerID = ?",
+            [volunteerId],
+            (err, volRes) => {
+              if (!err && volRes.length > 0 && volRes[0].FCMToken) {
+                if (admin.apps.length > 0) {
+                  admin
+                    .messaging()
+                    .send({
+                      token: volRes[0].FCMToken,
+                      notification: {
+                        title: "🚨 Mission Assigned!",
+                        body: `You have been assigned to rescue mission #${requestId}. Open the app to begin.`,
+                      },
+                      data: {
+                        requestId: String(requestId),
+                        type: "mission_assigned",
+                      },
+                      android: {
+                        priority: "high",
+                        notification: {
+                          channelId: "rescue_missions_channel",
+                          priority: "high",
+                          defaultVibrateTimings: true,
+                          defaultSound: true,
+                        },
+                      },
+                    })
+                    .then(() =>
+                      console.log(
+                        `✅ Volunteer #${volunteerId} notified for mission #${requestId}`,
+                      ),
+                    )
+                    .catch((e) => {
+                      console.error("Volunteer FCM Error:", e.message || e);
+                      if (
+                        e.code ===
+                          "messaging/registration-token-not-registered" ||
+                        e.code === "messaging/invalid-registration-token"
+                      ) {
+                        db.query(
+                          "UPDATE Volunteers SET FCMToken = NULL WHERE VolunteerID = ?",
+                          [volunteerId],
+                          () =>
+                            console.log(
+                              `🗑️ Cleared invalid FCM token for volunteer #${volunteerId}`,
+                            ),
                         );
                       }
                     });

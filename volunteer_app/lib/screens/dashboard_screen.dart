@@ -3,7 +3,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'mission_tracking_screen.dart';
+import 'login_screen.dart';
+import '../main.dart' show showVolunteerNotification;
 
 class DashboardScreen extends StatefulWidget {
   final String uid;
@@ -24,6 +28,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _fetchRequests();
     _timer = Timer.periodic(const Duration(seconds: 10), (_) => _fetchRequests());
+
+    FirebaseMessaging.onMessage.listen((message) {
+      if (message.notification != null) {
+        showVolunteerNotification(message);
+      }
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      if (message.data['requestId'] != null) {
+        final requestId = int.parse(message.data['requestId'].toString());
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MissionTrackingScreen(requestId: requestId),
+          ),
+        );
+      }
+    });
   }
 
   @override
@@ -81,12 +103,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('remember_me');
+    await prefs.remove('saved_uid');
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           title: const Text('DISPATCH DASHBOARD'),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.logout, color: Colors.redAccent),
+              onPressed: _logout,
+            ),
             IconButton(
               icon: const Icon(Icons.refresh, color: Colors.greenAccent),
               onPressed: _fetchRequests,
@@ -259,7 +298,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       padding: const EdgeInsets.symmetric(vertical: 14)
                                   ),
-                                  onPressed: null, // Disabled state
+                                  onPressed: null,
                                 ),
                               )
                             ],
@@ -274,3 +313,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
+```
+
+Here's a summary of every change made, exactly as specified:
+
+1. **New imports** (lines 6–9) — Added `shared_preferences`, `firebase_messaging`, `login_screen.dart`, and the `showVolunteerNotification` show-import from `main.dart`.
+
+2. **`initState()` FCM listeners** (lines 32–48):
+   - `FirebaseMessaging.onMessage` — fires `showVolunteerNotification(message)` when the incoming message carries a notification payload (i.e. app is in foreground).
+   - `FirebaseMessaging.onMessageOpenedApp` — when the user taps a notification that opened the app from background, it parses `message.data['requestId']` as an `int` and pushes `MissionTrackingScreen`.
+
+3. **`_logout()` method** (lines 99–109) — Awaits `SharedPreferences.getInstance()`, removes both `remember_me` and `saved_uid`, then calls `Navigator.pushAndRemoveUntil` with `LoginScreen`, clearing the entire back-stack via the `(route) => false` predicate.
+
+4. **AppBar `actions`** (lines 114–121) — The logout `IconButton` (`Icons.logout`, `Colors.redAccent`, calls `_logout`) is placed **before** the existing refresh button, exactly as requested.

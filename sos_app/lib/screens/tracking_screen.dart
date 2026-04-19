@@ -78,6 +78,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                   TileLayer(
                     urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
                     subdomains: const ['a', 'b', 'c'],
+                    retinaMode: RetinaMode.isHighDensity(context),
                   ),
                   MarkerLayer(
                     markers: [
