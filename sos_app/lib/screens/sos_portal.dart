@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:http/http.dart' as http;
 import '../services/api_service.dart';
 import 'tracking_screen.dart';
 
@@ -31,10 +32,37 @@ class _SosPortalState extends State<SosPortal> {
   double _urgencyScore = 5.0;
   List<Map<String, dynamic>> _history = [];
 
+  // Keeps the latest FCM token in SharedPreferences so _sendSosAlert can read it quickly.
+  Future<void> _updateFcmToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedRequestId = prefs.getInt('active_request_id');
+    // Persist the latest token locally.
+    await prefs.setString('fcm_token', token);
+    // If there is an active request, push the refreshed token to the server.
+    if (storedRequestId != null) {
+      try {
+        await http.post(
+          Uri.parse('https://geo-aid-hub.onrender.com/api/update-fcm-token'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'requestId': storedRequestId, 'fcmToken': token}),
+        );
+        debugPrint("FCM token refreshed on server for request #$storedRequestId");
+      } catch (e) {
+        debugPrint("Failed to push refreshed FCM token: $e");
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _loadHistory();
+
+    // Keep the server in sync whenever Firebase rotates the FCM token.
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+      debugPrint("FCM token refreshed: $newToken");
+      _updateFcmToken(newToken);
+    });
 
     // Add this listener to catch notifications while the app is open
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -151,8 +179,12 @@ class _SosPortalState extends State<SosPortal> {
 
                     final responseData = jsonDecode(response.body);
                     final requestId = responseData['requestId'];
+                    // Persist the active request ID so token refresh can update it on the server
+                    SharedPreferences.getInstance().then((prefs) {
+                      prefs.setInt('active_request_id', requestId);
+                    });
                     _saveHistory(
-                        requestId, 
+                        requestId,
                         _categories[_selectedCategory] ?? 'Unknown',
                         _urgencyScore.toInt(),
                         _messageController.text,
@@ -440,7 +472,7 @@ class _SosPortalState extends State<SosPortal> {
                                                     const SizedBox(height: 10),
                                                     const Text('Message:', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
                                                     Text(
-                                                      item['message']?.isNotEmpty == true ? item['message'] : 'No message provided', 
+                                                      item['message']?.isNotEmpty == true ? item['message'] : 'No message provided',
                                                       style: const TextStyle(color: Colors.grey, fontStyle: FontStyle.italic)
                                                     ),
                                                   ],
