@@ -337,12 +337,10 @@ app.post("/api/sos", (req, res) => {
         });
         // ---------------------------
 
-        res
-          .status(201)
-          .json({
-            message: "SOS Received successfully!",
-            requestId: reqResult.insertId,
-          });
+        res.status(201).json({
+          message: "SOS Received successfully!",
+          requestId: reqResult.insertId,
+        });
       },
     );
   });
@@ -485,12 +483,10 @@ app.post("/api/volunteers", (req, res) => {
           .status(500)
           .json({ error: "Failed to create volunteer profile" });
       }
-      res
-        .status(201)
-        .json({
-          message: "Volunteer created successfully",
-          id: result.insertId,
-        });
+      res.status(201).json({
+        message: "Volunteer created successfully",
+        id: result.insertId,
+      });
     },
   );
 });
@@ -727,10 +723,18 @@ app.post("/api/dispatch", (req, res) => {
                         title: "🚨 Rescue Dispatched!",
                         body: `Help is on the way! Your SOS request #${requestId} has been dispatched.`,
                       },
+                      // data is required for background/terminated app to wake up
+                      data: {
+                        requestId: String(requestId),
+                        type: "dispatch",
+                      },
                       android: {
+                        priority: "high",
                         notification: {
                           channelId: "high_importance_channel",
                           priority: "high",
+                          defaultVibrateTimings: true,
+                          defaultSound: true,
                         },
                       },
                     })

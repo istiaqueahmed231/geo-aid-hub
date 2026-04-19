@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import '../services/api_service.dart';
 import 'tracking_screen.dart';
+import '../main.dart' show showForegroundNotification;
 
 class SosPortal extends StatefulWidget {
   const SosPortal({super.key});
@@ -58,28 +59,21 @@ class _SosPortalState extends State<SosPortal> {
     super.initState();
     _loadHistory();
 
+    // Log the FCM token so we can verify it is non-null during testing
+    FirebaseMessaging.instance.getToken().then((token) {
+      debugPrint("📲 FCM Token: $token");
+    });
+
     // Keep the server in sync whenever Firebase rotates the FCM token.
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
       debugPrint("FCM token refreshed: $newToken");
       _updateFcmToken(newToken);
     });
 
-    // Add this listener to catch notifications while the app is open
+    // Show a real system notification while the app is open (foreground)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
-        // Show an in-app banner/snackbar when a message arrives
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${message.notification?.title}: ${message.notification?.body}'),
-            backgroundColor: Colors.green, // Or orangeAccent to fit your theme
-            duration: const Duration(seconds: 5),
-            action: SnackBarAction(
-              label: 'DISMISS',
-              textColor: Colors.white,
-              onPressed: () {},
-            ),
-          ),
-        );
+        showForegroundNotification(message);
       }
     });
 
