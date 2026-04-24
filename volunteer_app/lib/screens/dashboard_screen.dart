@@ -313,16 +313,5 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
-```
 
-Here's a summary of every change made, exactly as specified:
 
-1. **New imports** (lines 6–9) — Added `shared_preferences`, `firebase_messaging`, `login_screen.dart`, and the `showVolunteerNotification` show-import from `main.dart`.
-
-2. **`initState()` FCM listeners** (lines 32–48):
-   - `FirebaseMessaging.onMessage` — fires `showVolunteerNotification(message)` when the incoming message carries a notification payload (i.e. app is in foreground).
-   - `FirebaseMessaging.onMessageOpenedApp` — when the user taps a notification that opened the app from background, it parses `message.data['requestId']` as an `int` and pushes `MissionTrackingScreen`.
-
-3. **`_logout()` method** (lines 99–109) — Awaits `SharedPreferences.getInstance()`, removes both `remember_me` and `saved_uid`, then calls `Navigator.pushAndRemoveUntil` with `LoginScreen`, clearing the entire back-stack via the `(route) => false` predicate.
-
-4. **AppBar `actions`** (lines 114–121) — The logout `IconButton` (`Icons.logout`, `Colors.redAccent`, calls `_logout`) is placed **before** the existing refresh button, exactly as requested.

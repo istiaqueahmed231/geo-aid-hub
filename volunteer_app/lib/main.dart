@@ -96,8 +96,8 @@ class GeoAidVolunteerApp extends StatelessWidget {
           secondary: Colors.tealAccent,
           surface: Color(0xFF151C2C),
         ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF0B0F19),
+        appBarTheme: AppBarTheme(
+          backgroundColor: const Color(0xFF0B0F19),
           elevation: 0,
           centerTitle: true,
           titleTextStyle: TextStyle(
