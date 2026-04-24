@@ -16,6 +16,32 @@
     --surface-hi:   #21252b;
     --selected-res: rgba(254,87,51,0.10);
     --shadow:       0 12px 40px -12px rgba(0,0,0,0.5);
+    --bg-header:    rgba(10,12,15,0.92);
+    --header-text:  white;
+    --scroll-thumb: #2a2d32;
+    --nav-hover-bg: rgba(255,255,255,0.04);
+}
+
+:root:not(.dark) {
+    --bg:           #f4f6f8;
+    --bg-panel:     #ffffff;
+    --sidebar-bg:   #ffffff;
+    --border:       rgba(0,0,0,0.09);
+    --border-strong:rgba(0,0,0,0.18);
+    --text:         #1f2937;
+    --text-dim:     #6b7280;
+    --orange:       #e54f2c;
+    --orange-dim:   #d4401c;
+    --green:        #34a534;
+    --red:          #ef4444;
+    --surface:      #e5e7eb;
+    --surface-hi:   #d1d5db;
+    --selected-res: rgba(229, 79, 44, 0.08);
+    --shadow:       0 8px 30px -8px rgba(0,0,0,0.1);
+    --bg-header:    rgba(255,255,255,0.95);
+    --header-text:  #1f2937;
+    --scroll-thumb: #d1d5db;
+    --nav-hover-bg: rgba(0,0,0,0.05);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,7 +57,7 @@ body {
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2a2d32; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--orange); }
 
 /* ─── Sidebar ─── */
@@ -79,7 +105,7 @@ body {
     font-weight: 500;
     transition: all 0.15s;
 }
-.nav-link:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.nav-link:hover { background: var(--nav-hover-bg); color: var(--text); }
 .nav-link.active { background: rgba(254,87,51,0.10); color: var(--orange); }
 .nav-link .material-symbols-outlined { font-size: 19px; }
 
@@ -95,7 +121,7 @@ body {
 #header {
     height: 60px;
     min-height: 60px;
-    background: rgba(10,12,15,0.92);
+    background: var(--bg-header);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
     display: flex;
@@ -121,7 +147,7 @@ body {
     font-size: 12px; font-weight: 900;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: white;
+    color: var(--header-text);
 }
 .header-title span { color: var(--orange); }
 .header-divider { width: 1px; height: 26px; background: var(--border); }
