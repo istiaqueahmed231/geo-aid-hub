@@ -435,11 +435,11 @@ app.get("/api/admin/verify", (req, res) => {
   if (!email) return res.status(400).json({ error: "Missing email parameter" });
 
   // We check if this email exists in the Admins table
-  const sql = `SELECT AdminID FROM Admins WHERE Email = ? LIMIT 1`;
+  const sql = `SELECT AdminID, Admin_name FROM Admins WHERE Email = ? LIMIT 1`;
   db.query(sql, [email], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     if (results.length > 0) {
-      res.json({ isAdmin: true });
+      res.json({ isAdmin: true, adminName: results[0].Admin_name });
     } else {
       res.json({ isAdmin: false });
     }

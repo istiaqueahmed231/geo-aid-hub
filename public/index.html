@@ -662,10 +662,10 @@
                     <span class="material-symbols-outlined">group</span>
                     Volunteer Fleet
                 </a>
-                <a class="nav-link" href="support.html">
+                <!-- <a class="nav-link" href="support.html">
                     <span class="material-symbols-outlined">support</span>
                     Support & Info
-                </a>
+                </a> -->
             </div>
 
             <div class="sidebar-footer">
@@ -1069,9 +1069,25 @@
                         const res = await fetch(`/api/me?uid=${uid}`);
                         if (!res.ok) {
                             console.warn(
-                                "Volunteer profile not found for this UID. Defaulting to Admin Dispatch.",
+                                "Volunteer profile not found for this UID. Fetching whitelisted Admin profile.",
                             );
-                            currentVolunteer = { Name: "Admin Desk", Role: "Admin" };
+                            
+                            let adminName = "Admin Desk";
+                            const email = window.currentFirebaseUser ? window.currentFirebaseUser.email : null;
+                            if (email) {
+                                try {
+                                    const verifyRes = await fetch(`/api/admin/verify?email=${encodeURIComponent(email)}`);
+                                    if (verifyRes.ok) {
+                                        const verifyData = await verifyRes.json();
+                                        if (verifyData.isAdmin && verifyData.adminName) {
+                                            adminName = verifyData.adminName;
+                                        }
+                                    }
+                                } catch (errVerify) {
+                                    console.error("Admin verification fetch failed:", errVerify);
+                                }
+                            }
+                            currentVolunteer = { Name: adminName, Role: "Admin" };
                         } else {
                             currentVolunteer = await res.json();
                         }
