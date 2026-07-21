@@ -188,6 +188,11 @@
       // 8. Re-run scripts inside the new view
       runViewScripts(currentView);
 
+      // Sync theme icon for any new theme buttons in the loaded view
+      if (typeof window.updateThemeIcons === "function") {
+        window.updateThemeIcons();
+      }
+
       // 9. Scroll to top
       currentView.scrollTop = 0;
       window.scrollTo(0, 0);
