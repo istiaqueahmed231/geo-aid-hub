@@ -59,11 +59,16 @@ export function signup() {
     const status = document.getElementById("status").value.trim();
     const location = document.getElementById("location").value.trim();
     
-    // Optional fields
+    // Extended fields
     const ageElem = document.getElementById("age");
     const genderElem = document.getElementById("gender");
+    const phoneElem = document.getElementById("phoneNumber");
+    const addressElem = document.getElementById("homeAddress");
+
     const age = ageElem ? ageElem.value.trim() : null;
     const gender = genderElem ? genderElem.value.trim() : null;
+    const phoneNumber = phoneElem ? phoneElem.value.trim() : null;
+    const homeAddress = addressElem ? addressElem.value.trim() : null;
 
     if (!email || !password || !name) {
       toast("Email, password and name are required", true);
@@ -77,7 +82,7 @@ export function signup() {
         fetch("/api/volunteers", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uid, email, name, status, location, age, gender })
+          body: JSON.stringify({ uid, email, name, status, location, age, gender, phoneNumber, homeAddress })
         })
           .then(async (res) => {
             const data = await res.json();

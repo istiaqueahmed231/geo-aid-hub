@@ -146,6 +146,22 @@ db.connect((err) => {
         }
       },
     );
+    db.query(
+      `ALTER TABLE Volunteers ADD COLUMN PhoneNumber VARCHAR(50), ADD COLUMN HomeAddress TEXT, ADD COLUMN IsVerified TINYINT(1) DEFAULT 0, ADD COLUMN VerifiedByAdminName VARCHAR(255)`,
+      (err) => {
+        if (err && err.code !== "ER_DUP_FIELDNAME") {
+          console.error("Alter Volunteers extended fields failed:", err.message);
+        } else {
+          // Mark pre-existing test/dummy volunteers as Verified so test data remains working
+          db.query(
+            `UPDATE Volunteers SET IsVerified = 1, VerifiedByAdminName = 'System/Initial' WHERE IsVerified IS NULL OR (IsVerified = 0 AND (UID IS NULL OR UID = ''))`,
+            (err) => {
+              if (err) console.error("Initial verification backfill failed:", err.message);
+            }
+          );
+        }
+      },
+    );
     // ----------------------------------------
   }
 });
@@ -363,9 +379,8 @@ app.post("/api/sos", (req, res) => {
 // --- VOLUNTEER FLEET API ROUTE ---
 app.get("/api/volunteers", (req, res) => {
   const sql = `
-        SELECT VolunteerID, Name, Gender, Age, Location, Latitude, Longitude, Role, Status
+        SELECT VolunteerID, Name, Email, UID, Gender, Age, Location, Latitude, Longitude, Role, Status, PhoneNumber, HomeAddress, IsVerified, VerifiedByAdminName
         FROM Volunteers
-        WHERE UID IS NOT NULL AND Email IS NOT NULL
         ORDER BY VolunteerID ASC;
     `;
   db.query(sql, (err, results) => {
@@ -381,7 +396,9 @@ app.get("/api/volunteers", (req, res) => {
 app.get("/api/requests/:requestId", (req, res) => {
   const { requestId } = req.params;
   const sql = `
-        SELECT r.*, v.Name AS VolunteerName, v.Latitude AS VolLat, v.Longitude AS VolLon,
+        SELECT r.*, v.Name AS VolunteerName, v.PhoneNumber AS VolunteerPhone, v.HomeAddress AS VolunteerAddress,
+        v.Gender AS VolunteerGender, v.Age AS VolunteerAge, v.Role AS VolunteerRole,
+        v.Latitude AS VolLat, v.Longitude AS VolLon,
         c.CategoryName AS DispatchedCategoryName, c.UnitOfMeasure,
         l.Latitude, l.Longitude
         FROM HelpRequests r
@@ -484,15 +501,15 @@ app.post("/api/volunteer/fcm-token", (req, res) => {
 });
 
 app.post("/api/volunteers", (req, res) => {
-  const { uid, email, name, status, location, age, gender } = req.body;
+  const { uid, email, name, status, location, age, gender, role, phoneNumber, homeAddress } = req.body;
 
   if (!uid || !email || !name) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
   const sql = `
-        INSERT INTO Volunteers (Name, Email, UID, Gender, Age, Location, Role, Status)
-        VALUES (?, ?, ?, ?, ?, ?, 'General', ?)
+        INSERT INTO Volunteers (Name, Email, UID, Gender, Age, Location, Role, Status, PhoneNumber, HomeAddress, IsVerified)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
     `;
 
   db.query(
@@ -504,7 +521,10 @@ app.post("/api/volunteers", (req, res) => {
       gender || null,
       age || null,
       location || null,
-      status || "Available",
+      role || "General",
+      status || "Pending",
+      phoneNumber || null,
+      homeAddress || null,
     ],
     (err, result) => {
       if (err) {
@@ -514,16 +534,47 @@ app.post("/api/volunteers", (req, res) => {
           .json({ error: "Failed to create volunteer profile" });
       }
       res.status(201).json({
-        message: "Volunteer created successfully",
+        message: "Volunteer created successfully. Pending Admin verification.",
         id: result.insertId,
       });
     },
   );
 });
+
+// --- ADMIN VERIFY VOLUNTEER API ROUTE ---
+app.post("/api/volunteers/:id/verify", (req, res) => {
+  const { id } = req.params;
+  const { isVerified, adminName } = req.body;
+
+  const verifiedVal = isVerified ? 1 : 0;
+  const statusVal = isVerified ? "Available" : "Rejected";
+  const verifierName = adminName || "Admin";
+
+  const sql = `
+        UPDATE Volunteers
+        SET IsVerified = ?, VerifiedByAdminName = ?, Status = ?
+        WHERE VolunteerID = ?;
+    `;
+
+  db.query(sql, [verifiedVal, verifierName, statusVal, id], (err, result) => {
+    if (err) {
+      console.error("Error verifying volunteer:", err);
+      return res.status(500).json({ error: "Failed to verify volunteer" });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Volunteer not found" });
+    }
+    res.json({
+      success: true,
+      message: `Volunteer #${id} status updated to ${statusVal} by ${verifierName}`,
+    });
+  });
+});
+
 // --- GLOBAL STATS API ROUTE ---
 app.get("/api/stats", (req, res) => {
   const sosSql = `SELECT Status, COUNT(*) AS count FROM HelpRequests GROUP BY Status`;
-  const volSql = `SELECT COUNT(*) AS count FROM Volunteers WHERE Status = 'Available' AND UID IS NOT NULL AND Email IS NOT NULL`;
+  const volSql = `SELECT COUNT(*) AS count FROM Volunteers WHERE Status = 'Available' AND IsVerified = 1 AND UID IS NOT NULL AND Email IS NOT NULL`;
   const stockSql = `SELECT COUNT(*) AS count FROM Resources WHERE Quantity < 50 AND Status = 'Available'`;
 
   db.query(sosSql, (err, sosResults) => {
@@ -552,13 +603,14 @@ app.get("/api/stats", (req, res) => {
     });
   });
 });
+
 // --- GET CURRENT VOLUNTEER PROFILE BY FIREBASE UID ---
 app.get("/api/me", (req, res) => {
   const { uid } = req.query;
   if (!uid) return res.status(400).json({ error: "Missing uid parameter" });
 
   const sql = `
-        SELECT VolunteerID, Name, Email, Role, Status, Location
+        SELECT VolunteerID, Name, Email, Role, Status, Location, PhoneNumber, HomeAddress, Gender, Age, IsVerified, VerifiedByAdminName
         FROM Volunteers
         WHERE UID = ?
         LIMIT 1;
@@ -614,7 +666,7 @@ app.get("/api/nearest-volunteers", (req, res) => {
   const sql = `
         SELECT VolunteerID, Name, Role, Location, Status
         FROM Volunteers
-        WHERE Status = 'Available'
+        WHERE Status = 'Available' AND IsVerified = 1
         ORDER BY VolunteerID ASC;
     `;
 
@@ -668,7 +720,7 @@ app.get("/api/nearest-volunteers", (req, res) => {
   let sql = `
         SELECT VolunteerID, Name, Role, Location, Latitude, Longitude, Status
         FROM Volunteers
-        WHERE Status = 'Available'
+        WHERE Status = 'Available' AND IsVerified = 1
     `;
 
   if (lat && lon) {
@@ -679,7 +731,7 @@ app.get("/api/nearest-volunteers", (req, res) => {
                 + sin(radians(?)) * sin(radians(Latitude))
             )) AS distance
             FROM Volunteers
-            WHERE Status = 'Available' AND Latitude IS NOT NULL AND Longitude IS NOT NULL
+            WHERE Status = 'Available' AND IsVerified = 1 AND Latitude IS NOT NULL AND Longitude IS NOT NULL
             ORDER BY distance ASC
             LIMIT 10;
         `;

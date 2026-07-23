@@ -148,9 +148,7 @@
                                 class="text-zinc-400 max-w-3xl leading-relaxed text-sm"
                             >
                                 Coordinate active field responders, medical
-                                aids, and logisticians. Only verified volunteers
-                                synced with Firebase authentication are
-                                displayed in this registry.
+                                aids, and logisticians. Review pending applications, approve volunteer credentials, and inspect detailed responder profiles.
                             </p>
                         </div>
                         <div class="flex gap-4">
@@ -161,6 +159,19 @@
                                 Export Registry
                             </button>
                         </div>
+                    </div>
+
+                    <!-- Filter Tabs -->
+                    <div class="flex gap-2 mb-6 border-b border-zinc-800 pb-3">
+                        <button id="tab-all" class="px-4 py-2 rounded-lg text-xs font-bold bg-primary text-black transition">
+                            All (<span id="count-all">0</span>)
+                        </button>
+                        <button id="tab-pending" class="px-4 py-2 rounded-lg text-xs font-bold bg-zinc-800 text-zinc-400 hover:text-white transition">
+                            Pending Approval (<span id="count-pending">0</span>)
+                        </button>
+                        <button id="tab-verified" class="px-4 py-2 rounded-lg text-xs font-bold bg-zinc-800 text-zinc-400 hover:text-white transition">
+                            Verified (<span id="count-verified">0</span>)
+                        </button>
                     </div>
 
                     <!-- Grid container -->
@@ -176,73 +187,179 @@
 
             <script>
             (function() {
+                let allVolunteers = [];
+                let currentFilter = "all";
+
+                async function verifyVolunteer(id, isVerified) {
+                    try {
+                        const adminName = (window.currentVolunteer && window.currentVolunteer.Name) ? window.currentVolunteer.Name : "Admin";
+                        const res = await fetch(`/api/volunteers/${id}/verify`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ isVerified, adminName })
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                            if (window.showToast) window.showToast(data.message || "Volunteer verification updated!");
+                            loadVolunteers();
+                        } else {
+                            alert(data.error || "Failed to update verification status.");
+                        }
+                    } catch (e) {
+                        console.error("Verification error:", e);
+                        alert("Network error updating verification.");
+                    }
+                }
+
+                function renderVolunteers() {
+                    const grid = document.getElementById("volunteer-grid");
+                    if (!grid) return;
+                    grid.innerHTML = "";
+
+                    const filtered = allVolunteers.filter(vol => {
+                        if (currentFilter === "pending") return !vol.IsVerified || vol.IsVerified == 0;
+                        if (currentFilter === "verified") return vol.IsVerified == 1;
+                        return true;
+                    });
+
+                    // Update counts
+                    const pendingCount = allVolunteers.filter(v => !v.IsVerified || v.IsVerified == 0).length;
+                    const verifiedCount = allVolunteers.filter(v => v.IsVerified == 1).length;
+                    
+                    const elAll = document.getElementById("count-all");
+                    const elPending = document.getElementById("count-pending");
+                    const elVerified = document.getElementById("count-verified");
+
+                    if (elAll) elAll.textContent = allVolunteers.length;
+                    if (elPending) elPending.textContent = pendingCount;
+                    if (elVerified) elVerified.textContent = verifiedCount;
+
+                    if (filtered.length === 0) {
+                        grid.innerHTML = `<div class="col-span-full py-12 text-center text-zinc-500 font-medium">No volunteers found in this view.</div>`;
+                        return;
+                    }
+
+                    filtered.forEach((vol) => {
+                        const isVerified = vol.IsVerified == 1;
+                        const statusColor =
+                            vol.Status === "Active"
+                                ? "bg-secondary/20 text-secondary"
+                                : !isVerified
+                                  ? "bg-yellow-500/20 text-yellow-500"
+                                  : "bg-zinc-500/20 text-zinc-400";
+
+                        const icon = (vol.Role || "").includes("Medical")
+                            ? "health_and_safety"
+                            : (vol.Role || "").includes("Rescue")
+                              ? "emergency"
+                              : (vol.Role || "").includes("Supply")
+                                ? "local_shipping"
+                                : (vol.Role || "").includes("Communication")
+                                  ? "wifi_tethering"
+                                  : "person";
+
+                        const card = document.createElement("div");
+                        card.className =
+                            "bg-surface-container border border-surface-bright rounded-xl p-5 hover:border-zinc-500 transition-colors duration-300 flex flex-col gap-3 group";
+
+                        card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
+                                    <span class="material-symbols-outlined text-xl">${icon}</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-zinc-100 flex items-center gap-1.5">
+                                        ${vol.Name}
+                                        ${isVerified ? '<span class="material-symbols-outlined text-emerald-400 text-sm" title="Verified Volunteer">verified</span>' : ''}
+                                    </h3>
+                                    <div class="text-xs text-zinc-500">${vol.Role || 'General'}</div>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded-full uppercase ${statusColor}">
+                                ${!isVerified ? 'PENDING VERIFICATION' : vol.Status}
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 mt-1">
+                            <div class="bg-zinc-900/50 rounded-lg p-2 flex flex-col gap-1">
+                                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Age & Gender</span>
+                                <span class="text-xs font-medium text-zinc-300">${vol.Age || 'N/A'} y/o &bull; ${vol.Gender || 'N/A'}</span>
+                            </div>
+                            <div class="bg-zinc-900/50 rounded-lg p-2 flex flex-col gap-1">
+                                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Phone</span>
+                                <span class="text-xs font-medium text-zinc-300 flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[12px]">call</span> ${vol.PhoneNumber || 'Not provided'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="bg-zinc-900/50 rounded-lg p-2 flex flex-col gap-1">
+                            <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Home Address</span>
+                            <span class="text-xs font-medium text-zinc-300 truncate" title="${vol.HomeAddress || vol.Location || 'N/A'}">
+                                ${vol.HomeAddress || vol.Location || 'Not provided'}
+                            </span>
+                        </div>
+
+                        ${isVerified && vol.VerifiedByAdminName ? `
+                            <div class="text-[10px] text-emerald-400/80 font-medium flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[12px]">admin_panel_settings</span> Verified by ${vol.VerifiedByAdminName}
+                            </div>
+                        ` : ''}
+
+                        ${!isVerified ? `
+                            <div class="flex gap-2 pt-2 border-t border-zinc-800 mt-1">
+                                <button data-id="${vol.VolunteerID}" data-action="approve" class="btn-verify-action flex-1 py-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs font-bold rounded-lg border border-emerald-500/30 transition">
+                                    Approve & Verify
+                                </button>
+                                <button data-id="${vol.VolunteerID}" data-action="reject" class="btn-verify-action py-1.5 px-3 bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs font-bold rounded-lg border border-red-500/30 transition">
+                                    Reject
+                                </button>
+                            </div>
+                        ` : ''}
+                    `;
+                        grid.appendChild(card);
+                    });
+
+                    // Attach action handlers for approve/reject buttons
+                    grid.querySelectorAll(".btn-verify-action").forEach(btn => {
+                        btn.addEventListener("click", (e) => {
+                            const id = e.currentTarget.dataset.id;
+                            const action = e.currentTarget.dataset.action;
+                            verifyVolunteer(id, action === "approve");
+                        });
+                    });
+                }
+
                 async function loadVolunteers() {
                     try {
                         const response = await fetch("/api/volunteers");
-                        const volunteers = await response.json();
-
-                        const grid = document.getElementById("volunteer-grid");
-                        grid.innerHTML = "";
-
-                        volunteers.forEach((vol) => {
-                            const statusColor =
-                                vol.Status === "Active"
-                                    ? "bg-secondary/20 text-secondary"
-                                    : vol.Status === "Pending"
-                                      ? "bg-yellow-500/20 text-yellow-500"
-                                      : "bg-zinc-500/20 text-zinc-400";
-
-                            const icon = vol.Role.includes("Medical")
-                                ? "health_and_safety"
-                                : vol.Role.includes("Rescue")
-                                  ? "emergency"
-                                  : vol.Role.includes("Supply")
-                                    ? "local_shipping"
-                                    : vol.Role.includes("Communication")
-                                      ? "wifi_tethering"
-                                      : "person";
-
-                            const card = document.createElement("div");
-                            card.className =
-                                "bg-surface-container border border-surface-bright rounded-xl p-5 hover:border-zinc-500 transition-colors duration-300 flex flex-col gap-3 group";
-
-                            card.innerHTML = `
-                            <div class="flex justify-between items-start">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
-                                        <span class="material-symbols-outlined text-xl">${icon}</span>
-                                    </div>
-                                    <div>
-                                        <h3 class="font-bold text-zinc-100">${vol.Name}</h3>
-                                        <div class="text-xs text-zinc-500">${vol.Role}</div>
-                                    </div>
-                                </div>
-                                <span class="text-[10px] font-bold px-2 py-1 rounded-full uppercase ${statusColor}">
-                                    ${vol.Status}
-                                </span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 mt-2">
-                                <div class="bg-zinc-900/50 rounded-lg p-2 flex flex-col gap-1">
-                                    <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Age & Gender</span>
-                                    <span class="text-sm font-medium text-zinc-300">${vol.Age} y/o &bull; ${vol.Gender}</span>
-                                </div>
-                                <div class="bg-zinc-900/50 rounded-lg p-2 flex flex-col gap-1">
-                                    <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Location</span>
-                                    <span class="text-sm font-medium text-zinc-300 flex items-center gap-1">
-                                        <span class="material-symbols-outlined text-[14px]">pin_drop</span> ${vol.Location}
-                                    </span>
-                                </div>
-                            </div>
-                        `;
-                            grid.appendChild(card);
-                        });
+                        allVolunteers = await response.json();
+                        renderVolunteers();
                     } catch (error) {
                         console.error("Failed to load volunteers:", error);
                         const grid = document.getElementById("volunteer-grid");
-                        grid.innerHTML =
+                        if (grid) grid.innerHTML =
                             '<div class="col-span-full py-8 text-center text-error">Failed to load data. Make sure the server is running.</div>';
                     }
                 }
+
+                // Tab Event Listeners
+                const tabAll = document.getElementById("tab-all");
+                const tabPending = document.getElementById("tab-pending");
+                const tabVerified = document.getElementById("tab-verified");
+
+                function setTabActive(activeTab) {
+                    [tabAll, tabPending, tabVerified].forEach(t => {
+                        if (!t) return;
+                        t.className = "px-4 py-2 rounded-lg text-xs font-bold bg-zinc-800 text-zinc-400 hover:text-white transition";
+                    });
+                    if (activeTab) activeTab.className = "px-4 py-2 rounded-lg text-xs font-bold bg-primary text-black transition";
+                }
+
+                if (tabAll) tabAll.onclick = () => { currentFilter = "all"; setTabActive(tabAll); renderVolunteers(); };
+                if (tabPending) tabPending.onclick = () => { currentFilter = "pending"; setTabActive(tabPending); renderVolunteers(); };
+                if (tabVerified) tabVerified.onclick = () => { currentFilter = "verified"; setTabActive(tabVerified); renderVolunteers(); };
 
                 loadVolunteers();
 

@@ -117,37 +117,21 @@
                     </div>
                 </div>
 
-                <!-- Location -->
+                <!-- Phone Number -->
                 <div class="space-y-1.5">
-                    <label for="location" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">General Location</label>
+                    <label for="phoneNumber" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">Phone Number *</label>
                     <div class="relative group">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors">location_on</span>
-                        <input type="text" id="location" class="w-full bg-surface/50 border border-outline text-on-surface placeholder-on-surface-variant/30 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium" placeholder="e.g. Downtown Sector 4" />
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors">call</span>
+                        <input type="tel" id="phoneNumber" required class="w-full bg-surface/50 border border-outline text-on-surface placeholder-on-surface-variant/30 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium" placeholder="+8801700000000" />
                     </div>
                 </div>
 
-                <!-- Age -->
-                <div class="space-y-1.5">
-                    <label for="age" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">Age</label>
+                <!-- Home Address -->
+                <div class="space-y-1.5 md:col-span-2">
+                    <label for="homeAddress" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">Home Address *</label>
                     <div class="relative group">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors">cake</span>
-                        <input type="number" id="age" min="18" max="100" class="w-full bg-surface/50 border border-outline text-on-surface placeholder-on-surface-variant/30 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium" placeholder="18+" />
-                    </div>
-                </div>
-
-                <!-- Gender -->
-                <div class="space-y-1.5">
-                    <label for="gender" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">Gender</label>
-                    <div class="relative group">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors">wc</span>
-                        <select id="gender" class="w-full bg-surface/50 border border-outline text-on-surface placeholder-on-surface-variant/30 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium appearance-none">
-                            <option value="" disabled selected>Select gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                            <option value="Prefer not to say">Prefer not to say</option>
-                        </select>
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant pointer-events-none">expand_more</span>
+                        <span class="absolute left-4 top-4 material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors">home</span>
+                        <textarea id="homeAddress" required rows="2" class="w-full bg-surface/50 border border-outline text-on-surface placeholder-on-surface-variant/30 rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium" placeholder="Full residential street address"></textarea>
                     </div>
                 </div>
             </div>

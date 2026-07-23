@@ -20,14 +20,20 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   bool _isAvailable = false;
+  bool _isVerified = true;
+  String? _volunteerName;
   List<dynamic> _sosRequests = [];
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
+    _checkProfileVerification();
     _fetchRequests();
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) => _fetchRequests());
+    _timer = Timer.periodic(const Duration(seconds: 10), (_) {
+      _checkProfileVerification();
+      _fetchRequests();
+    });
 
     FirebaseMessaging.onMessage.listen((message) {
       if (message.notification != null) {
@@ -54,6 +60,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.dispose();
   }
 
+  Future<void> _checkProfileVerification() async {
+    try {
+      final res = await http.get(Uri.parse('https://geo-aid-hub.onrender.com/api/me?uid=${widget.uid}'));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (mounted) {
+          setState(() {
+            _isVerified = (data['IsVerified'] == 1 || data['IsVerified'] == true);
+            _volunteerName = data['Name'];
+            if (!_isVerified) _isAvailable = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Failed to check profile verification: $e");
+    }
+  }
+
   Future<void> _fetchRequests() async {
     try {
       final res = await http.get(Uri.parse('https://geo-aid-hub.onrender.com/api/requests'));
@@ -69,6 +93,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _toggleAvailability(bool val) async {
+    if (!_isVerified && val) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account Pending Admin Verification. You cannot go on duty until verified.'),
+          backgroundColor: Colors.amber,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isAvailable = val);
 
     if (val) {
@@ -134,6 +168,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         body: Column(
           children: [
+            if (!_isVerified)
+              Container(
+                margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.amber.withOpacity(0.4)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 28),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Verification Pending', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber, fontSize: 15)),
+                          SizedBox(height: 2),
+                          Text('Your account is under Admin review. You cannot go on active duty until approved.', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // Sleek Availability Banner
             Container(
                 margin: const EdgeInsets.all(16),

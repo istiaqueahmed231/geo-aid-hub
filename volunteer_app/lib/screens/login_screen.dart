@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dashboard_screen.dart';
+import 'registration_screen.dart';
 import '../main.dart' show showVolunteerNotification;
 
 class LoginScreen extends StatefulWidget {
@@ -211,6 +212,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: _login,
                           child: const Text('SECURE LOGIN'),
                         ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const RegistrationScreen()),
+                    );
+                  },
+                  child: const Text(
+                    'New Volunteer? Apply / Register Here',
+                    style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
