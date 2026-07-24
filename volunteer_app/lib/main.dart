@@ -86,7 +86,7 @@ class GeoAidVolunteerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Geo Aid Volunteer',
+      title: 'GAH Volunteer',
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF0B0F19),
