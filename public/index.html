@@ -1055,6 +1055,24 @@
                     if (typeof loadVolunteers === "function") loadVolunteers();
                 });
 
+                // ─── Real-time Dispatch Resolved Listener ───
+                socket.off("dispatch_resolved");
+                socket.on("dispatch_resolved", (data) => {
+                    console.log("🚨 DISPATCH RESOLVED:", data);
+                    showToast(`🚨 Request #${data.RequestID} resolved by ${data.AdminName || 'Admin'}.`);
+                    if (typeof loadRequests === "function") loadRequests();
+                    if (typeof fetchGlobalStats === "function") fetchGlobalStats();
+                    if (typeof loadVolunteers === "function") loadVolunteers();
+                });
+
+                // ─── Real-time Feedback Listener ───
+                socket.off("feedback_received");
+                socket.on("feedback_received", (data) => {
+                    console.log("⭐ VICTIM FEEDBACK RECEIVED:", data);
+                    showToast(`⭐ Victim feedback received for Request #${data.RequestID}: ${data.Rating}/5 stars!`);
+                    if (typeof loadRequests === "function") loadRequests();
+                });
+
                 // ─── Toast ───
                 function showToast(msg, isError = false) {
                     const t = document.getElementById("toast");
@@ -1146,6 +1164,28 @@
                         window.registerLeafletMap(map);
                 }
 
+                async function resolveRequest(id) {
+                    try {
+                        const adminName = (currentVolunteer && currentVolunteer.Name) ? currentVolunteer.Name : "Admin";
+                        const res = await fetch(`/api/requests/${id}/resolve`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ adminName })
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                            showToast(data.message || `Request #${id} marked as Resolved!`);
+                            loadRequests();
+                            if (typeof fetchGlobalStats === "function") fetchGlobalStats();
+                        } else {
+                            alert(data.error || "Failed to mark request resolved.");
+                        }
+                    } catch (e) {
+                        console.error("Resolve request error:", e);
+                        alert("Network error marking request resolved.");
+                    }
+                }
+
                 // ─── Load Requests ───
                 async function loadRequests() {
                     try {
@@ -1153,13 +1193,17 @@
                             r.json(),
                         );
                         const feed = document.getElementById("request-feed");
+                        if (!feed) return;
                         feed.innerHTML = "";
 
                         const pending = data
-                            .filter((r) => r.Status !== "Dispatched")
+                            .filter((r) => r.Status === "Pending")
                             .sort((a, b) => b.UrgencyScore - a.UrgencyScore);
                         const dispatched = data.filter(
-                            (r) => r.Status === "Dispatched",
+                            (r) => r.Status === "Dispatched" || r.Status === "Completed",
+                        );
+                        const resolved = data.filter(
+                            (r) => r.Status === "Resolved",
                         );
 
                         if (!data.length) {
@@ -1168,12 +1212,23 @@
                             return;
                         }
 
-                        [...pending, ...dispatched].forEach((req) => {
+                        [...pending, ...dispatched, ...resolved].forEach((req) => {
                             const isD = req.Status === "Dispatched";
+                            const isC = req.Status === "Completed";
+                            const isR = req.Status === "Resolved";
+
+                            const statusLabel = isR ? "RESOLVED" : isC ? "COMPLETED" : isD ? "DISPATCHED" : "PENDING";
+                            const statusDotClass = isR ? "bg-emerald-400" : isC ? "bg-green-400" : isD ? "done" : "";
+
                             const card = document.createElement("div");
                             card.className =
-                                "req-card" + (isD ? " dispatched" : "");
+                                "req-card" + (isD || isC ? " dispatched" : "") + (isR ? " opacity-80" : "");
                             card.dataset.id = req.RequestID;
+
+                            let starsHtml = "";
+                            if (req.Rating) {
+                                starsHtml = "★".repeat(req.Rating) + "☆".repeat(5 - req.Rating);
+                            }
 
                             card.innerHTML = `
                         <div class="req-row">
@@ -1183,33 +1238,73 @@
                           </div>
                           <span class="urgency-badge">Urgency: ${req.UrgencyScore}</span>
                         </div>
-                        ${!isD ? `<div class="req-msg">"${req.ShortMessage || "No additional message."}"</div>` : ""}
+                        ${!isD && !isC && !isR ? `<div class="req-msg">"${req.ShortMessage || "No additional message."}"</div>` : ""}
+                        
                         <div class="req-footer">
                           <span class="cat-badge">${req.CategoryName}</span>
                           <div class="status-pill">
-                            <span class="dot-sm ${isD ? "done" : ""}"></span>
-                            ${isD ? "DISPATCHED" : "PENDING"}
+                            <span class="dot-sm ${statusDotClass}"></span>
+                            ${statusLabel}
                           </div>
                         </div>
+
                         ${
-                            isD && req.DispatcherName
+                            (isD || isC) && req.DispatcherName
                                 ? `
                           <div class="dispatched-footer">
                             <b>${req.DispatcherName}</b> dispatched <b>${req.DispatchedQuantity || "1 unit"}</b> of <b>${req.DispatchedItemName || "supplies"}</b>
                           </div>`
                                 : ""
                         }
+
+                        ${
+                            req.Rating || req.FeedbackNote
+                                ? `
+                          <div class="mt-2 p-2 bg-emerald-950/40 border border-emerald-500/30 rounded-lg text-xs flex flex-col gap-1">
+                            <div class="flex items-center justify-between font-bold text-emerald-400">
+                                <span>${req.IsSafe == 1 ? '🛡️ Confirmed Safe' : '⚠️ Needs Assistance'}</span>
+                                <span class="text-amber-400 text-sm tracking-widest">${starsHtml}</span>
+                            </div>
+                            ${req.FeedbackNote ? `<div class="text-zinc-300 italic">"${req.FeedbackNote}"</div>` : ''}
+                          </div>`
+                                : ""
+                        }
+
+                        ${
+                            !isR && (isD || isC)
+                                ? `
+                          <div class="mt-2 pt-2 border-t border-zinc-800 flex justify-end">
+                            <button data-id="${req.RequestID}" class="btn-resolve-action px-3 py-1 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs font-bold rounded-lg border border-emerald-500/30 transition">
+                                Mark as Resolved
+                            </button>
+                          </div>`
+                                : ""
+                        }
                       `;
 
-                            if (!isD)
-                                card.onclick = () => selectRequest(req, card);
+                            if (req.Status === "Pending")
+                                card.onclick = (e) => {
+                                    if (e.target.closest('.btn-resolve-action')) return;
+                                    selectRequest(req, card);
+                                };
+
                             feed.appendChild(card);
+                        });
+
+                        // Attach resolve click handlers
+                        feed.querySelectorAll(".btn-resolve-action").forEach(btn => {
+                            btn.addEventListener("click", (e) => {
+                                e.stopPropagation();
+                                const id = e.currentTarget.dataset.id;
+                                resolveRequest(id);
+                            });
                         });
 
                         document.getElementById("nav-active-sos").textContent =
                             pending.length;
                     } catch (err) {
-                        document.getElementById("request-feed").innerHTML =
+                        const feed = document.getElementById("request-feed");
+                        if (feed) feed.innerHTML =
                             '<div style="color:var(--red);text-align:center;padding:30px;font-size:12px;">Failed to load requests.</div>';
                         console.error(err);
                     }

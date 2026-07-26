@@ -114,6 +114,14 @@ db.connect((err) => {
                 MessageText TEXT NOT NULL,
                 SentAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`,
+      `CREATE TABLE IF NOT EXISTS Feedback (
+                FeedbackID INT AUTO_INCREMENT PRIMARY KEY,
+                RequestID INT NOT NULL UNIQUE,
+                IsSafe TINYINT(1) DEFAULT 1,
+                Rating INT DEFAULT 5,
+                FeedbackNote TEXT,
+                SubmittedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`,
     ];
 
     migrations.forEach((sql) => {
@@ -121,6 +129,15 @@ db.connect((err) => {
         if (err) console.error("Migration failed:", err.message);
       });
     });
+
+    db.query(
+      `ALTER TABLE HelpRequests ADD COLUMN ResolvedAt TIMESTAMP NULL`,
+      (err) => {
+        if (err && err.code !== "ER_DUP_FIELDNAME") {
+          console.error("Alter HelpRequests ResolvedAt failed:", err.message);
+        }
+      },
+    );
 
     db.query(
       `ALTER TABLE Volunteers ADD COLUMN Latitude DOUBLE, ADD COLUMN Longitude DOUBLE`,
@@ -189,21 +206,23 @@ app.get("/", (req, res) => {
 
 // --- OUR NEW API ROUTE ---
 app.get("/api/requests", (req, res) => {
-  // Join with Volunteers and Resources to show who is helping and what was sent
+  // Join with Volunteers, Resources and Feedback to show complete dispatch & victim safety details
   const sql = `
         SELECT
-            r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage,
+            r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage, r.DispatchedAt, r.CompletedAt, r.ResolvedAt,
             c.CategoryName, l.AreaName, l.Latitude, l.Longitude,
             v.Name AS DispatcherName,
             rc.CategoryName AS DispatchedItemName,
-            r.DispatchedQuantity
+            r.DispatchedQuantity,
+            fb.IsSafe, fb.Rating, fb.FeedbackNote
         FROM HelpRequests r
         JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
         JOIN Locations l ON r.LocationID = l.LocationID
         LEFT JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID
         LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
         LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
-        ORDER BY FIELD(r.Status, 'Pending') DESC, r.UrgencyScore DESC;
+        LEFT JOIN Feedback fb ON r.RequestID = fb.RequestID
+        ORDER BY FIELD(r.Status, 'Pending', 'Dispatched', 'Completed', 'Resolved') ASC, r.UrgencyScore DESC;
     `;
 
   db.query(sql, (err, results) => {
@@ -702,6 +721,128 @@ app.post("/api/requests/:requestId/complete", (req, res) => {
         message: `Mission #${requestId} marked as Completed. Volunteer is now Available.`
       });
     });
+  });
+});
+
+// --- ADMIN MARK SOS DISPATCH RESOLVED API ROUTE ---
+app.post("/api/requests/:requestId/resolve", (req, res) => {
+  const { requestId } = req.params;
+  const { adminName } = req.body;
+
+  if (!requestId) {
+    return res.status(400).json({ error: "Missing requestId parameter" });
+  }
+
+  // 1. Find request details
+  const findSql = `SELECT RequestID, Status, AssignedVolunteerID, FCMToken FROM HelpRequests WHERE RequestID = ?`;
+  db.query(findSql, [requestId], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (results.length === 0) return res.status(404).json({ error: "Request not found" });
+
+    const reqData = results[0];
+    const assignedVolId = reqData.AssignedVolunteerID;
+
+    // 2. Update HelpRequest status to Resolved
+    const updateReqSql = `UPDATE HelpRequests SET Status = 'Resolved', ResolvedAt = NOW() WHERE RequestID = ?`;
+    db.query(updateReqSql, [requestId], (err) => {
+      if (err) return res.status(500).json({ error: `Failed to resolve request: ${err.message}` });
+
+      // 3. Ensure Volunteer status is set to Available if assigned
+      if (assignedVolId) {
+        db.query(`UPDATE Volunteers SET Status = 'Available' WHERE VolunteerID = ?`, [assignedVolId], (err) => {
+          if (err) console.error("Failed to reset volunteer status on resolve:", err.message);
+        });
+      }
+
+      // 4. Emit Socket.IO event
+      io.emit("dispatch_resolved", {
+        RequestID: parseInt(requestId),
+        Status: "Resolved",
+        ResolvedAt: new Date(),
+        AdminName: adminName || "Admin"
+      });
+
+      // 5. Send FCM Push Notification to Victim
+      if (reqData.FCMToken && admin.apps.length > 0) {
+        admin.messaging().send({
+          token: reqData.FCMToken,
+          notification: {
+            title: "🚨 Rescue Dispatch Resolved",
+            body: "Central Command has resolved your request. Please confirm your safety and rate your response team.",
+          },
+          data: {
+            requestId: String(requestId),
+            type: "resolved",
+          },
+          android: {
+            priority: "high",
+            notification: {
+              channelId: "high_importance_channel",
+              priority: "high",
+              defaultVibrateTimings: true,
+              defaultSound: true,
+            },
+          },
+        }).catch(e => console.error("FCM Send Error:", e.message));
+      }
+
+      res.json({
+        success: true,
+        message: `Dispatch #${requestId} marked as Resolved.`
+      });
+    });
+  });
+});
+
+// --- SUBMIT VICTIM FEEDBACK & RATING API ROUTE ---
+app.post("/api/requests/:requestId/feedback", (req, res) => {
+  const { requestId } = req.params;
+  const { isSafe, rating, note } = req.body;
+
+  if (!requestId) {
+    return res.status(400).json({ error: "Missing requestId parameter" });
+  }
+
+  const isSafeVal = (isSafe === true || isSafe === 1 || isSafe === 'true') ? 1 : 0;
+  const ratingVal = parseInt(rating) || 5;
+  const noteVal = note || "";
+
+  const sql = `
+    INSERT INTO Feedback (RequestID, IsSafe, Rating, FeedbackNote)
+    VALUES (?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE IsSafe = VALUES(IsSafe), Rating = VALUES(Rating), FeedbackNote = VALUES(FeedbackNote), SubmittedAt = NOW();
+  `;
+
+  db.query(sql, [requestId, isSafeVal, ratingVal, noteVal], (err, result) => {
+    if (err) {
+      console.error("Error saving feedback:", err.message);
+      return res.status(500).json({ error: "Failed to submit feedback" });
+    }
+
+    // Emit Socket.IO Event for Admin Dashboard Sync
+    io.emit("feedback_received", {
+      RequestID: parseInt(requestId),
+      IsSafe: isSafeVal,
+      Rating: ratingVal,
+      FeedbackNote: noteVal,
+      SubmittedAt: new Date()
+    });
+
+    res.json({
+      success: true,
+      message: "Feedback submitted successfully! Thank you for helping central command."
+    });
+  });
+});
+
+// --- GET FEEDBACK FOR REQUEST ---
+app.get("/api/requests/:requestId/feedback", (req, res) => {
+  const { requestId } = req.params;
+  const sql = `SELECT * FROM Feedback WHERE RequestID = ? LIMIT 1`;
+  db.query(sql, [requestId], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (results.length === 0) return res.status(404).json({ error: "No feedback found" });
+    res.json(results[0]);
   });
 });
 

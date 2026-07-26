@@ -58,9 +58,154 @@ class _TrackingScreenState extends State<TrackingScreen> {
           );
         }
       }
-    } catch (e) {
-      debugPrint('Error launching dialer: $e');
-    }
+  void _openFeedbackBottomSheet() {
+    bool isSafe = true;
+    int rating = 5;
+    final TextEditingController noteController = TextEditingController();
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 24, right: 24, top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.shield_outlined, color: Colors.greenAccent, size: 28),
+                  SizedBox(width: 12),
+                  Text(
+                    'Safety & Response Feedback',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Central Command has resolved this dispatch. Please confirm your safety status and rate the response team.',
+                style: TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+              const SizedBox(height: 20),
+
+              // Safety Choice
+              const Text('Are you and your family safe?', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 13)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: ChoiceChip(
+                      label: const Center(child: Text('Yes, We are Safe')),
+                      selected: isSafe,
+                      selectedColor: Colors.green.withOpacity(0.3),
+                      labelStyle: TextStyle(color: isSafe ? Colors.greenAccent : Colors.grey, fontWeight: FontWeight.bold),
+                      onSelected: (val) => setModalState(() => isSafe = true),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ChoiceChip(
+                      label: const Center(child: Text('Need More Help')),
+                      selected: !isSafe,
+                      selectedColor: Colors.red.withOpacity(0.3),
+                      labelStyle: TextStyle(color: !isSafe ? Colors.redAccent : Colors.grey, fontWeight: FontWeight.bold),
+                      onSelected: (val) => setModalState(() => isSafe = false),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Star Rating
+              const Text('Rate Emergency Response Quality', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 13)),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  final starIndex = index + 1;
+                  return IconButton(
+                    iconSize: 36,
+                    icon: Icon(
+                      starIndex <= rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                      color: Colors.amber,
+                    ),
+                    onPressed: () => setModalState(() => rating = starIndex),
+                  );
+                }),
+              ),
+              const SizedBox(height: 16),
+
+              // Notes Input
+              TextField(
+                controller: noteController,
+                maxLines: 3,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Feedback Notes (Optional)',
+                  hintText: 'e.g. Rescue team arrived quickly with supplies...',
+                  hintStyle: TextStyle(color: Colors.grey, fontSize: 12),
+                  prefixIcon: Icon(Icons.comment_outlined, color: Colors.greenAccent),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              isSubmitting
+                  ? const Center(child: CircularProgressIndicator(color: Colors.greenAccent))
+                  : ElevatedButton.icon(
+                      icon: const Icon(Icons.send_rounded),
+                      label: const Text('SUBMIT SAFETY FEEDBACK', style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.greenAccent,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () async {
+                        setModalState(() => isSubmitting = true);
+                        try {
+                          final res = await http.post(
+                            Uri.parse('https://geo-aid-hub.onrender.com/api/requests/${widget.requestId}/feedback'),
+                            headers: {'Content-Type': 'application/json'},
+                            body: jsonEncode({
+                              'isSafe': isSafe,
+                              'rating': rating,
+                              'note': noteController.text.trim(),
+                            }),
+                          );
+                          if (res.statusCode == 200) {
+                            if (mounted) {
+                              Navigator.pop(ctx); // Close modal
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('🎉 Feedback Submitted! Thank you.'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              _fetchStatus(); // Refresh local state
+                            }
+                          }
+                        } catch (e) {
+                          debugPrint('Error submitting feedback: $e');
+                        } finally {
+                          if (mounted) setModalState(() => isSubmitting = false);
+                        }
+                      },
+                    ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -86,6 +231,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
     final unit = _requestData?['UnitOfMeasure'] ?? 'units';
 
     final isCompleted = status == 'Completed';
+    final isResolved = status == 'Resolved';
+    final hasFeedback = _requestData?['Rating'] != null || _requestData?['FeedbackNote'] != null;
 
     return Scaffold(
         appBar: AppBar(title: Text('MISSION #${widget.requestId}')),
@@ -113,12 +260,12 @@ class _TrackingScreenState extends State<TrackingScreen> {
                         width: 80,
                         height: 80,
                         child: Icon(
-                          isCompleted ? Icons.check_circle : Icons.my_location,
-                          color: isCompleted ? Colors.greenAccent : Colors.redAccent,
+                          isCompleted || isResolved ? Icons.check_circle : Icons.my_location,
+                          color: isCompleted || isResolved ? Colors.greenAccent : Colors.redAccent,
                           size: 40,
                         ),
                       ),
-                      if (volLat != null && volLon != null && !isCompleted)
+                      if (volLat != null && volLon != null && !isCompleted && !isResolved)
                         Marker(
                           point: LatLng(volLat, volLon),
                           width: 80,
@@ -152,14 +299,14 @@ class _TrackingScreenState extends State<TrackingScreen> {
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                              color: isCompleted
+                              color: isCompleted || isResolved
                                   ? Colors.greenAccent.withOpacity(0.15)
                                   : isDispatched
                                       ? Colors.orangeAccent.withOpacity(0.1)
                                       : Colors.white10,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                  color: isCompleted
+                                  color: isCompleted || isResolved
                                       ? Colors.greenAccent.withOpacity(0.4)
                                       : isDispatched
                                           ? Colors.orangeAccent.withOpacity(0.3)
@@ -168,12 +315,12 @@ class _TrackingScreenState extends State<TrackingScreen> {
                           child: Row(
                             children: [
                               Icon(
-                                isCompleted
+                                isCompleted || isResolved
                                     ? Icons.task_alt
                                     : isDispatched
                                         ? Icons.radar
                                         : Icons.satellite_alt,
-                                color: isCompleted
+                                color: isCompleted || isResolved
                                     ? Colors.greenAccent
                                     : isDispatched
                                         ? Colors.orangeAccent
@@ -183,15 +330,17 @@ class _TrackingScreenState extends State<TrackingScreen> {
                               const SizedBox(width: 14),
                               Expanded(
                                 child: Text(
-                                  isCompleted
-                                      ? 'RESCUE COMPLETED - YOU ARE SAFE'
-                                      : isDispatched
-                                          ? 'Rescue Unit En Route'
-                                          : 'Broadcasting Signal...',
+                                  isResolved
+                                      ? 'DISPATCH RESOLVED & SAFE'
+                                      : isCompleted
+                                          ? 'RESCUE COMPLETED - YOU ARE SAFE'
+                                          : isDispatched
+                                              ? 'Rescue Unit En Route'
+                                              : 'Broadcasting Signal...',
                                   style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: isCompleted
+                                      color: isCompleted || isResolved
                                           ? Colors.greenAccent
                                           : isDispatched
                                               ? Colors.orangeAccent
@@ -203,7 +352,47 @@ class _TrackingScreenState extends State<TrackingScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        if (isCompleted) ...[
+                        if (isResolved) ...[
+                          _buildDetailRow(
+                            Icons.verified_user,
+                            'Status',
+                            'Resolved by Central Command',
+                            subtitle: 'Safety verification active',
+                          ),
+                          const SizedBox(height: 12),
+                          if (hasFeedback) ...[
+                            _buildDetailRow(
+                              Icons.star,
+                              'Response Rating',
+                              '${_requestData!['Rating']} / 5 Stars',
+                              subtitle: _requestData!['FeedbackNote'] != null && _requestData!['FeedbackNote'].toString().isNotEmpty
+                                  ? 'Note: ${_requestData!['FeedbackNote']}'
+                                  : 'Safety Status: Confirmed Safe',
+                            ),
+                          ],
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            icon: Icon(hasFeedback ? Icons.edit_note : Icons.rate_review, size: 22),
+                            label: Text(hasFeedback ? 'UPDATE SAFETY FEEDBACK' : 'CONFIRM SAFETY & RATE RESPONSE'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.greenAccent,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            onPressed: () => _openFeedbackBottomSheet(),
+                          ),
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.check_circle_outline),
+                            label: const Text('CLOSE TRACKING'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.white24),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                          )
+                        ] else if (isCompleted) ...[
                           _buildDetailRow(
                             Icons.verified,
                             'Assigned Rescuer',
@@ -216,14 +405,25 @@ class _TrackingScreenState extends State<TrackingScreen> {
                             'Delivered Payload',
                             '$quantity $unit of $resourceName',
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
                           ElevatedButton.icon(
-                            icon: const Icon(Icons.check_circle_outline),
-                            label: const Text('CLOSE MISSION'),
+                            icon: const Icon(Icons.rate_review),
+                            label: const Text('LEAVE FEEDBACK FOR RESCUERS'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.greenAccent,
                               foregroundColor: Colors.black,
                               padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            onPressed: () => _openFeedbackBottomSheet(),
+                          ),
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.check_circle_outline),
+                            label: const Text('CLOSE MISSION'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.white24),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                             onPressed: () => Navigator.pop(context),
                           )
