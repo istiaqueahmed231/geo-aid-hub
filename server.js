@@ -147,6 +147,14 @@ db.connect((err) => {
       },
     );
     db.query(
+      `ALTER TABLE HelpRequests MODIFY COLUMN Status VARCHAR(50) DEFAULT 'Pending'`,
+      (err) => {
+        if (err) {
+          console.error("Modify HelpRequests Status column failed:", err.message);
+        }
+      },
+    );
+    db.query(
       `ALTER TABLE Volunteers ADD COLUMN FCMToken VARCHAR(255)`,
       (err) => {
         if (err && err.code !== "ER_DUP_FIELDNAME") {
@@ -635,7 +643,10 @@ app.post("/api/requests/:requestId/complete", (req, res) => {
     // 2. Update HelpRequest status to Completed
     const updateReqSql = `UPDATE HelpRequests SET Status = 'Completed', CompletedAt = NOW() WHERE RequestID = ?`;
     db.query(updateReqSql, [requestId], (err) => {
-      if (err) return res.status(500).json({ error: "Failed to update request status" });
+      if (err) {
+        console.error("Error updating HelpRequest status to Completed:", err.message);
+        return res.status(500).json({ error: `Failed to update request status: ${err.message}` });
+      }
 
       // 3. Reset Volunteer status back to Available so they can be dispatched again
       if (assignedVolId || volunteerId || uid) {
