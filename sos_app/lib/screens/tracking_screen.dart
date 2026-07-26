@@ -85,6 +85,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
     final quantity = _requestData?['DispatchedQuantity'] ?? 0;
     final unit = _requestData?['UnitOfMeasure'] ?? 'units';
 
+    final isCompleted = status == 'Completed';
+
     return Scaffold(
         appBar: AppBar(title: Text('MISSION #${widget.requestId}')),
         body: _requestData == null
@@ -110,9 +112,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
                         point: LatLng(sosLat, sosLon),
                         width: 80,
                         height: 80,
-                        child: const Icon(Icons.my_location, color: Colors.redAccent, size: 40),
+                        child: Icon(
+                          isCompleted ? Icons.check_circle : Icons.my_location,
+                          color: isCompleted ? Colors.greenAccent : Colors.redAccent,
+                          size: 40,
+                        ),
                       ),
-                      if (volLat != null && volLon != null)
+                      if (volLat != null && volLon != null && !isCompleted)
                         Marker(
                           point: LatLng(volLat, volLon),
                           width: 80,
@@ -146,25 +152,50 @@ class _TrackingScreenState extends State<TrackingScreen> {
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                              color: isDispatched ? Colors.orangeAccent.withOpacity(0.1) : Colors.white10,
+                              color: isCompleted
+                                  ? Colors.greenAccent.withOpacity(0.15)
+                                  : isDispatched
+                                      ? Colors.orangeAccent.withOpacity(0.1)
+                                      : Colors.white10,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: isDispatched ? Colors.orangeAccent.withOpacity(0.3) : Colors.transparent)
+                              border: Border.all(
+                                  color: isCompleted
+                                      ? Colors.greenAccent.withOpacity(0.4)
+                                      : isDispatched
+                                          ? Colors.orangeAccent.withOpacity(0.3)
+                                          : Colors.transparent)
                           ),
                           child: Row(
                             children: [
                               Icon(
-                                isDispatched ? Icons.radar : Icons.satellite_alt,
-                                color: isDispatched ? Colors.orangeAccent : Colors.grey,
+                                isCompleted
+                                    ? Icons.task_alt
+                                    : isDispatched
+                                        ? Icons.radar
+                                        : Icons.satellite_alt,
+                                color: isCompleted
+                                    ? Colors.greenAccent
+                                    : isDispatched
+                                        ? Colors.orangeAccent
+                                        : Colors.grey,
                                 size: 30,
                               ),
                               const SizedBox(width: 14),
                               Expanded(
                                 child: Text(
-                                  isDispatched ? 'Rescue Unit En Route' : 'Broadcasting Signal...',
+                                  isCompleted
+                                      ? 'RESCUE COMPLETED - YOU ARE SAFE'
+                                      : isDispatched
+                                          ? 'Rescue Unit En Route'
+                                          : 'Broadcasting Signal...',
                                   style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: isDispatched ? Colors.orangeAccent : Colors.white
+                                      color: isCompleted
+                                          ? Colors.greenAccent
+                                          : isDispatched
+                                              ? Colors.orangeAccent
+                                              : Colors.white
                                   ),
                                 ),
                               ),
@@ -172,7 +203,31 @@ class _TrackingScreenState extends State<TrackingScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        if (isDispatched) ...[
+                        if (isCompleted) ...[
+                          _buildDetailRow(
+                            Icons.verified,
+                            'Assigned Rescuer',
+                            '$volName ($volRole)',
+                            subtitle: 'Status: Mission Accomplished',
+                          ),
+                          const SizedBox(height: 12),
+                          _buildDetailRow(
+                            Icons.inventory_2_outlined,
+                            'Delivered Payload',
+                            '$quantity $unit of $resourceName',
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.check_circle_outline),
+                            label: const Text('CLOSE MISSION'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.greenAccent,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                          )
+                        ] else if (isDispatched) ...[
                           _buildDetailRow(
                             Icons.badge_outlined,
                             'Assigned Rescuer',

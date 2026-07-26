@@ -139,6 +139,14 @@ db.connect((err) => {
       },
     );
     db.query(
+      `ALTER TABLE HelpRequests ADD COLUMN CompletedAt TIMESTAMP NULL`,
+      (err) => {
+        if (err && err.code !== "ER_DUP_FIELDNAME") {
+          console.error("Alter HelpRequests CompletedAt failed:", err.message);
+        }
+      },
+    );
+    db.query(
       `ALTER TABLE Volunteers ADD COLUMN FCMToken VARCHAR(255)`,
       (err) => {
         if (err && err.code !== "ER_DUP_FIELDNAME") {
@@ -589,6 +597,7 @@ app.get("/api/stats", (req, res) => {
         const stats = {
           pending: 0,
           dispatched: 0,
+          completed: 0,
           volunteers: volResult[0].count,
           lowStockCount: stockResult[0].count,
         };
@@ -596,9 +605,90 @@ app.get("/api/stats", (req, res) => {
         sosResults.forEach((r) => {
           if (r.Status === "Pending") stats.pending = r.count;
           if (r.Status === "Dispatched") stats.dispatched = r.count;
+          if (r.Status === "Completed") stats.completed = r.count;
         });
 
         res.json(stats);
+      });
+    });
+  });
+});
+
+// --- COMPLETE SOS MISSION API ROUTE ---
+app.post("/api/requests/:requestId/complete", (req, res) => {
+  const { requestId } = req.params;
+  const { uid, volunteerId } = req.body;
+
+  if (!requestId) {
+    return res.status(400).json({ error: "Missing requestId parameter" });
+  }
+
+  // 1. Find the HelpRequest and Assigned Volunteer
+  const findSql = `SELECT RequestID, Status, AssignedVolunteerID, FCMToken FROM HelpRequests WHERE RequestID = ?`;
+  db.query(findSql, [requestId], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (results.length === 0) return res.status(404).json({ error: "Request not found" });
+
+    const reqData = results[0];
+    const assignedVolId = reqData.AssignedVolunteerID;
+
+    // 2. Update HelpRequest status to Completed
+    const updateReqSql = `UPDATE HelpRequests SET Status = 'Completed', CompletedAt = NOW() WHERE RequestID = ?`;
+    db.query(updateReqSql, [requestId], (err) => {
+      if (err) return res.status(500).json({ error: "Failed to update request status" });
+
+      // 3. Reset Volunteer status back to Available so they can be dispatched again
+      if (assignedVolId || volunteerId || uid) {
+        let updateVolSql = `UPDATE Volunteers SET Status = 'Available' WHERE VolunteerID = ?`;
+        let volParam = assignedVolId || volunteerId;
+
+        if (uid && !volParam) {
+          updateVolSql = `UPDATE Volunteers SET Status = 'Available' WHERE UID = ?`;
+          volParam = uid;
+        }
+
+        if (volParam) {
+          db.query(updateVolSql, [volParam], (err) => {
+            if (err) console.error("Failed to reset volunteer status:", err.message);
+          });
+        }
+      }
+
+      // 4. Emit Socket.IO Event
+      io.emit("mission_completed", {
+        RequestID: parseInt(requestId),
+        VolunteerID: assignedVolId || volunteerId,
+        CompletedAt: new Date(),
+        Status: "Completed"
+      });
+
+      // 5. Send FCM Push Notification to Victim
+      if (reqData.FCMToken && admin.apps.length > 0) {
+        admin.messaging().send({
+          token: reqData.FCMToken,
+          notification: {
+            title: "✅ Rescue Mission Completed",
+            body: `Your emergency request #${requestId} has been marked completed by the rescue team. Stay safe!`,
+          },
+          data: {
+            requestId: String(requestId),
+            type: "completed",
+          },
+          android: {
+            priority: "high",
+            notification: {
+              channelId: "high_importance_channel",
+              priority: "high",
+              defaultVibrateTimings: true,
+              defaultSound: true,
+            },
+          },
+        }).catch(e => console.error("FCM Send Error:", e.message));
+      }
+
+      res.json({
+        success: true,
+        message: `Mission #${requestId} marked as Completed. Volunteer is now Available.`
       });
     });
   });
