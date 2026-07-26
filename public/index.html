@@ -1164,28 +1164,6 @@
                         window.registerLeafletMap(map);
                 }
 
-                async function resolveRequest(id) {
-                    try {
-                        const adminName = (currentVolunteer && currentVolunteer.Name) ? currentVolunteer.Name : "Admin";
-                        const res = await fetch(`/api/requests/${id}/resolve`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ adminName })
-                        });
-                        const data = await res.json();
-                        if (res.ok) {
-                            showToast(data.message || `Request #${id} marked as Resolved!`);
-                            loadRequests();
-                            if (typeof fetchGlobalStats === "function") fetchGlobalStats();
-                        } else {
-                            alert(data.error || "Failed to mark request resolved.");
-                        }
-                    } catch (e) {
-                        console.error("Resolve request error:", e);
-                        alert("Network error marking request resolved.");
-                    }
-                }
-
                 // ─── Load Requests ───
                 async function loadRequests() {
                     try {
@@ -1269,35 +1247,12 @@
                           </div>`
                                 : ""
                         }
-
-                        ${
-                            !isR && (isD || isC)
-                                ? `
-                          <div class="mt-2 pt-2 border-t border-zinc-800 flex justify-end">
-                            <button data-id="${req.RequestID}" class="btn-resolve-action px-3 py-1 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs font-bold rounded-lg border border-emerald-500/30 transition">
-                                Mark as Resolved
-                            </button>
-                          </div>`
-                                : ""
-                        }
                       `;
 
                             if (req.Status === "Pending")
-                                card.onclick = (e) => {
-                                    if (e.target.closest('.btn-resolve-action')) return;
-                                    selectRequest(req, card);
-                                };
+                                card.onclick = () => selectRequest(req, card);
 
                             feed.appendChild(card);
-                        });
-
-                        // Attach resolve click handlers
-                        feed.querySelectorAll(".btn-resolve-action").forEach(btn => {
-                            btn.addEventListener("click", (e) => {
-                                e.stopPropagation();
-                                const id = e.currentTarget.dataset.id;
-                                resolveRequest(id);
-                            });
                         });
 
                         document.getElementById("nav-active-sos").textContent =

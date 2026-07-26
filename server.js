@@ -807,30 +807,37 @@ app.post("/api/requests/:requestId/feedback", (req, res) => {
   const ratingVal = parseInt(rating) || 5;
   const noteVal = note || "";
 
-  const sql = `
-    INSERT INTO Feedback (RequestID, IsSafe, Rating, FeedbackNote)
-    VALUES (?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE IsSafe = VALUES(IsSafe), Rating = VALUES(Rating), FeedbackNote = VALUES(FeedbackNote), SubmittedAt = NOW();
-  `;
-
-  db.query(sql, [requestId, isSafeVal, ratingVal, noteVal], (err, result) => {
-    if (err) {
-      console.error("Error saving feedback:", err.message);
-      return res.status(500).json({ error: "Failed to submit feedback" });
+  // Check if feedback already exists for this request
+  db.query(`SELECT FeedbackID FROM Feedback WHERE RequestID = ?`, [requestId], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (results && results.length > 0) {
+      return res.status(400).json({ error: "Feedback has already been submitted for this request" });
     }
 
-    // Emit Socket.IO Event for Admin Dashboard Sync
-    io.emit("feedback_received", {
-      RequestID: parseInt(requestId),
-      IsSafe: isSafeVal,
-      Rating: ratingVal,
-      FeedbackNote: noteVal,
-      SubmittedAt: new Date()
-    });
+    const sql = `
+      INSERT INTO Feedback (RequestID, IsSafe, Rating, FeedbackNote)
+      VALUES (?, ?, ?, ?);
+    `;
 
-    res.json({
-      success: true,
-      message: "Feedback submitted successfully! Thank you for helping central command."
+    db.query(sql, [requestId, isSafeVal, ratingVal, noteVal], (err, result) => {
+      if (err) {
+        console.error("Error saving feedback:", err.message);
+        return res.status(500).json({ error: "Failed to submit feedback" });
+      }
+
+      // Emit Socket.IO Event for Admin Dashboard Sync
+      io.emit("feedback_received", {
+        RequestID: parseInt(requestId),
+        IsSafe: isSafeVal,
+        Rating: ratingVal,
+        FeedbackNote: noteVal,
+        SubmittedAt: new Date()
+      });
+
+      res.json({
+        success: true,
+        message: "Feedback submitted successfully! Thank you for helping central command."
+      });
     });
   });
 });

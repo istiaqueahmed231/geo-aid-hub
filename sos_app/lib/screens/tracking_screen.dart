@@ -58,6 +58,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
           );
         }
       }
+    } catch (e) {
+      debugPrint('Error launching dialer: $e');
+    }
+  }
+
   void _openFeedbackBottomSheet() {
     bool isSafe = true;
     int rating = 5;
@@ -77,10 +82,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
             left: 24, right: 24, top: 24,
             bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               const Row(
                 children: [
                   Icon(Icons.shield_outlined, color: Colors.greenAccent, size: 28),
@@ -369,18 +375,19 @@ class _TrackingScreenState extends State<TrackingScreen> {
                                   ? 'Note: ${_requestData!['FeedbackNote']}'
                                   : 'Safety Status: Confirmed Safe',
                             ),
-                          ],
-                          const SizedBox(height: 20),
-                          ElevatedButton.icon(
-                            icon: Icon(hasFeedback ? Icons.edit_note : Icons.rate_review, size: 22),
-                            label: Text(hasFeedback ? 'UPDATE SAFETY FEEDBACK' : 'CONFIRM SAFETY & RATE RESPONSE'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.greenAccent,
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                          ] else ...[
+                            const SizedBox(height: 20),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.rate_review, size: 22),
+                              label: const Text('CONFIRM SAFETY & RATE RESPONSE'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.greenAccent,
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                              onPressed: () => _openFeedbackBottomSheet(),
                             ),
-                            onPressed: () => _openFeedbackBottomSheet(),
-                          ),
+                          ],
                           const SizedBox(height: 10),
                           OutlinedButton.icon(
                             icon: const Icon(Icons.check_circle_outline),
@@ -405,17 +412,29 @@ class _TrackingScreenState extends State<TrackingScreen> {
                             'Delivered Payload',
                             '$quantity $unit of $resourceName',
                           ),
-                          const SizedBox(height: 20),
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.rate_review),
-                            label: const Text('LEAVE FEEDBACK FOR RESCUERS'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.greenAccent,
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                          if (hasFeedback) ...[
+                            const SizedBox(height: 12),
+                            _buildDetailRow(
+                              Icons.star,
+                              'Response Rating',
+                              '${_requestData!['Rating']} / 5 Stars',
+                              subtitle: _requestData!['FeedbackNote'] != null && _requestData!['FeedbackNote'].toString().isNotEmpty
+                                  ? 'Note: ${_requestData!['FeedbackNote']}'
+                                  : 'Safety Status: Confirmed Safe',
                             ),
-                            onPressed: () => _openFeedbackBottomSheet(),
-                          ),
+                          ] else ...[
+                            const SizedBox(height: 20),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.rate_review),
+                              label: const Text('LEAVE FEEDBACK FOR RESCUERS'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.greenAccent,
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                              onPressed: () => _openFeedbackBottomSheet(),
+                            ),
+                          ],
                           const SizedBox(height: 10),
                           OutlinedButton.icon(
                             icon: const Icon(Icons.check_circle_outline),
