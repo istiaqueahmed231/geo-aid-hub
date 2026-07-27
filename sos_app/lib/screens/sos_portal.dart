@@ -507,29 +507,26 @@ class _SosPortalState extends State<SosPortal> {
                                                       Navigator.push(context, MaterialPageRoute(builder: (_) => TrackingScreen(requestId: item['requestId'])));
                                                     },
                                                   )
-                                                ],
-                                              )
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          );
-                        }
-                      );
-                    },
-                    icon: const Icon(Icons.history, color: Colors.grey),
-                    label: const Text('History', style: TextStyle(color: Colors.grey)),
-                  ),
-                ],
-              )
+                                                 ],
+                                               )
+                                             );
+                                           },
+                                         );
+                                       },
+                                     ),
+                                   ),
+                               ],
+                             ),
+                           );
+                         }
+                       );
+                     },
+                     icon: const Icon(Icons.history, color: Colors.grey),
+                     label: const Text('History', style: TextStyle(color: Colors.grey)),
+                   ),
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }

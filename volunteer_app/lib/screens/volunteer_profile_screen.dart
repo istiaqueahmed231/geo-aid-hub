@@ -137,17 +137,17 @@ class _VolunteerProfileScreenState extends State<VolunteerProfileScreen> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: _isVerified ? Colors.emerald.withOpacity(0.15) : Colors.amber.withOpacity(0.15),
+                          color: _isVerified ? Colors.green.withOpacity(0.15) : Colors.amber.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: _isVerified ? Colors.emeraldAccent.withOpacity(0.4) : Colors.amberAccent.withOpacity(0.4),
+                            color: _isVerified ? Colors.greenAccent.withOpacity(0.4) : Colors.amberAccent.withOpacity(0.4),
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               _isVerified ? Icons.verified_user : Icons.pending_actions,
-                              color: _isVerified ? Colors.emeraldAccent : Colors.amberAccent,
+                              color: _isVerified ? Colors.greenAccent : Colors.amberAccent,
                               size: 32,
                             ),
                             const SizedBox(width: 14),
@@ -158,7 +158,7 @@ class _VolunteerProfileScreenState extends State<VolunteerProfileScreen> {
                                   Text(
                                     _isVerified ? 'VERIFIED VOLUNTEER' : 'PENDING VERIFICATION',
                                     style: TextStyle(
-                                      color: _isVerified ? Colors.emeraldAccent : Colors.amberAccent,
+                                      color: _isVerified ? Colors.greenAccent : Colors.amberAccent,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
                                     ),

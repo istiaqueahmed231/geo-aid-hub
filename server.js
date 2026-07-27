@@ -1085,18 +1085,44 @@ app.get("/api/victims/requests", (req, res) => {
       fb.IsSafe, fb.Rating, fb.FeedbackNote, fb.SubmittedAt AS FeedbackSubmittedAt
     FROM HelpRequests r
     LEFT JOIN Victims vct ON r.VictimID = vct.VictimID
-    JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
-    JOIN Locations l ON r.LocationID = l.LocationID
+    LEFT JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
+    LEFT JOIN Locations l ON r.LocationID = l.LocationID
     LEFT JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID
     LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
     LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
     LEFT JOIN Feedback fb ON r.RequestID = fb.RequestID
-    WHERE vct.AuthUID = ? OR r.RequestorName = (SELECT FullName FROM Victims WHERE AuthUID = ? LIMIT 1)
+    WHERE vct.AuthUID = ? 
+       OR r.RequestorName = (SELECT FullName FROM Victims WHERE AuthUID = ? LIMIT 1)
     ORDER BY r.RequestID DESC;
   `;
 
   db.query(sql, [uid, uid], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
+    if (err) {
+      console.error("Error fetching victim requests:", err.message);
+      const fallbackSql = `
+        SELECT 
+          r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage, 
+          r.DispatchedAt, r.CompletedAt, r.ResolvedAt, r.CreatedAt, r.DispatchedQuantity,
+          c.CategoryName, l.AreaName, l.Latitude, l.Longitude,
+          v.Name AS VolunteerName, v.PhoneNumber AS VolunteerPhone,
+          rc.CategoryName AS DispatchedItemName,
+          fb.IsSafe, fb.Rating, fb.FeedbackNote, fb.SubmittedAt AS FeedbackSubmittedAt
+        FROM HelpRequests r
+        LEFT JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
+        LEFT JOIN Locations l ON r.LocationID = l.LocationID
+        LEFT JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID
+        LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
+        LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
+        LEFT JOIN Feedback fb ON r.RequestID = fb.RequestID
+        WHERE r.RequestorName = (SELECT FullName FROM Victims WHERE AuthUID = ? LIMIT 1)
+        ORDER BY r.RequestID DESC;
+      `;
+      db.query(fallbackSql, [uid], (fErr, fResults) => {
+        if (fErr) return res.status(500).json({ error: fErr.message });
+        return res.json(fResults);
+      });
+      return;
+    }
     res.json(results);
   });
 });

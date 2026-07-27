@@ -16,9 +16,9 @@ class VolunteerMissionDetailScreen extends StatelessWidget {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'Completed':
-        return Colors.emeraldAccent.shade400;
+        return Colors.greenAccent;
       case 'Resolved':
-        return Colors.greenAccent.shade700;
+        return Colors.green;
       default:
         return Colors.blueAccent;
     }
@@ -216,7 +216,7 @@ class VolunteerMissionDetailScreen extends StatelessWidget {
                   ),
                   child: Text(
                     '"$message"',
-                    style: const TextStyle(color: Colors.white70, italic: true),
+                    style: const TextStyle(color: Colors.white70, fontStyle: FontStyle.italic),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -278,9 +278,9 @@ class VolunteerMissionDetailScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.emerald.withOpacity(0.1),
+                    color: Colors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.emeraldAccent.withOpacity(0.3)),
+                    border: Border.all(color: Colors.greenAccent.withOpacity(0.3)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,7 +291,7 @@ class VolunteerMissionDetailScreen extends StatelessWidget {
                           Text(
                             isSafe == 1 ? '🛡️ Victim Confirmed Safe' : '⚠️ Needed Extra Aid',
                             style: const TextStyle(
-                              color: Colors.emeraldAccent,
+                              color: Colors.greenAccent,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -312,7 +312,7 @@ class VolunteerMissionDetailScreen extends StatelessWidget {
                         const SizedBox(height: 10),
                         Text(
                           '"$note"',
-                          style: const TextStyle(color: Colors.white70, italic: true),
+                          style: const TextStyle(color: Colors.white70, fontStyle: FontStyle.italic),
                         ),
                       ],
                     ],

@@ -127,12 +127,12 @@ class _VolunteerMissionsHistoryScreenState extends State<VolunteerMissionsHistor
                             decoration: BoxDecoration(
                               color: const Color(0xFF151C2C),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.emeraldAccent.withOpacity(0.3)),
+                              border: Border.all(color: Colors.greenAccent.withOpacity(0.3)),
                             ),
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                               title: Row(
-                                mainAxisAlignment: MainAxisAlignment.between,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
                                     child: Text(
@@ -148,14 +148,14 @@ class _VolunteerMissionsHistoryScreenState extends State<VolunteerMissionsHistor
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: Colors.emeraldAccent.withOpacity(0.2),
+                                      color: Colors.greenAccent.withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: Colors.emeraldAccent, width: 1),
+                                      border: Border.all(color: Colors.greenAccent, width: 1),
                                     ),
                                     child: Text(
                                       status.toUpperCase(),
                                       style: const TextStyle(
-                                        color: Colors.emeraldAccent,
+                                        color: Colors.greenAccent,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 11,
                                       ),
@@ -174,7 +174,7 @@ class _VolunteerMissionsHistoryScreenState extends State<VolunteerMissionsHistor
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
-                                      const Icon(Icons.check_circle_outline, color: Colors.emeraldAccent, size: 14),
+                                      const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 14),
                                       const SizedBox(width: 6),
                                       Text(
                                         'Completed: $completedAt',

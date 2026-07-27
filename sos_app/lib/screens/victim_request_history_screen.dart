@@ -39,7 +39,7 @@ class _VictimRequestHistoryScreenState extends State<VictimRequestHistoryScreen>
         });
       } else if (mounted) {
         setState(() {
-          _errorMessage = 'Failed to load requests';
+          _errorMessage = 'Failed to load requests (${res.statusCode}): ${res.body}';
           _isLoading = false;
         });
       }
@@ -60,9 +60,9 @@ class _VictimRequestHistoryScreenState extends State<VictimRequestHistoryScreen>
       case 'Dispatched':
         return Colors.blueAccent;
       case 'Completed':
-        return Colors.emeraldAccent.shade400;
+        return Colors.greenAccent;
       case 'Resolved':
-        return Colors.greenAccent.shade700;
+        return Colors.green;
       default:
         return Colors.grey;
     }
