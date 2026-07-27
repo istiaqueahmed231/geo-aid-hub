@@ -643,16 +643,15 @@ app.get("/api/contacts", (req, res) => {
     SELECT AuthUID AS id, FullName AS name, PhoneNumber AS phone, 'Victim' AS role 
     FROM Victims 
     WHERE AuthUID IS NOT NULL AND AuthUID != ''
-    UNION
-    SELECT DISTINCT COALESCE(AuthUID, CONCAT('req_', RequestID)) AS id, RequestorName AS name, PhoneNumber AS phone, 'Victim' AS role 
-    FROM HelpRequests 
-    WHERE RequestorName IS NOT NULL AND RequestorName != ''
   `;
   const volunteersSql = `SELECT UID AS id, Name AS name, PhoneNumber AS phone, Role AS subRole, 'Volunteer' AS role FROM Volunteers WHERE UID IS NOT NULL AND UID != ''`;
 
   db.query(adminsSql, (err1, admins) => {
+    if (err1) console.error("Error fetching admins contacts:", err1.message);
     db.query(victimsSql, (err2, victims) => {
+      if (err2) console.error("Error fetching victims contacts:", err2.message);
       db.query(volunteersSql, (err3, volunteers) => {
+        if (err3) console.error("Error fetching volunteers contacts:", err3.message);
         res.json({
           admins: admins || [],
           victims: victims || [],

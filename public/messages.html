@@ -327,14 +327,14 @@
                     }
 
                     messages.forEach(msg => {
-                        const isMe = msg.SenderRole === 'Admin' || (msg.SenderID && currentUserEmail && (msg.SenderID.toLowerCase() === currentUserEmail.toLowerCase()));
+                        const isMe = msg.SenderID && currentUserEmail && (msg.SenderID.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
                         const div = document.createElement('div');
                         div.className = isMe ? 'msg-bubble-sent' : 'msg-bubble-recv';
                         div.style.padding = '10px 14px';
 
                         const time = new Date(msg.SentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                         let senderLabel = isMe 
-                            ? (currentUserEmail && msg.SenderID && msg.SenderID.toLowerCase() === currentUserEmail.toLowerCase() ? 'You (Admin)' : 'Admin')
+                            ? 'You (Admin)'
                             : (activeTarget && activeTarget.name ? activeTarget.name : msg.SenderRole);
 
                         div.innerHTML = `
