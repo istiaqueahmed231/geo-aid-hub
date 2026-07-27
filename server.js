@@ -639,8 +639,12 @@ app.get("/api/messages/:requestId", (req, res) => {
 // 1. GET ALL CONTACTS (Admins, Victims, Volunteers) for starting new chats
 app.get("/api/contacts", (req, res) => {
   const adminsSql = `SELECT Email AS id, Email AS name, 'Admin' AS role FROM Admins`;
-  const victimsSql = `SELECT AuthUID AS id, FullName AS name, PhoneNumber AS phone, 'Victim' AS role FROM Victims`;
-  const volunteersSql = `SELECT UID AS id, Name AS name, PhoneNumber AS phone, Role AS subRole, 'Volunteer' AS role FROM Volunteers`;
+  const victimsSql = `
+    SELECT AuthUID AS id, FullName AS name, PhoneNumber AS phone, 'Victim' AS role FROM Victims WHERE AuthUID IS NOT NULL AND AuthUID != ''
+    UNION
+    SELECT DISTINCT AuthUID AS id, RequestorName AS name, PhoneNumber AS phone, 'Victim' AS role FROM HelpRequests WHERE AuthUID IS NOT NULL AND AuthUID != '' AND AuthUID NOT IN (SELECT AuthUID FROM Victims WHERE AuthUID IS NOT NULL)
+  `;
+  const volunteersSql = `SELECT UID AS id, Name AS name, PhoneNumber AS phone, Role AS subRole, 'Volunteer' AS role FROM Volunteers WHERE UID IS NOT NULL AND UID != ''`;
 
   db.query(adminsSql, (err1, admins) => {
     db.query(victimsSql, (err2, victims) => {
@@ -662,17 +666,32 @@ app.post("/api/conversations/start", (req, res) => {
     return res.status(400).json({ error: "Missing initiator or target identifier" });
   }
 
-  const convType = type || (targetRole === 'Admin' ? 'AdminDirect' : targetRole === 'Victim' ? 'VictimDirect' : 'VolunteerDirect');
+  const convType = type || (targetRole === 'Admin' || initiatorRole === 'Admin' ? 
+                    (targetRole === 'Victim' || initiatorRole === 'Victim' ? 'VictimDirect' : 
+                     targetRole === 'Volunteer' || initiatorRole === 'Volunteer' ? 'VolunteerDirect' : 'AdminDirect') : 'AdminDirect');
+
+  // Find any existing conversation containing BOTH participants (in either direction) or between user and Admin
   const checkSql = `
-    SELECT cp1.ConversationID 
+    SELECT DISTINCT cp1.ConversationID 
     FROM ConversationParticipants cp1
     JOIN ConversationParticipants cp2 ON cp1.ConversationID = cp2.ConversationID
-    JOIN Conversations c ON cp1.ConversationID = c.ConversationID
-    WHERE cp1.UserIdentifier = ? AND cp2.UserIdentifier = ? AND c.Type = ?
+    WHERE (
+      (cp1.UserIdentifier = ? AND cp2.UserIdentifier = ?)
+      OR (cp1.UserIdentifier = ? AND cp2.UserIdentifier = ?)
+      OR (
+        (cp1.UserRole = 'Admin' OR cp2.UserRole = 'Admin') 
+        AND (cp1.UserIdentifier = ? OR cp2.UserIdentifier = ?)
+        AND cp1.ConversationID IN (
+          SELECT ConversationID FROM ConversationParticipants WHERE UserIdentifier = ?
+        )
+      )
+    )
     LIMIT 1
   `;
 
-  db.query(checkSql, [initiatorIdentifier, targetIdentifier, convType], (err, existing) => {
+  const nonAdminId = (initiatorRole === 'Admin' ? targetIdentifier : initiatorIdentifier);
+
+  db.query(checkSql, [initiatorIdentifier, targetIdentifier, targetIdentifier, initiatorIdentifier, initiatorIdentifier, targetIdentifier, nonAdminId], (err, existing) => {
     if (!err && existing && existing.length > 0) {
       return res.json({ conversationId: existing[0].ConversationID, isNew: false });
     }
@@ -687,7 +706,7 @@ app.post("/api/conversations/start", (req, res) => {
         VALUES (?, ?, ?), (?, ?, ?)
       `;
 
-      db.query(insertPartSql, [convId, initiatorRole || 'Admin', initiatorIdentifier, convId, targetRole, targetIdentifier], (err3) => {
+      db.query(insertPartSql, [convId, initiatorRole || 'Admin', initiatorIdentifier, convId, targetRole || 'Admin', targetIdentifier], (err3) => {
         if (err3) return res.status(500).json({ error: err3.message });
         res.json({ conversationId: convId, isNew: true });
       });
