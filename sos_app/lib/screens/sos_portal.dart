@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import '../services/api_service.dart';
 import 'tracking_screen.dart';
@@ -142,14 +143,18 @@ class _SosPortalState extends State<SosPortal> {
         debugPrint("FCM error: $e");
       }
 
+      final user = FirebaseAuth.instance.currentUser;
       final Map<String, dynamic> sosData = {
-        'RequestorName': _nameController.text,
+        'RequestorName': _nameController.text.trim().isNotEmpty 
+            ? _nameController.text.trim() 
+            : (user?.displayName ?? 'Registered Victim'),
         'CategoryID': _selectedCategory,
         'UrgencyScore': _urgencyScore.toInt(),
         'Latitude': position.latitude,
         'Longitude': position.longitude,
         'ShortMessage': _messageController.text,
         'FCMToken': fcmToken,
+        'authUid': user?.uid,
       };
 
       final response = await ApiService.sendSosAlert(sosData);
@@ -213,6 +218,15 @@ class _SosPortalState extends State<SosPortal> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('GEO-AID DISPATCH'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white70),
+            tooltip: 'Sign Out',
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+            },
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(

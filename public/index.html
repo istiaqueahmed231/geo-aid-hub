@@ -1236,6 +1236,21 @@
                         }
 
                         ${
+                            req.VictimPhone || req.MobilityStatus
+                                ? `
+                          <div class="mt-2 p-2 bg-red-950/30 border border-red-500/20 rounded-lg text-xs flex flex-col gap-1">
+                            <div class="flex items-center justify-between font-bold text-red-300">
+                              <span>👤 ${req.VictimFullName || req.RequestorName} ${req.VictimPhone ? `(${req.VictimPhone})` : ''}</span>
+                              <span class="px-1.5 py-0.5 bg-red-900/60 text-red-200 rounded text-[10px] uppercase font-bold">${req.MobilityStatus || 'Fully Mobile'}</span>
+                            </div>
+                            ${req.HouseholdCount ? `<div class="text-zinc-400">👨‍👩‍👧‍👦 Household Size: <b>${req.HouseholdCount}</b> ${req.HasVulnerableDependents == 1 ? '• <span class="text-amber-400 font-bold">⚠️ Vulnerable Dependents</span>' : ''}</div>` : ''}
+                            ${req.MedicalDependencies ? `<div class="text-amber-300">💊 Medical: ${req.MedicalDependencies}</div>` : ''}
+                            ${req.EmergencyContactName ? `<div class="text-zinc-400">📞 Emergency: ${req.EmergencyContactName} (${req.EmergencyContactPhone || '—'})</div>` : ''}
+                          </div>`
+                                : ""
+                        }
+
+                        ${
                             req.Rating || req.FeedbackNote
                                 ? `
                           <div class="mt-2 p-2 bg-emerald-950/40 border border-emerald-500/30 rounded-lg text-xs flex flex-col gap-1">

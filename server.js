@@ -122,6 +122,24 @@ db.connect((err) => {
                 FeedbackNote TEXT,
                 SubmittedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`,
+      `CREATE TABLE IF NOT EXISTS Victims (
+                VictimID INT AUTO_INCREMENT PRIMARY KEY,
+                AuthUID VARCHAR(128) NOT NULL UNIQUE,
+                FullName VARCHAR(255) NOT NULL,
+                PhoneNumber VARCHAR(20),
+                HomeAddress TEXT,
+                Age INT,
+                Gender VARCHAR(50),
+                HouseholdCount INT DEFAULT 1,
+                HasVulnerableDependents TINYINT(1) DEFAULT 0,
+                MobilityStatus ENUM('Fully Mobile', 'Wheelchair', 'Bedbound', 'Requires Assistance') DEFAULT 'Fully Mobile',
+                MedicalDependencies TEXT,
+                PrimaryLanguage VARCHAR(100) DEFAULT 'Local',
+                PetCount INT DEFAULT 0,
+                EmergencyContactName VARCHAR(255),
+                EmergencyContactPhone VARCHAR(20),
+                CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`,
     ];
 
     migrations.forEach((sql) => {
@@ -129,6 +147,15 @@ db.connect((err) => {
         if (err) console.error("Migration failed:", err.message);
       });
     });
+
+    db.query(
+      `ALTER TABLE HelpRequests ADD COLUMN VictimID INT NULL`,
+      (err) => {
+        if (err && err.code !== "ER_DUP_FIELDNAME") {
+          console.error("Alter HelpRequests VictimID failed:", err.message);
+        }
+      },
+    );
 
     db.query(
       `ALTER TABLE HelpRequests ADD COLUMN ResolvedAt TIMESTAMP NULL`,
@@ -206,15 +233,18 @@ app.get("/", (req, res) => {
 
 // --- OUR NEW API ROUTE ---
 app.get("/api/requests", (req, res) => {
-  // Join with Volunteers, Resources and Feedback to show complete dispatch & victim safety details
+  // Join with Volunteers, Resources, Feedback, and Victims to show complete dispatch & victim vulnerability details
   const sql = `
         SELECT
-            r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage, r.DispatchedAt, r.CompletedAt, r.ResolvedAt,
+            r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage, r.DispatchedAt, r.CompletedAt, r.ResolvedAt, r.VictimID,
             c.CategoryName, l.AreaName, l.Latitude, l.Longitude,
             v.Name AS DispatcherName,
             rc.CategoryName AS DispatchedItemName,
             r.DispatchedQuantity,
-            fb.IsSafe, fb.Rating, fb.FeedbackNote
+            fb.IsSafe, fb.Rating, fb.FeedbackNote,
+            vct.FullName AS VictimFullName, vct.PhoneNumber AS VictimPhone, vct.HomeAddress AS VictimAddress,
+            vct.HouseholdCount, vct.HasVulnerableDependents, vct.MobilityStatus, vct.MedicalDependencies,
+            vct.EmergencyContactName, vct.EmergencyContactPhone
         FROM HelpRequests r
         JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
         JOIN Locations l ON r.LocationID = l.LocationID
@@ -222,6 +252,7 @@ app.get("/api/requests", (req, res) => {
         LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
         LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
         LEFT JOIN Feedback fb ON r.RequestID = fb.RequestID
+        LEFT JOIN Victims vct ON r.VictimID = vct.VictimID
         ORDER BY FIELD(r.Status, 'Pending', 'Dispatched', 'Completed', 'Resolved') ASC, r.UrgencyScore DESC;
     `;
 
@@ -355,61 +386,88 @@ app.post("/api/sos", (req, res) => {
     Longitude,
     ShortMessage,
     FCMToken,
+    victimId,
+    authUid
   } = req.body;
 
-  // 1. First, save the new GPS location to the Locations table
-  const insertLocationSql = `
-        INSERT INTO Locations (AreaName, Latitude, Longitude, ZoneType)
-        VALUES ('Live SOS Location', ?, ?, 'Urban');
-    `;
+  const saveHelpRequest = (vId, scoreMultiplier = 0) => {
+    const finalUrgencyScore = Math.min(100, (parseInt(UrgencyScore) || 50) + scoreMultiplier);
 
-  db.query(insertLocationSql, [Latitude, Longitude], (err, locResult) => {
-    if (err) return res.status(500).json({ error: "Failed to save location" });
+    const insertLocationSql = `
+          INSERT INTO Locations (AreaName, Latitude, Longitude, ZoneType)
+          VALUES ('Live SOS Location', ?, ?, 'Urban');
+      `;
 
-    const newLocationId = locResult.insertId;
+    db.query(insertLocationSql, [Latitude, Longitude], (err, locResult) => {
+      if (err) return res.status(500).json({ error: "Failed to save location" });
 
-    // 2. Then, save the actual SOS request linked to that new location
-    const insertRequestSql = `
-            INSERT INTO HelpRequests (RequestorName, LocationID, CategoryID, UrgencyScore, Status, ShortMessage, FCMToken)
-            VALUES (?, ?, ?, ?, 'Pending', ?, ?);
-        `;
+      const newLocationId = locResult.insertId;
 
-    db.query(
-      insertRequestSql,
-      [
-        RequestorName,
-        newLocationId,
-        CategoryID,
-        UrgencyScore,
-        ShortMessage,
-        FCMToken || null,
-      ],
-      (err, reqResult) => {
-        if (err)
-          return res.status(500).json({ error: "Failed to save SOS request" });
+      const insertRequestSql = `
+              INSERT INTO HelpRequests (RequestorName, LocationID, CategoryID, UrgencyScore, Status, ShortMessage, FCMToken, VictimID)
+              VALUES (?, ?, ?, ?, 'Pending', ?, ?, ?);
+          `;
 
-        // --- SOCKET.IO EMISSION ---
-        // Notify all connected dashboards about the new emergency
-        io.emit("new_sos", {
-          RequestID: reqResult.insertId,
+      db.query(
+        insertRequestSql,
+        [
           RequestorName,
+          newLocationId,
           CategoryID,
-          UrgencyScore,
+          finalUrgencyScore,
           ShortMessage,
-          Latitude,
-          Longitude,
-          Status: "Pending",
-          CreatedAt: new Date(),
-        });
-        // ---------------------------
+          FCMToken || null,
+          vId || null
+        ],
+        (err, reqResult) => {
+          if (err)
+            return res.status(500).json({ error: "Failed to save SOS request" });
 
-        res.status(201).json({
-          message: "SOS Received successfully!",
-          requestId: reqResult.insertId,
-        });
-      },
-    );
-  });
+          io.emit("new_sos", {
+            RequestID: reqResult.insertId,
+            RequestorName,
+            CategoryID,
+            UrgencyScore: finalUrgencyScore,
+            ShortMessage,
+            Latitude,
+            Longitude,
+            Status: "Pending",
+            CreatedAt: new Date(),
+            VictimID: vId || null
+          });
+
+          res.status(201).json({
+            message: "SOS Received successfully!",
+            requestId: reqResult.insertId,
+          });
+        },
+      );
+    });
+  };
+
+  if (victimId || authUid) {
+    const findVictimSql = victimId 
+      ? `SELECT VictimID, MobilityStatus, HasVulnerableDependents FROM Victims WHERE VictimID = ? LIMIT 1`
+      : `SELECT VictimID, MobilityStatus, HasVulnerableDependents FROM Victims WHERE AuthUID = ? LIMIT 1`;
+    const param = victimId || authUid;
+
+    db.query(findVictimSql, [param], (err, results) => {
+      let vId = null;
+      let scoreBoost = 0;
+      if (!err && results && results.length > 0) {
+        vId = results[0].VictimID;
+        const mobility = results[0].MobilityStatus;
+        if (mobility === 'Bedbound') scoreBoost += 25;
+        else if (mobility === 'Wheelchair') scoreBoost += 20;
+        else if (mobility === 'Requires Assistance') scoreBoost += 15;
+
+        if (results[0].HasVulnerableDependents == 1) scoreBoost += 10;
+      }
+      saveHelpRequest(vId, scoreBoost);
+    });
+  } else {
+    saveHelpRequest(null, 0);
+  }
 });
 // --- VOLUNTEER FLEET API ROUTE ---
 app.get("/api/volunteers", (req, res) => {
@@ -851,6 +909,92 @@ app.get("/api/requests/:requestId/feedback", (req, res) => {
   db.query(sql, [requestId], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     if (results.length === 0) return res.status(404).json({ error: "No feedback found" });
+    res.json(results[0]);
+  });
+});
+
+// --- VICTIM PROFILE APIS ---
+app.post("/api/victims", (req, res) => {
+  const {
+    authUid,
+    fullName,
+    phoneNumber,
+    homeAddress,
+    age,
+    gender,
+    householdCount,
+    hasVulnerableDependents,
+    mobilityStatus,
+    medicalDependencies,
+    primaryLanguage,
+    petCount,
+    emergencyContactName,
+    emergencyContactPhone
+  } = req.body;
+
+  if (!authUid || !fullName) {
+    return res.status(400).json({ error: "Missing authUid or fullName parameter" });
+  }
+
+  const ageVal = age ? parseInt(age) : null;
+  const householdCountVal = householdCount ? parseInt(householdCount) : 1;
+  const vulnerableVal = (hasVulnerableDependents === true || hasVulnerableDependents === 1 || hasVulnerableDependents === 'true') ? 1 : 0;
+  const mobilityVal = mobilityStatus || 'Fully Mobile';
+  const petCountVal = petCount ? parseInt(petCount) : 0;
+
+  const sql = `
+    INSERT INTO Victims (
+      AuthUID, FullName, PhoneNumber, HomeAddress, Age, Gender,
+      HouseholdCount, HasVulnerableDependents, MobilityStatus, MedicalDependencies,
+      PrimaryLanguage, PetCount, EmergencyContactName, EmergencyContactPhone
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      FullName = VALUES(FullName),
+      PhoneNumber = VALUES(PhoneNumber),
+      HomeAddress = VALUES(HomeAddress),
+      Age = VALUES(Age),
+      Gender = VALUES(Gender),
+      HouseholdCount = VALUES(HouseholdCount),
+      HasVulnerableDependents = VALUES(HasVulnerableDependents),
+      MobilityStatus = VALUES(MobilityStatus),
+      MedicalDependencies = VALUES(MedicalDependencies),
+      PrimaryLanguage = VALUES(PrimaryLanguage),
+      PetCount = VALUES(PetCount),
+      EmergencyContactName = VALUES(EmergencyContactName),
+      EmergencyContactPhone = VALUES(EmergencyContactPhone);
+  `;
+
+  db.query(
+    sql,
+    [
+      authUid, fullName, phoneNumber || null, homeAddress || null, ageVal, gender || null,
+      householdCountVal, vulnerableVal, mobilityVal, medicalDependencies || null,
+      primaryLanguage || 'Local', petCountVal, emergencyContactName || null, emergencyContactPhone || null
+    ],
+    (err, result) => {
+      if (err) {
+        console.error("Error creating/updating victim profile:", err.message);
+        return res.status(500).json({ error: err.message });
+      }
+
+      db.query(`SELECT * FROM Victims WHERE AuthUID = ? LIMIT 1`, [authUid], (err, results) => {
+        if (err || results.length === 0) {
+          return res.json({ success: true, victimId: result.insertId || null });
+        }
+        res.json({ success: true, victim: results[0] });
+      });
+    }
+  );
+});
+
+app.get("/api/victims/me", (req, res) => {
+  const { uid } = req.query;
+  if (!uid) return res.status(400).json({ error: "Missing uid parameter" });
+
+  const sql = `SELECT * FROM Victims WHERE AuthUID = ? LIMIT 1`;
+  db.query(sql, [uid], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (results.length === 0) return res.status(404).json({ error: "Victim profile not found" });
     res.json(results[0]);
   });
 });

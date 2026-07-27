@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http/http.dart' as http;
 import 'firebase_options.dart';
 import 'screens/sos_portal.dart';
+import 'screens/victim_login_screen.dart';
+import 'screens/victim_profile_setup_screen.dart';
 
 // The global plugin instance — accessible from anywhere in the app
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -131,8 +135,100 @@ class GeoAidApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const SosPortal(),
+      home: const VictimAuthWrapper(),
       debugShowCheckedModeBanner: false,
     );
+  }
+}
+
+class VictimAuthWrapper extends StatelessWidget {
+  const VictimAuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator(color: Colors.redAccent)),
+          );
+        }
+
+        final user = snapshot.data;
+        if (user == null) {
+          return const VictimLoginScreen();
+        }
+
+        return VictimCheckState(user: user);
+      },
+    );
+  }
+}
+
+class VictimCheckState extends StatefulWidget {
+  final User user;
+  const VictimCheckState({super.key, required this.user});
+
+  @override
+  State<VictimCheckState> createState() => _VictimCheckStateState();
+}
+
+class _VictimCheckStateState extends State<VictimCheckState> {
+  bool _isLoading = true;
+  bool _hasProfile = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkVictimProfile();
+  }
+
+  Future<void> _checkVictimProfile() async {
+    try {
+      final res = await http.get(
+        Uri.parse('https://geo-aid-hub.onrender.com/api/victims/me?uid=${widget.user.uid}'),
+      );
+      if (mounted) {
+        setState(() {
+          _hasProfile = (res.statusCode == 200);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _hasProfile = false;
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Colors.redAccent),
+              SizedBox(height: 16),
+              Text('Checking Emergency Profile...', style: TextStyle(color: Colors.grey)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_hasProfile) {
+      return const SosPortal();
+    } else {
+      return VictimProfileSetupScreen(
+        authUid: widget.user.uid,
+        email: widget.user.email,
+      );
+    }
   }
 }
