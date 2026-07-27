@@ -8,6 +8,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import '../services/api_service.dart';
 import 'tracking_screen.dart';
+import 'victim_profile_screen.dart';
+import 'victim_request_history_screen.dart';
 import '../main.dart' show showForegroundNotification;
 
 class SosPortal extends StatefulWidget {
@@ -18,6 +20,7 @@ class SosPortal extends StatefulWidget {
 }
 
 class _SosPortalState extends State<SosPortal> {
+  int _currentIndex = 0;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
 
@@ -228,7 +231,7 @@ class _SosPortalState extends State<SosPortal> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GEO-AID DISPATCH'),
+        title: Text(_currentIndex == 0 ? 'GEO-AID DISPATCH' : _currentIndex == 1 ? 'MY REQUESTS HISTORY' : 'VICTIM PROFILE'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white70),
@@ -239,19 +242,52 @@ class _SosPortalState extends State<SosPortal> {
           ),
         ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0B0F19), Color(0xFF111827)],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          _buildSosForm(context),
+          const VictimRequestHistoryScreen(),
+          const VictimProfileScreen(),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        selectedItemColor: Colors.redAccent,
+        unselectedItemColor: Colors.grey,
+        backgroundColor: const Color(0xFF151C2C),
+        onTap: (index) => setState(() => _currentIndex = index),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.warning_amber_rounded),
+            label: 'Emergency SOS',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history_outlined),
+            label: 'My Requests',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'My Profile',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSosForm(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF0B0F19), Color(0xFF111827)],
         ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
               // Glowing Warning Icon
               Center(
                 child: Container(
@@ -397,46 +433,6 @@ class _SosPortalState extends State<SosPortal> {
                 onPressed: _sendSosAlert,
                 child: const Text('BROADCAST SOS ALERT'),
               ),
-
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      final TextEditingController idController = TextEditingController();
-                      showDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            backgroundColor: Theme.of(context).colorScheme.surface,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            title: const Text('Track Request', style: TextStyle(color: Colors.white)),
-                            content: TextField(
-                              controller: idController,
-                              keyboardType: TextInputType.number,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Enter Request ID',
-                              ),
-                            ),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.grey))),
-                              ElevatedButton(
-                                onPressed: () {
-                                  if (idController.text.isNotEmpty) {
-                                    Navigator.pop(ctx);
-                                    Navigator.push(context, MaterialPageRoute(builder: (_) => TrackingScreen(requestId: int.parse(idController.text))));
-                                  }
-                                },
-                                child: const Text('Track'),
-                              )
-                            ],
-                          )
-                      );
-                    },
-                    icon: const Icon(Icons.my_location, color: Colors.grey),
-                    label: const Text('Manual ID', style: TextStyle(color: Colors.grey)),
-                  ),
                   TextButton.icon(
                     onPressed: () {
                       showModalBottomSheet(

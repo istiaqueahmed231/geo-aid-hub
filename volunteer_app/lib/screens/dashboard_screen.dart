@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'mission_tracking_screen.dart';
 import 'login_screen.dart';
+import 'volunteer_profile_screen.dart';
+import 'volunteer_missions_history_screen.dart';
 import '../main.dart' show showVolunteerNotification;
 
 class DashboardScreen extends StatefulWidget {
@@ -19,6 +21,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  int _currentIndex = 0;
   bool _isAvailable = false;
   bool _isVerified = true;
   String? _volunteerName;
@@ -153,24 +156,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('DISPATCH DASHBOARD'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout, color: Colors.redAccent),
-              onPressed: _logout,
-            ),
+      appBar: AppBar(
+        title: Text(_currentIndex == 0 ? 'DISPATCH DASHBOARD' : _currentIndex == 1 ? 'COMPLETED MISSIONS' : 'VOLUNTEER PROFILE'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.redAccent),
+            onPressed: _logout,
+          ),
+          if (_currentIndex == 0)
             IconButton(
               icon: const Icon(Icons.refresh, color: Colors.greenAccent),
               onPressed: _fetchRequests,
             )
-          ],
-        ),
-        body: Column(
-          children: [
-            if (!_isVerified)
-              Container(
-                margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        ],
+      ),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          _buildLiveFeed(context),
+          VolunteerMissionsHistoryScreen(uid: widget.uid),
+          VolunteerProfileScreen(uid: widget.uid),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        selectedItemColor: Colors.blueAccent,
+        unselectedItemColor: Colors.grey,
+        backgroundColor: const Color(0xFF151C2C),
+        onTap: (index) => setState(() => _currentIndex = index),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            label: 'Live Feed',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.emoji_events_outlined),
+            label: 'Completed',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'My Profile',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveFeed(BuildContext context) {
+    return Column(
+      children: [
+        if (!_isVerified)
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.amber.withOpacity(0.12),

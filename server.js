@@ -1070,6 +1070,37 @@ app.get("/api/victims/me", (req, res) => {
   });
 });
 
+// --- GET REQUESTS SUBMITTED BY A SPECIFIC VICTIM ---
+app.get("/api/victims/requests", (req, res) => {
+  const { uid } = req.query;
+  if (!uid) return res.status(400).json({ error: "Missing uid parameter" });
+
+  const sql = `
+    SELECT 
+      r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage, 
+      r.DispatchedAt, r.CompletedAt, r.ResolvedAt, r.CreatedAt, r.DispatchedQuantity,
+      c.CategoryName, l.AreaName, l.Latitude, l.Longitude,
+      v.Name AS VolunteerName, v.PhoneNumber AS VolunteerPhone,
+      rc.CategoryName AS DispatchedItemName,
+      fb.IsSafe, fb.Rating, fb.FeedbackNote, fb.SubmittedAt AS FeedbackSubmittedAt
+    FROM HelpRequests r
+    LEFT JOIN Victims vct ON r.VictimID = vct.VictimID
+    JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
+    JOIN Locations l ON r.LocationID = l.LocationID
+    LEFT JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID
+    LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
+    LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
+    LEFT JOIN Feedback fb ON r.RequestID = fb.RequestID
+    WHERE vct.AuthUID = ? OR r.RequestorName = (SELECT FullName FROM Victims WHERE AuthUID = ? LIMIT 1)
+    ORDER BY r.RequestID DESC;
+  `;
+
+  db.query(sql, [uid, uid], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+});
+
 // --- GET CURRENT VOLUNTEER PROFILE BY FIREBASE UID ---
 app.get("/api/me", (req, res) => {
   const { uid } = req.query;
@@ -1088,6 +1119,66 @@ app.get("/api/me", (req, res) => {
         .status(404)
         .json({ error: "Volunteer profile not found for this account." });
     res.json(results[0]);
+  });
+});
+
+// --- UPDATE VOLUNTEER PROFILE BY FIREBASE UID ---
+app.put("/api/volunteers/me", (req, res) => {
+  const { uid, name, phoneNumber, homeAddress, age, gender, role } = req.body;
+  if (!uid) return res.status(400).json({ error: "Missing uid parameter" });
+
+  const ageVal = age ? parseInt(age) : null;
+
+  const sql = `
+    UPDATE Volunteers 
+    SET Name = COALESCE(?, Name),
+        PhoneNumber = COALESCE(?, PhoneNumber),
+        HomeAddress = COALESCE(?, HomeAddress),
+        Age = COALESCE(?, Age),
+        Gender = COALESCE(?, Gender),
+        Role = COALESCE(?, Role)
+    WHERE UID = ?;
+  `;
+
+  db.query(sql, [name || null, phoneNumber || null, homeAddress || null, ageVal, gender || null, role || null, uid], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    
+    db.query(`SELECT VolunteerID, Name, Email, Role, Status, Location, PhoneNumber, HomeAddress, Gender, Age, IsVerified, VerifiedByAdminName FROM Volunteers WHERE UID = ? LIMIT 1`, [uid], (err, results) => {
+      if (err || results.length === 0) return res.json({ success: true, message: "Profile updated successfully" });
+      res.json({ success: true, volunteer: results[0] });
+    });
+  });
+});
+
+// --- GET COMPLETED / RESOLVED MISSIONS FOR A VOLUNTEER ---
+app.get("/api/volunteers/missions", (req, res) => {
+  const { uid } = req.query;
+  if (!uid) return res.status(400).json({ error: "Missing uid parameter" });
+
+  const sql = `
+    SELECT 
+      r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage,
+      r.DispatchedAt, r.CompletedAt, r.ResolvedAt, r.CreatedAt, r.DispatchedQuantity,
+      c.CategoryName, l.AreaName, l.Latitude, l.Longitude,
+      vct.FullName AS VictimFullName, vct.PhoneNumber AS VictimPhone, vct.HomeAddress AS VictimAddress,
+      vct.MobilityStatus, vct.HouseholdCount, vct.MedicalDependencies, vct.EmergencyContactName, vct.EmergencyContactPhone,
+      rc.CategoryName AS DispatchedItemName,
+      fb.IsSafe, fb.Rating, fb.FeedbackNote, fb.SubmittedAt AS FeedbackSubmittedAt
+    FROM HelpRequests r
+    JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID
+    JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
+    JOIN Locations l ON r.LocationID = l.LocationID
+    LEFT JOIN Victims vct ON r.VictimID = vct.VictimID
+    LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
+    LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
+    LEFT JOIN Feedback fb ON r.RequestID = fb.RequestID
+    WHERE v.UID = ? AND r.Status IN ('Completed', 'Resolved')
+    ORDER BY r.CompletedAt DESC, r.RequestID DESC;
+  `;
+
+  db.query(sql, [uid], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
   });
 });
 // -------------------------------------------------------
