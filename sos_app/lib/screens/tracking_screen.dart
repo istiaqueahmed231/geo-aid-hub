@@ -211,8 +211,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {

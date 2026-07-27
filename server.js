@@ -435,12 +435,14 @@ app.get("/api/requests/:requestId", (req, res) => {
         v.Gender AS VolunteerGender, v.Age AS VolunteerAge, v.Role AS VolunteerRole,
         v.Latitude AS VolLat, v.Longitude AS VolLon,
         c.CategoryName AS DispatchedCategoryName, c.UnitOfMeasure,
-        l.Latitude, l.Longitude
+        l.Latitude, l.Longitude,
+        fb.IsSafe, fb.Rating, fb.FeedbackNote
         FROM HelpRequests r
         LEFT JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID
         LEFT JOIN Resources rsc ON r.AssignedResourceID = rsc.ResourceID
         LEFT JOIN ResourceCategories c ON rsc.CategoryID = c.CategoryID
         LEFT JOIN Locations l ON r.LocationID = l.LocationID
+        LEFT JOIN Feedback fb ON r.RequestID = fb.RequestID
         WHERE r.RequestID = ?
     `;
   db.query(sql, [requestId], (err, results) => {
