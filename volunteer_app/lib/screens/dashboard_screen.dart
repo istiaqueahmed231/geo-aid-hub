@@ -9,6 +9,7 @@ import 'mission_tracking_screen.dart';
 import 'login_screen.dart';
 import 'volunteer_profile_screen.dart';
 import 'volunteer_missions_history_screen.dart';
+import 'direct_admin_chat_screen.dart';
 import '../main.dart' show showVolunteerNotification;
 
 class DashboardScreen extends StatefulWidget {
@@ -159,6 +160,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: Text(_currentIndex == 0 ? 'DISPATCH DASHBOARD' : _currentIndex == 1 ? 'COMPLETED MISSIONS' : 'VOLUNTEER PROFILE'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.support_agent, color: Colors.blueAccent),
+            tooltip: 'Chat with Admin',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DirectAdminChatScreen(uid: widget.uid))),
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.redAccent),
             onPressed: _logout,
@@ -407,8 +413,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 )
             )
           ],
-        )
-    );
+        );
   }
 }
 

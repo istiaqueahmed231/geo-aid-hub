@@ -140,6 +140,21 @@ db.connect((err) => {
                 EmergencyContactPhone VARCHAR(20),
                 CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`,
+      `CREATE TABLE IF NOT EXISTS Conversations (
+                ConversationID INT AUTO_INCREMENT PRIMARY KEY,
+                Type ENUM('Request', 'AdminDirect', 'AdminGroup', 'VictimDirect', 'VolunteerDirect') NOT NULL DEFAULT 'AdminDirect',
+                RequestID INT NULL,
+                Title VARCHAR(255) NULL,
+                CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )`,
+      `CREATE TABLE IF NOT EXISTS ConversationParticipants (
+                ParticipantID INT AUTO_INCREMENT PRIMARY KEY,
+                ConversationID INT NOT NULL,
+                UserRole ENUM('Admin', 'Volunteer', 'Victim') NOT NULL,
+                UserIdentifier VARCHAR(255) NOT NULL,
+                JoinedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`,
     ];
 
     migrations.forEach((sql) => {
@@ -199,6 +214,15 @@ db.connect((err) => {
       (err) => {
         if (err && err.code !== "ER_DUP_FIELDNAME") {
           console.error("Alter HelpRequests failed:", err.message);
+        }
+      },
+    );
+
+    db.query(
+      `ALTER TABLE Messages ADD COLUMN ConversationID INT NULL`,
+      (err) => {
+        if (err && err.code !== "ER_DUP_FIELDNAME") {
+          console.error("Alter Messages ConversationID failed:", err.message);
         }
       },
     );
@@ -591,13 +615,132 @@ app.get("/api/requests/:requestId", (req, res) => {
   });
 });
 
-// --- NEW CHAT/MESSAGES ROUTE ---
+// --- NEW CHAT/MESSAGES ROUTE (LEGACY REQUEST CHAT) ---
 app.get("/api/messages/:requestId", (req, res) => {
   const { requestId } = req.params;
   const sql = `SELECT * FROM Messages WHERE RequestID = ? ORDER BY SentAt ASC`;
   db.query(sql, [requestId], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(results);
+  });
+});
+
+// --- UNIVERSAL CONVERSATIONS & DIRECT MESSAGING APIS ---
+
+// 1. GET ALL CONTACTS (Admins, Victims, Volunteers) for starting new chats
+app.get("/api/contacts", (req, res) => {
+  const adminsSql = `SELECT Email AS id, Email AS name, 'Admin' AS role FROM Admins`;
+  const victimsSql = `SELECT AuthUID AS id, FullName AS name, PhoneNumber AS phone, 'Victim' AS role FROM Victims`;
+  const volunteersSql = `SELECT UID AS id, Name AS name, PhoneNumber AS phone, Role AS subRole, 'Volunteer' AS role FROM Volunteers`;
+
+  db.query(adminsSql, (err1, admins) => {
+    db.query(victimsSql, (err2, victims) => {
+      db.query(volunteersSql, (err3, volunteers) => {
+        res.json({
+          admins: admins || [],
+          victims: victims || [],
+          volunteers: volunteers || []
+        });
+      });
+    });
+  });
+});
+
+// 2. START OR GET DIRECT CONVERSATION
+app.post("/api/conversations/start", (req, res) => {
+  const { type, initiatorRole, initiatorIdentifier, targetRole, targetIdentifier, title } = req.body;
+  if (!initiatorIdentifier || !targetIdentifier) {
+    return res.status(400).json({ error: "Missing initiator or target identifier" });
+  }
+
+  const convType = type || (targetRole === 'Admin' ? 'AdminDirect' : targetRole === 'Victim' ? 'VictimDirect' : 'VolunteerDirect');
+  const checkSql = `
+    SELECT cp1.ConversationID 
+    FROM ConversationParticipants cp1
+    JOIN ConversationParticipants cp2 ON cp1.ConversationID = cp2.ConversationID
+    JOIN Conversations c ON cp1.ConversationID = c.ConversationID
+    WHERE cp1.UserIdentifier = ? AND cp2.UserIdentifier = ? AND c.Type = ?
+    LIMIT 1
+  `;
+
+  db.query(checkSql, [initiatorIdentifier, targetIdentifier, convType], (err, existing) => {
+    if (!err && existing && existing.length > 0) {
+      return res.json({ conversationId: existing[0].ConversationID, isNew: false });
+    }
+
+    const insertConvSql = `INSERT INTO Conversations (Type, Title) VALUES (?, ?)`;
+    db.query(insertConvSql, [convType, title || null], (err2, convResult) => {
+      if (err2) return res.status(500).json({ error: err2.message });
+
+      const convId = convResult.insertId;
+      const insertPartSql = `
+        INSERT INTO ConversationParticipants (ConversationID, UserRole, UserIdentifier) 
+        VALUES (?, ?, ?), (?, ?, ?)
+      `;
+
+      db.query(insertPartSql, [convId, initiatorRole || 'Admin', initiatorIdentifier, convId, targetRole, targetIdentifier], (err3) => {
+        if (err3) return res.status(500).json({ error: err3.message });
+        res.json({ conversationId: convId, isNew: true });
+      });
+    });
+  });
+});
+
+// 3. GET CONVERSATIONS FOR A USER
+app.get("/api/conversations", (req, res) => {
+  const { identifier } = req.query;
+  if (!identifier) return res.status(400).json({ error: "Missing identifier parameter" });
+
+  const sql = `
+    SELECT 
+      c.ConversationID, c.Type, c.Title, c.UpdatedAt,
+      (SELECT MessageText FROM Messages WHERE ConversationID = c.ConversationID ORDER BY SentAt DESC LIMIT 1) AS LastMessage,
+      (SELECT SentAt FROM Messages WHERE ConversationID = c.ConversationID ORDER BY SentAt DESC LIMIT 1) AS LastMessageTime,
+      other.UserRole AS OtherUserRole,
+      other.UserIdentifier AS OtherUserIdentifier
+    FROM Conversations c
+    JOIN ConversationParticipants cp ON c.ConversationID = cp.ConversationID
+    LEFT JOIN ConversationParticipants other ON c.ConversationID = other.ConversationID AND (other.UserIdentifier != ? OR other.ParticipantID IS NULL)
+    WHERE cp.UserIdentifier = ?
+    GROUP BY c.ConversationID
+    ORDER BY c.UpdatedAt DESC;
+  `;
+
+  db.query(sql, [identifier, identifier], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+});
+
+// 4. GET MESSAGES BY CONVERSATION ID
+app.get("/api/conversations/:conversationId/messages", (req, res) => {
+  const { conversationId } = req.params;
+  const sql = `SELECT * FROM Messages WHERE ConversationID = ? ORDER BY SentAt ASC`;
+  db.query(sql, [conversationId], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+});
+
+// 5. POST MESSAGE TO CONVERSATION
+app.post("/api/conversations/:conversationId/messages", (req, res) => {
+  const { conversationId } = req.params;
+  const { senderRole, senderIdentifier, senderName, messageText } = req.body;
+
+  if (!messageText || !senderIdentifier) {
+    return res.status(400).json({ error: "Missing message text or sender info" });
+  }
+
+  const sql = `
+    INSERT INTO Messages (ConversationID, SenderRole, SenderID, MessageText)
+    VALUES (?, ?, ?, ?)
+  `;
+
+  db.query(sql, [conversationId, senderRole || 'Admin', senderIdentifier, messageText], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    db.query(`UPDATE Conversations SET UpdatedAt = NOW() WHERE ConversationID = ?`, [conversationId]);
+    res.json({ success: true, messageId: result.insertId, sentAt: new Date() });
   });
 });
 

@@ -149,14 +149,18 @@ class _VictimRequestHistoryScreenState extends State<VictimRequestHistoryScreen>
                               title: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    '#${req['RequestID']} • ${req['CategoryName'] ?? 'SOS'}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontSize: 15,
+                                  Expanded(
+                                    child: Text(
+                                      '#${req['RequestID']} • ${req['CategoryName'] ?? 'SOS'}',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                      ),
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(

@@ -10,6 +10,7 @@ import '../services/api_service.dart';
 import 'tracking_screen.dart';
 import 'victim_profile_screen.dart';
 import 'victim_request_history_screen.dart';
+import 'direct_admin_chat_screen.dart';
 import '../main.dart' show showForegroundNotification;
 
 class SosPortal extends StatefulWidget {
@@ -234,8 +235,12 @@ class _SosPortalState extends State<SosPortal> {
         title: Text(_currentIndex == 0 ? 'GEO-AID DISPATCH' : _currentIndex == 1 ? 'MY REQUESTS HISTORY' : 'VICTIM PROFILE'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white70),
-            tooltip: 'Sign Out',
+            icon: const Icon(Icons.support_agent, color: Colors.blueAccent),
+            tooltip: 'Chat with Admin',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DirectAdminChatScreen())),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.redAccent),
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
             },

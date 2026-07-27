@@ -187,13 +187,19 @@ class VictimRequestDetailScreen extends StatelessWidget {
                           children: [
                             const Icon(Icons.inventory_2_outlined, color: Colors.amberAccent, size: 20),
                             const SizedBox(width: 8),
-                            Text(
-                              'Dispatched Supply: ',
-                              style: const TextStyle(color: Colors.grey, fontSize: 13),
-                            ),
-                            Text(
-                              '${dispatchedQty ?? 1} unit of $dispatchedItem',
-                              style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 13),
+                            Expanded(
+                              child: RichText(
+                                text: TextSpan(
+                                  style: const TextStyle(fontSize: 13),
+                                  children: [
+                                    const TextSpan(text: 'Dispatched Supply: ', style: TextStyle(color: Colors.grey)),
+                                    TextSpan(
+                                      text: '${dispatchedQty ?? 1} unit of $dispatchedItem',
+                                      style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
                         ),
