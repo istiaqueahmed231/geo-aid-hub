@@ -198,7 +198,18 @@ class _SosPortalState extends State<SosPortal> {
           );
         }
       } else {
-        throw Exception('Failed to send SOS (Status: ${response.statusCode})');
+        String serverError = 'Status ${response.statusCode}';
+        try {
+          final errBody = jsonDecode(response.body);
+          if (errBody is Map && errBody.containsKey('error')) {
+            serverError = errBody['error'];
+          } else {
+            serverError = response.body;
+          }
+        } catch (_) {
+          serverError = response.body;
+        }
+        throw Exception(serverError);
       }
     } catch (e) {
       if (mounted) {

@@ -149,6 +149,17 @@ db.connect((err) => {
     });
 
     db.query(
+      `INSERT IGNORE INTO ResourceCategories (CategoryID, CategoryName, UnitOfMeasure) VALUES 
+       (1, 'Emergency Medical Kits', 'kits'),
+       (2, 'Drinking Water', 'liters'),
+       (3, 'Dry Food Rations', 'packs'),
+       (4, 'Rescue Boats', 'boats')`,
+      (err) => {
+        if (err) console.error("ResourceCategories backfill failed:", err.message);
+      }
+    );
+
+    db.query(
       `ALTER TABLE HelpRequests ADD COLUMN VictimID INT NULL`,
       (err) => {
         if (err && err.code !== "ER_DUP_FIELDNAME") {
@@ -410,81 +421,97 @@ app.post("/api/sos", (req, res) => {
 
       const newLocationId = locResult.insertId;
 
-      const insertRequestSql = `
-              INSERT INTO HelpRequests (RequestorName, LocationID, CategoryID, UrgencyScore, Status, ShortMessage, FCMToken, VictimID)
-              VALUES (?, ?, ?, ?, 'Pending', ?, ?, ?);
-          `;
+      // Ensure CategoryID exists in ResourceCategories to prevent Foreign Key constraint error
+      db.query(`SELECT CategoryID FROM ResourceCategories WHERE CategoryID = ? LIMIT 1`, [catIdVal], (catErr, catResults) => {
+        let validCatId = catIdVal;
+        if (catErr || !catResults || catResults.length === 0) {
+          // Auto-create category if missing
+          db.query(`INSERT IGNORE INTO ResourceCategories (CategoryID, CategoryName, UnitOfMeasure) VALUES (?, 'Emergency Relief', 'units')`, [catIdVal], (iErr) => {
+            if (iErr) console.error("Auto-category creation warning:", iErr.message);
+            doInsert(newLocationId, catIdVal, vId, finalUrgencyScore);
+          });
+        } else {
+          doInsert(newLocationId, validCatId, vId, finalUrgencyScore);
+        }
+      });
+    });
+  };
 
-      db.query(
-        insertRequestSql,
-        [
-          RequestorName || 'Registered Victim',
-          newLocationId,
-          catIdVal,
-          finalUrgencyScore,
-          ShortMessage || '',
-          FCMToken || null,
-          vId || null
-        ],
-        (err, reqResult) => {
-          if (err) {
-            console.error("SOS HelpRequest Insert Error:", err.message);
+  const doInsert = (newLocationId, validCatId, vId, finalUrgencyScore) => {
+    const insertRequestSql = `
+            INSERT INTO HelpRequests (RequestorName, LocationID, CategoryID, UrgencyScore, Status, ShortMessage, FCMToken, VictimID)
+            VALUES (?, ?, ?, ?, 'Pending', ?, ?, ?);
+        `;
 
-            // Fallback if VictimID column is not yet present on remote DB
-            if (err.code === "ER_BAD_FIELD_ERROR" || (err.message && err.message.includes("VictimID"))) {
-              const fallbackSql = `
-                INSERT INTO HelpRequests (RequestorName, LocationID, CategoryID, UrgencyScore, Status, ShortMessage, FCMToken)
-                VALUES (?, ?, ?, ?, 'Pending', ?, ?);
-              `;
-              db.query(fallbackSql, [RequestorName || 'Registered Victim', newLocationId, catIdVal, finalUrgencyScore, ShortMessage || '', FCMToken || null], (fErr, fResult) => {
-                if (fErr) {
-                  console.error("SOS Fallback Insert Error:", fErr.message);
-                  return res.status(500).json({ error: `Failed to save SOS request: ${fErr.message}` });
-                }
+    db.query(
+      insertRequestSql,
+      [
+        RequestorName || 'Registered Victim',
+        newLocationId,
+        validCatId,
+        finalUrgencyScore,
+        ShortMessage || '',
+        FCMToken || null,
+        vId || null
+      ],
+      (err, reqResult) => {
+        if (err) {
+          console.error("SOS HelpRequest Insert Error:", err.message);
 
-                io.emit("new_sos", {
-                  RequestID: fResult.insertId,
-                  RequestorName: RequestorName || 'Registered Victim',
-                  CategoryID: catIdVal,
-                  UrgencyScore: finalUrgencyScore,
-                  ShortMessage: ShortMessage || '',
-                  Latitude: latVal,
-                  Longitude: lonVal,
-                  Status: "Pending",
-                  CreatedAt: new Date()
-                });
+          // Fallback if VictimID column is not yet present on remote DB
+          if (err.code === "ER_BAD_FIELD_ERROR" || (err.message && err.message.includes("VictimID"))) {
+            const fallbackSql = `
+              INSERT INTO HelpRequests (RequestorName, LocationID, CategoryID, UrgencyScore, Status, ShortMessage, FCMToken)
+              VALUES (?, ?, ?, ?, 'Pending', ?, ?);
+            `;
+            db.query(fallbackSql, [RequestorName || 'Registered Victim', newLocationId, validCatId, finalUrgencyScore, ShortMessage || '', FCMToken || null], (fErr, fResult) => {
+              if (fErr) {
+                console.error("SOS Fallback Insert Error:", fErr.message);
+                return res.status(500).json({ error: `Failed to save SOS request: ${fErr.message}` });
+              }
 
-                return res.status(201).json({
-                  message: "SOS Received successfully!",
-                  requestId: fResult.insertId,
-                });
+              io.emit("new_sos", {
+                RequestID: fResult.insertId,
+                RequestorName: RequestorName || 'Registered Victim',
+                CategoryID: validCatId,
+                UrgencyScore: finalUrgencyScore,
+                ShortMessage: ShortMessage || '',
+                Latitude: latVal,
+                Longitude: lonVal,
+                Status: "Pending",
+                CreatedAt: new Date()
               });
-              return;
-            }
 
-            return res.status(500).json({ error: `Failed to save SOS request: ${err.message}` });
+              return res.status(201).json({
+                message: "SOS Received successfully!",
+                requestId: fResult.insertId,
+              });
+            });
+            return;
           }
 
-          io.emit("new_sos", {
-            RequestID: reqResult.insertId,
-            RequestorName: RequestorName || 'Registered Victim',
-            CategoryID: catIdVal,
-            UrgencyScore: finalUrgencyScore,
-            ShortMessage: ShortMessage || '',
-            Latitude: latVal,
-            Longitude: lonVal,
-            Status: "Pending",
-            CreatedAt: new Date(),
-            VictimID: vId || null
-          });
+          return res.status(500).json({ error: `Failed to save SOS request: ${err.message}` });
+        }
 
-          res.status(201).json({
-            message: "SOS Received successfully!",
-            requestId: reqResult.insertId,
-          });
-        },
-      );
-    });
+        io.emit("new_sos", {
+          RequestID: reqResult.insertId,
+          RequestorName: RequestorName || 'Registered Victim',
+          CategoryID: validCatId,
+          UrgencyScore: finalUrgencyScore,
+          ShortMessage: ShortMessage || '',
+          Latitude: latVal,
+          Longitude: lonVal,
+          Status: "Pending",
+          CreatedAt: new Date(),
+          VictimID: vId || null
+        });
+
+        res.status(201).json({
+          message: "SOS Received successfully!",
+          requestId: reqResult.insertId,
+        });
+      },
+    );
   };
 
   if (victimId || authUid) {
