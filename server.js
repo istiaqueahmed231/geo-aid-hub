@@ -406,7 +406,9 @@ app.post("/api/sos", (req, res) => {
   const catIdVal = parseInt(CategoryID) || 1;
 
   const saveHelpRequest = (vId, scoreMultiplier = 0) => {
-    const finalUrgencyScore = Math.min(100, (parseInt(UrgencyScore) || 50) + scoreMultiplier);
+    const rawUrgency = Math.min(10, Math.max(1, parseInt(UrgencyScore) || 5));
+    const boostPoints = Math.min(3, Math.floor(scoreMultiplier / 10));
+    const finalUrgencyScore = Math.min(10, Math.max(1, rawUrgency + boostPoints));
 
     const insertLocationSql = `
           INSERT INTO Locations (AreaName, Latitude, Longitude, ZoneType)
