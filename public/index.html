@@ -1,804 +1,815 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-        <title>Geo-Aid Hub | Command Center</title>
 
-        <!-- Fonts & Icons -->
-        <link
-            href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap"
-            rel="stylesheet"
-        />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-            rel="stylesheet"
-        />
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Geo-Aid Hub | Command Center</title>
 
-        <!-- Leaflet Map -->
-        <link
-            rel="stylesheet"
-            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <!-- Fonts & Icons -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet" />
 
-        <!-- Leaflet Fullscreen Plugin -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/3.0.0/Control.FullScreen.min.css" />
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/3.0.0/Control.FullScreen.min.js"></script>
+    <!-- Leaflet Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
-        <!-- jsPDF -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <!-- Leaflet Fullscreen Plugin -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/3.0.0/Control.FullScreen.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/3.0.0/Control.FullScreen.min.js"></script>
 
-        <!-- Socket.io Client -->
-        <script src="/socket.io/socket.io.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
-        <!-- Firebase Auth (module) -->
-        <script type="module" src="./firebase-config.js"></script>
-        <script type="module" src="./auth.js"></script>
+    <!-- Socket.io Client -->
+    <script src="/socket.io/socket.io.js"></script>
 
-        <!-- Theme Switcher -->
-        <script src="./theme.js"></script>
+    <!-- Firebase Auth (module) -->
+    <script type="module" src="./firebase-config.js"></script>
+    <script type="module" src="./auth.js"></script>
 
-        <link rel="stylesheet" href="./app.css" />
+    <!-- Theme Switcher -->
+    <script src="./theme.js"></script>
 
-        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-        <script id="tailwind-config">
-            tailwind.config = {
-                darkMode: "class",
-                theme: {
-                    extend: {
-                        colors: {
-                            background: "var(--bg)",
-                            surface: "var(--bg-panel)",
-                            primary: "var(--orange)",
-                            secondary: "var(--green)",
-                            error: "var(--red)",
-                            outline: "var(--border)",
-                            "surface-container": "var(--surface)",
-                            "on-surface": "var(--text)",
-                            "on-surface-variant": "var(--text-dim)",
-                        },
-                        fontFamily: {
-                            headline: ["Manrope"],
-                            body: ["Inter"],
-                        },
+    <link rel="stylesheet" href="./app.css" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        background: "var(--bg)",
+                        surface: "var(--bg-panel)",
+                        primary: "var(--orange)",
+                        secondary: "var(--green)",
+                        error: "var(--red)",
+                        outline: "var(--border)",
+                        "surface-container": "var(--surface)",
+                        "on-surface": "var(--text)",
+                        "on-surface-variant": "var(--text-dim)",
+                    },
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        body: ["Inter"],
                     },
                 },
-            };
-        </script>
+            },
+        };
+    </script>
 
-        <style>
-            /* ─── Dashboard Two-Panel Grid ─── */
-            #dashboard-grid {
-                flex: 1;
-                display: grid;
-                grid-template-columns: 5fr 7fr;
-                gap: 18px;
-                padding: 18px;
-                overflow: hidden;
-            }
+    <style>
+        /* ─── Dashboard Two-Panel Grid ─── */
+        #dashboard-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 5fr 7fr;
+            gap: 18px;
+            padding: 18px;
+            overflow: hidden;
+        }
 
-            /* ─── Panel Base ─── */
-            .panel {
-                background: var(--bg-panel);
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
+        /* ─── Panel Base ─── */
+        .panel {
+            background: var(--bg-panel);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-            #panel-requests {
-                border: 1.5px solid var(--border-strong);
-                border-radius: 14px;
-            }
+        #panel-requests {
+            border: 1.5px solid var(--border-strong);
+            border-radius: 14px;
+        }
 
-            #panel-dispatch {
-                border: 2.5px solid rgba(255, 255, 255, 0.17);
-                border-radius: 22px;
-            }
+        #panel-dispatch {
+            border: 2.5px solid rgba(255, 255, 255, 0.17);
+            border-radius: 22px;
+        }
 
-            .panel-header {
-                padding: 15px 18px 12px;
-                border-bottom: 1px solid var(--border);
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                flex-shrink: 0;
-            }
-            .supply-qty.low-stock {
-                color: var(--red);
-                animation: pulse-warning 2s infinite;
-            }
+        .panel-header {
+            padding: 15px 18px 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
 
-            @keyframes pulse-warning {
-                0% {
-                    opacity: 1;
-                }
-                50% {
-                    opacity: 0.4;
-                }
-                100% {
-                    opacity: 1;
-                }
+        .supply-qty.low-stock {
+            color: var(--red);
+            animation: pulse-warning 2s infinite;
+        }
+
+        @keyframes pulse-warning {
+            0% {
+                opacity: 1;
             }
 
-            .low-stock-badge {
-                background: rgba(255, 107, 107, 0.1);
-                color: var(--red);
-                padding: 2px 6px;
-                border-radius: 4px;
-                font-size: 9px;
-                font-weight: 800;
-                margin-left: 8px;
-                border: 1px solid rgba(255, 107, 107, 0.2);
-            }
-            .panel-header h2 {
-                font-family: "Manrope", sans-serif;
-                font-size: 14px;
-                font-weight: 800;
-                color: var(--text);
-            }
-            .panel-header-sub {
-                font-size: 10px;
-                color: var(--text-dim);
-                text-transform: uppercase;
-                letter-spacing: 1px;
+            50% {
+                opacity: 0.4;
             }
 
-            /* ─── Request Feed ─── */
-            #request-feed {
-                flex: 1;
-                overflow-y: auto;
-                padding: 10px;
-                display: flex;
-                flex-direction: column;
-                gap: 7px;
+            100% {
+                opacity: 1;
             }
+        }
 
-            .req-card {
-                background: var(--surface);
-                border: 1px solid var(--border);
-                border-left: 3px solid var(--red);
-                border-radius: 10px;
-                padding: 13px;
-                cursor: pointer;
-                transition: all 0.16s;
-                position: relative;
-            }
-            .req-card:hover {
-                background: var(--surface-hi);
-                border-left-color: var(--orange);
-                transform: translateX(2px);
-            }
-            .req-card.selected {
-                border-color: var(--orange);
-                background: rgba(254, 87, 51, 0.05);
-                border-left-color: var(--orange);
-            }
-            .req-card.dispatched {
-                border-left-color: var(--green);
-                opacity: 0.5;
-                cursor: not-allowed;
-                pointer-events: none;
-            }
+        .low-stock-badge {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--red);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 800;
+            margin-left: 8px;
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
 
-            .req-row {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-            }
-            .req-name {
-                font-family: "Manrope", sans-serif;
-                font-size: 14px;
-                font-weight: 700;
-            }
-            .req-area {
-                font-size: 10px;
-                color: var(--text-dim);
-                margin-top: 3px;
-            }
-            .urgency-badge {
-                font-size: 10px;
-                font-weight: 800;
-                background: rgba(255, 107, 107, 0.1);
-                color: var(--red);
-                border: 1px solid rgba(255, 107, 107, 0.18);
-                border-radius: 5px;
-                padding: 2px 7px;
-                flex-shrink: 0;
-            }
-            .req-msg {
-                font-size: 11px;
-                color: var(--text-dim);
-                font-style: italic;
-                background: rgba(255, 255, 255, 0.025);
-                border-radius: 6px;
-                padding: 6px 8px;
-                margin: 7px 0;
-                line-height: 1.5;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-            }
-            .req-footer {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-top: 4px;
-            }
-            .cat-badge {
-                font-size: 10px;
-                font-weight: 700;
-                color: var(--orange);
-                background: rgba(254, 87, 51, 0.07);
-                border: 1px solid rgba(254, 87, 51, 0.14);
-                border-radius: 5px;
-                padding: 2px 7px;
-                text-transform: uppercase;
-            }
-            .status-pill {
-                display: flex;
-                align-items: center;
-                gap: 5px;
-                font-size: 10px;
-                font-family: monospace;
-                color: var(--text-dim);
-            }
-            .dot-sm {
-                width: 5px;
-                height: 5px;
-                border-radius: 50%;
-                background: var(--red);
-                animation: blink 1.4s infinite;
-            }
-            .dot-sm.done {
-                background: var(--green);
-                animation: none;
-            }
+        .panel-header h2 {
+            font-family: "Manrope", sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text);
+        }
 
-            .dispatched-footer {
-                margin-top: 8px;
-                padding-top: 8px;
-                border-top: 1px solid rgba(136, 217, 130, 0.08);
-                font-size: 11px;
-                color: var(--text-dim);
-            }
-            .dispatched-footer b {
-                color: var(--green);
-            }
+        .panel-header-sub {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-            /* ─── Dispatch Panel: Empty State ─── */
-            #empty-state {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                text-align: center;
-                padding: 40px;
-                gap: 14px;
-                opacity: 0.45;
-            }
-            #empty-state .e-icon {
-                width: 68px;
-                height: 68px;
-                border-radius: 50%;
-                background: var(--surface);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            #empty-state .e-icon .material-symbols-outlined {
-                font-size: 30px;
-                color: var(--text-dim);
-            }
-            #empty-state h3 {
-                font-family: "Manrope", sans-serif;
-                font-size: 18px;
-                font-weight: 800;
-            }
-            #empty-state p {
-                font-size: 12px;
-                color: var(--text-dim);
-                max-width: 220px;
-                line-height: 1.7;
-            }
+        /* ─── Request Feed ─── */
+        #request-feed {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
 
-            /* ─── Dispatch Panel: Detailed View ─── */
-            #detailed-view {
-                display: none;
-                flex-direction: column;
-                flex: 1;
-                overflow-y: auto;
-            }
+        .req-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--red);
+            border-radius: 10px;
+            padding: 13px;
+            cursor: pointer;
+            transition: all 0.16s;
+            position: relative;
+        }
 
-            /* Hero section */
-            .d-hero {
-                padding: 18px;
-                background: linear-gradient(
-                    135deg,
+        .req-card:hover {
+            background: var(--surface-hi);
+            border-left-color: var(--orange);
+            transform: translateX(2px);
+        }
+
+        .req-card.selected {
+            border-color: var(--orange);
+            background: rgba(254, 87, 51, 0.05);
+            border-left-color: var(--orange);
+        }
+
+        .req-card.dispatched {
+            border-left-color: var(--green);
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .req-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .req-name {
+            font-family: "Manrope", sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .req-area {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 3px;
+        }
+
+        .urgency-badge {
+            font-size: 10px;
+            font-weight: 800;
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--red);
+            border: 1px solid rgba(255, 107, 107, 0.18);
+            border-radius: 5px;
+            padding: 2px 7px;
+            flex-shrink: 0;
+        }
+
+        .req-msg {
+            font-size: 11px;
+            color: var(--text-dim);
+            font-style: italic;
+            background: rgba(255, 255, 255, 0.025);
+            border-radius: 6px;
+            padding: 6px 8px;
+            margin: 7px 0;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .req-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        .cat-badge {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--orange);
+            background: rgba(254, 87, 51, 0.07);
+            border: 1px solid rgba(254, 87, 51, 0.14);
+            border-radius: 5px;
+            padding: 2px 7px;
+            text-transform: uppercase;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            font-family: monospace;
+            color: var(--text-dim);
+        }
+
+        .dot-sm {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--red);
+            animation: blink 1.4s infinite;
+        }
+
+        .dot-sm.done {
+            background: var(--green);
+            animation: none;
+        }
+
+        .dispatched-footer {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(136, 217, 130, 0.08);
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .dispatched-footer b {
+            color: var(--green);
+        }
+
+        /* ─── Dispatch Panel: Empty State ─── */
+        #empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px;
+            gap: 14px;
+            opacity: 0.45;
+        }
+
+        #empty-state .e-icon {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #empty-state .e-icon .material-symbols-outlined {
+            font-size: 30px;
+            color: var(--text-dim);
+        }
+
+        #empty-state h3 {
+            font-family: "Manrope", sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        #empty-state p {
+            font-size: 12px;
+            color: var(--text-dim);
+            max-width: 220px;
+            line-height: 1.7;
+        }
+
+        /* ─── Dispatch Panel: Detailed View ─── */
+        #detailed-view {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Hero section */
+        .d-hero {
+            padding: 18px;
+            background: linear-gradient(135deg,
                     rgba(254, 87, 51, 0.06) 0%,
-                    transparent 55%
-                );
-                border-bottom: 1px solid var(--border);
-                flex-shrink: 0;
-            }
-            .d-hero-row {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 8px;
-            }
-            #detail-name {
-                font-family: "Manrope", sans-serif;
-                font-size: 20px;
-                font-weight: 900;
-                color: var(--text);
-                margin-bottom: 4px;
-            }
-            #detail-category-badge {
-                font-size: 10px;
-                font-weight: 700;
-                text-transform: uppercase;
-                background: rgba(254, 87, 51, 0.1);
-                color: var(--orange);
-                border: 1px solid rgba(254, 87, 51, 0.2);
-                border-radius: 5px;
-                padding: 2px 8px;
-                display: inline-block;
-                margin-bottom: 6px;
-            }
-            #detail-coords {
-                font-family: monospace;
-                font-size: 11px;
-                color: var(--orange);
-                background: rgba(254, 87, 51, 0.07);
-                border: 1px solid rgba(254, 87, 51, 0.14);
-                border-radius: 5px;
-                padding: 2px 7px;
-                display: inline-block;
-            }
-            .d-urg-badge {
-                font-size: 10px;
-                font-weight: 800;
-                text-transform: uppercase;
-                background: rgba(255, 107, 107, 0.1);
-                color: var(--red);
-                border: 1px solid rgba(255, 107, 107, 0.2);
-                border-radius: 20px;
-                padding: 4px 11px;
-            }
-            #detail-message {
-                font-size: 12.5px;
-                color: var(--text-dim);
-                font-style: italic;
-                background: rgba(255, 255, 255, 0.025);
-                border-radius: 7px;
-                padding: 10px 12px;
-                line-height: 1.6;
-            }
+                    transparent 55%);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
 
-            /* Map */
-            #detail-map {
-                height: 185px;
-                flex-shrink: 0;
-            }
+        .d-hero-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
 
-            /* Supply section */
-            .supply-section {
-                padding: 14px 18px;
-                border-bottom: 1px solid var(--border);
-                flex-shrink: 0;
-            }
-            .supply-section-title {
-                font-size: 11px;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                color: var(--text-dim);
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                margin-bottom: 10px;
-            }
-            .supply-section-title .material-symbols-outlined {
-                font-size: 14px;
-            }
+        #detail-name {
+            font-family: "Manrope", sans-serif;
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
 
-            #nearest-resources {
-                display: flex;
-                flex-direction: column;
-                gap: 6px;
-                max-height: 200px;
-                overflow-y: auto;
-            }
+        #detail-category-badge {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: rgba(254, 87, 51, 0.1);
+            color: var(--orange);
+            border: 1px solid rgba(254, 87, 51, 0.2);
+            border-radius: 5px;
+            padding: 2px 8px;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
 
-            .supply-item {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 10px 12px;
-                background: var(--surface);
-                border: 1.5px solid var(--border);
-                border-radius: 8px;
-                cursor: pointer;
-                transition: all 0.14s;
-            }
-            .supply-item:hover {
-                border-color: rgba(254, 87, 51, 0.35);
-                background: var(--surface-hi);
-            }
-            .supply-item.selected {
-                border-color: var(--orange);
-                background: var(--selected-res);
-            }
-            .supply-left {
-                display: flex;
-                flex-direction: column;
-                gap: 2px;
-            }
-            .supply-name {
-                font-size: 13px;
-                font-weight: 600;
-                color: var(--text);
-            }
-            .supply-sub {
-                font-size: 10px;
-                color: var(--text-dim);
-            }
-            .supply-qty {
-                font-size: 11px;
-                font-weight: 700;
-                font-family: monospace;
-                color: var(--orange);
-                background: rgba(254, 87, 51, 0.07);
-                padding: 3px 8px;
-                border-radius: 5px;
-                flex-shrink: 0;
-            }
-            .supply-empty {
-                text-align: center;
-                font-size: 12px;
-                color: var(--text-dim);
-                font-style: italic;
-                padding: 14px;
-                border: 1px dashed rgba(255, 107, 107, 0.25);
-                background: rgba(255, 107, 107, 0.03);
-                border-radius: 8px;
-            }
+        #detail-coords {
+            font-family: monospace;
+            font-size: 11px;
+            color: var(--orange);
+            background: rgba(254, 87, 51, 0.07);
+            border: 1px solid rgba(254, 87, 51, 0.14);
+            border-radius: 5px;
+            padding: 2px 7px;
+            display: inline-block;
+        }
 
-            /* Volunteer Selection */
-            #nearest-volunteers-list {
-                display: flex;
-                flex-direction: column;
-                gap: 6px;
-                max-height: 180px;
-                overflow-y: auto;
-            }
-            .volunteer-item {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 10px 12px;
-                background: var(--surface);
-                border: 1.5px solid var(--border);
-                border-radius: 8px;
-                cursor: pointer;
-                transition: all 0.14s;
-            }
-            .volunteer-item:hover {
-                border-color: rgba(136, 217, 130, 0.35);
-                background: var(--surface-hi);
-            }
-            .volunteer-item.selected {
-                border-color: var(--green);
-                background: rgba(136, 217, 130, 0.05);
-            }
-            .volunteer-info {
-                display: flex;
-                flex-direction: column;
-                gap: 2px;
-            }
-            .volunteer-name {
-                font-size: 13px;
-                font-weight: 700;
-                color: var(--text);
-            }
-            .volunteer-role {
-                font-size: 10px;
-                color: var(--text-dim);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-            .rec-badge {
-                font-size: 9px;
-                font-weight: 800;
-                background: linear-gradient(135deg, #ffd700, #ffa500);
-                color: #000;
-                padding: 1px 6px;
-                border-radius: 4px;
-                display: flex;
-                align-items: center;
-                gap: 3px;
-                margin-top: 2px;
-            }
+        .d-urg-badge {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--red);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+            border-radius: 20px;
+            padding: 4px 11px;
+        }
 
-            /* Dispatch action area */
-            #dispatch-action-area {
-                padding: 16px 18px;
-                flex-shrink: 0;
-                display: none;
-                flex-direction: column;
-                gap: 10px;
-            }
+        #detail-message {
+            font-size: 12.5px;
+            color: var(--text-dim);
+            font-style: italic;
+            background: rgba(255, 255, 255, 0.025);
+            border-radius: 7px;
+            padding: 10px 12px;
+            line-height: 1.6;
+        }
 
-            /* Dispatcher identity strip */
-            #dispatcher-strip {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                background: rgba(136, 217, 130, 0.06);
-                border: 1px solid rgba(136, 217, 130, 0.15);
-                border-radius: 9px;
-                padding: 10px 14px;
-            }
-            .d-strip-avatar {
-                width: 32px;
-                height: 32px;
-                border-radius: 50%;
-                background: rgba(136, 217, 130, 0.15);
-                color: var(--green);
-                font-size: 13px;
-                font-weight: 800;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                flex-shrink: 0;
-            }
-            .d-strip-info {
-                flex: 1;
-            }
-            .d-strip-label {
-                font-size: 10px;
-                color: var(--text-dim);
-                text-transform: uppercase;
-                letter-spacing: 0.8px;
-            }
-            .d-strip-name {
-                font-size: 13px;
-                font-weight: 700;
-                color: var(--green);
-            }
+        /* Map */
+        #detail-map {
+            height: 185px;
+            flex-shrink: 0;
+        }
 
-            /* Dispatch button */
-            #dispatch-btn {
-                width: 100%;
-                height: 50px;
-                background: linear-gradient(
-                    135deg,
+        /* Supply section */
+        .supply-section {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .supply-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .supply-section-title .material-symbols-outlined {
+            font-size: 14px;
+        }
+
+        #nearest-resources {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .supply-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.14s;
+        }
+
+        .supply-item:hover {
+            border-color: rgba(254, 87, 51, 0.35);
+            background: var(--surface-hi);
+        }
+
+        .supply-item.selected {
+            border-color: var(--orange);
+            background: var(--selected-res);
+        }
+
+        .supply-left {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .supply-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .supply-sub {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        .supply-qty {
+            font-size: 11px;
+            font-weight: 700;
+            font-family: monospace;
+            color: var(--orange);
+            background: rgba(254, 87, 51, 0.07);
+            padding: 3px 8px;
+            border-radius: 5px;
+            flex-shrink: 0;
+        }
+
+        .supply-empty {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-dim);
+            font-style: italic;
+            padding: 14px;
+            border: 1px dashed rgba(255, 107, 107, 0.25);
+            background: rgba(255, 107, 107, 0.03);
+            border-radius: 8px;
+        }
+
+        /* Volunteer Selection */
+        #nearest-volunteers-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .volunteer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.14s;
+        }
+
+        .volunteer-item:hover {
+            border-color: rgba(136, 217, 130, 0.35);
+            background: var(--surface-hi);
+        }
+
+        .volunteer-item.selected {
+            border-color: var(--green);
+            background: rgba(136, 217, 130, 0.05);
+        }
+
+        .volunteer-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .volunteer-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .volunteer-role {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .rec-badge {
+            font-size: 9px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffd700, #ffa500);
+            color: #000;
+            padding: 1px 6px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            margin-top: 2px;
+        }
+
+        /* Dispatch action area */
+        #dispatch-action-area {
+            padding: 16px 18px;
+            flex-shrink: 0;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Dispatcher identity strip */
+        #dispatcher-strip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(136, 217, 130, 0.06);
+            border: 1px solid rgba(136, 217, 130, 0.15);
+            border-radius: 9px;
+            padding: 10px 14px;
+        }
+
+        .d-strip-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(136, 217, 130, 0.15);
+            color: var(--green);
+            font-size: 13px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .d-strip-info {
+            flex: 1;
+        }
+
+        .d-strip-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .d-strip-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        /* Dispatch button */
+        #dispatch-btn {
+            width: 100%;
+            height: 50px;
+            background: linear-gradient(135deg,
                     var(--orange),
-                    var(--orange-dim)
-                );
-                border: none;
-                border-radius: 11px;
-                color: white;
-                font-family: "Manrope", sans-serif;
-                font-size: 14px;
-                font-weight: 900;
-                letter-spacing: 0.5px;
-                text-transform: uppercase;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                transition: all 0.2s;
-                box-shadow: 0 4px 18px rgba(254, 87, 51, 0.22);
-            }
-            #dispatch-btn:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 8px 28px rgba(254, 87, 51, 0.35);
-            }
-            #dispatch-btn:active {
-                transform: scale(0.98);
-            }
-            #dispatch-btn .material-symbols-outlined {
-                font-size: 19px;
-            }
-            .dispatch-note {
-                text-align: center;
-                font-size: 10px;
-                color: var(--text-dim);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 5px;
-            }
-            .dispatch-note .material-symbols-outlined {
-                font-size: 12px;
-                color: var(--green);
-            }
+                    var(--orange-dim));
+            border: none;
+            border-radius: 11px;
+            color: white;
+            font-family: "Manrope", sans-serif;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 18px rgba(254, 87, 51, 0.22);
+        }
 
-            /* ─── Toast ─── */
-            #toast {
-                display: none;
-                position: fixed;
-                bottom: 22px;
-                right: 22px;
-                padding: 11px 18px;
-                border-radius: 9px;
-                font-size: 13px;
-                font-weight: 600;
-                z-index: 9999;
-                max-width: 340px;
-                box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
-                border: 1px solid rgba(255, 255, 255, 0.06);
-            }
-        </style>
-    </head>
-    <body>
-        <!-- ══════════════════════════════════════════ SIDEBAR -->
-        <nav id="sidebar">
-            <div class="sidebar-brand">
-                <div class="sidebar-brand-name">Geo-Aid <span>HUB</span></div>
-                <div class="sidebar-brand-sub">National Command Center</div>
-            </div>
+        #dispatch-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 28px rgba(254, 87, 51, 0.35);
+        }
 
-            <div class="sidebar-nav">
-                <a class="nav-link active" href="index.html">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    Dashboard
-                </a>
-                <a class="nav-link" href="map-view.html">
-                    <span class="material-symbols-outlined">map</span> Map View
-                </a>
-                <a class="nav-link" href="resource-log.html">
-                    <span class="material-symbols-outlined">inventory_2</span>
-                    Resource Log
-                </a>
-                <a class="nav-link" href="volunteer-fleet.html">
-                    <span class="material-symbols-outlined">group</span>
-                    Volunteer Fleet
-                </a>
-                <a class="nav-link" href="messages.html">
-                    <span class="material-symbols-outlined">forum</span>
-                    Messenger Hub
-                </a>
-            </div>
+        #dispatch-btn:active {
+            transform: scale(0.98);
+        }
 
-            <div class="sidebar-footer">
-                <a class="nav-link" href="support.html">
-                    <span class="material-symbols-outlined">help</span> Support
-                </a>
-                <a
-                    class="nav-link"
-                    href="#"
-                    onclick="
+        #dispatch-btn .material-symbols-outlined {
+            font-size: 19px;
+        }
+
+        .dispatch-note {
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .dispatch-note .material-symbols-outlined {
+            font-size: 12px;
+            color: var(--green);
+        }
+
+        /* ─── Toast ─── */
+        #toast {
+            display: none;
+            position: fixed;
+            bottom: 22px;
+            right: 22px;
+            padding: 11px 18px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 9999;
+            max-width: 340px;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ══════════════════════════════════════════ SIDEBAR -->
+    <nav id="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-name">Geo-Aid <span>HUB</span></div>
+            <div class="sidebar-brand-sub">National Command Center</div>
+        </div>
+
+        <div class="sidebar-nav">
+            <a class="nav-link active" href="index.html">
+                <span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+            <a class="nav-link" href="map-view.html">
+                <span class="material-symbols-outlined">map</span> Map View
+            </a>
+            <a class="nav-link" href="resource-log.html">
+                <span class="material-symbols-outlined">inventory_2</span>
+                Resource Log
+            </a>
+            <a class="nav-link" href="volunteer-fleet.html">
+                <span class="material-symbols-outlined">group</span>
+                Volunteer Fleet
+            </a>
+            <a class="nav-link" href="messages.html">
+                <span class="material-symbols-outlined">forum</span>
+                Messenger Hub
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <a class="nav-link" href="support.html">
+                <span class="material-symbols-outlined">help</span> Support
+            </a>
+            <a class="nav-link" href="#" onclick="
                         event.preventDefault();
                         window.logout && window.logout();
-                    "
-                >
-                    <span class="material-symbols-outlined">logout</span> Logout
-                </a>
+                    ">
+                <span class="material-symbols-outlined">logout</span> Logout
+            </a>
+        </div>
+    </nav>
+
+    <!-- ══════════════════════════════════════════ MAIN -->
+    <div id="main">
+        <!-- ─── HEADER ─── -->
+        <header id="header">
+            <div class="header-left">
+                <div class="header-title">GEO-AID <span>HUB</span></div>
+                <div class="header-divider"></div>
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <span class="stat-dot red"></span>
+                        <span style="color: var(--red)">Active SOS:
+                            <strong id="nav-active-sos">…</strong></span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-dot orange"></span>
+                        <span style="color: var(--orange)">Low Stock:
+                            <strong id="nav-low-stock">0</strong></span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-dot green"></span>
+                        <span style="color: var(--green)">Volunteers:
+                            <strong id="nav-active-volunteers">…</strong></span>
+                    </div>
+                </div>
             </div>
-        </nav>
 
-        <!-- ══════════════════════════════════════════ MAIN -->
-        <div id="main">
-            <!-- ─── HEADER ─── -->
-            <header id="header">
-                <div class="header-left">
-                    <div class="header-title">GEO-AID <span>HUB</span></div>
-                    <div class="header-divider"></div>
-                    <div class="header-stats">
-                        <div class="stat-item">
-                            <span class="stat-dot red"></span>
-                            <span style="color: var(--red)"
-                                >Active SOS:
-                                <strong id="nav-active-sos">…</strong></span
-                            >
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-dot orange"></span>
-                            <span style="color: var(--orange)"
-                                >Low Stock:
-                                <strong id="nav-low-stock">0</strong></span
-                            >
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-dot green"></span>
-                            <span style="color: var(--green)"
-                                >Volunteers:
-                                <strong id="nav-active-volunteers"
-                                    >…</strong
-                                ></span
-                            >
-                        </div>
-                    </div>
+            <div class="header-right">
+                <!-- Logged-in volunteer badge -->
+                <div id="dispatcher-badge">
+                    <div class="dispatcher-avatar-sm" id="db-avatar"></div>
+                    <span id="db-name">Loading…</span>
                 </div>
 
-                <div class="header-right">
-                    <!-- Logged-in volunteer badge -->
-                    <div id="dispatcher-badge">
-                        <div class="dispatcher-avatar-sm" id="db-avatar">?</div>
-                        <span id="db-name">Loading…</span>
+                <button class="icon-btn" id="theme-toggle-btn" title="Toggle Theme">
+                    <span class="material-symbols-outlined" id="theme-icon">light_mode</span>
+                </button>
+                <button class="icon-btn" onclick="exportRegistry()" title="Export PDF">
+                    <span class="material-symbols-outlined">description</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- ─── TWO-PANEL GRID ─── -->
+        <div id="view">
+            <div id="dashboard-grid">
+                <!-- ══ LEFT: PENDING REQUESTS ══ -->
+                <div class="panel" id="panel-requests">
+                    <div class="panel-header">
+                        <h2>Pending Requests</h2>
+                        <span class="panel-header-sub">Live Feed</span>
                     </div>
-
-                    <button
-                        class="icon-btn"
-                        id="theme-toggle-btn"
-                        title="Toggle Theme"
-                    >
-                        <span class="material-symbols-outlined" id="theme-icon"
-                            >light_mode</span
-                        >
-                    </button>
-                    <button
-                        class="icon-btn"
-                        onclick="exportRegistry()"
-                        title="Export PDF"
-                    >
-                        <span class="material-symbols-outlined"
-                            >description</span
-                        >
-                    </button>
-                </div>
-            </header>
-
-            <!-- ─── TWO-PANEL GRID ─── -->
-            <div id="view">
-                <div id="dashboard-grid">
-                    <!-- ══ LEFT: PENDING REQUESTS ══ -->
-                    <div class="panel" id="panel-requests">
-                        <div class="panel-header">
-                            <h2>Pending Requests</h2>
-                            <span class="panel-header-sub">Live Feed</span>
-                        </div>
-                        <div id="request-feed">
-                            <div
-                                style="
+                    <div id="request-feed">
+                        <div style="
                                     color: var(--text-dim);
                                     font-style: italic;
                                     text-align: center;
                                     padding: 40px 20px;
                                     font-size: 12px;
-                                "
-                            >
-                                Loading SOS reports…
-                            </div>
+                                ">
+                            Loading SOS reports…
                         </div>
                     </div>
+                </div>
 
-                    <!-- ══ RIGHT: DISPATCH OPTION ══ -->
-                    <div class="panel" id="panel-dispatch">
-                        <div class="panel-header">
-                            <div
-                                style="
+                <!-- ══ RIGHT: DISPATCH OPTION ══ -->
+                <div class="panel" id="panel-dispatch">
+                    <div class="panel-header">
+                        <div style="
                                     display: flex;
                                     align-items: center;
                                     gap: 10px;
-                                "
-                            >
-                                <span
-                                    class="material-symbols-outlined"
-                                    style="color: var(--orange)"
-                                    >map</span
-                                >
-                                <div>
-                                    <h2>LIVE DISPATCH MAP</h2>
-                                    <div class="panel-header-sub">
-                                        Tactical Proximity View
-                                    </div>
+                                ">
+                            <span class="material-symbols-outlined" style="color: var(--orange)">map</span>
+                            <div>
+                                <h2>LIVE DISPATCH MAP</h2>
+                                <div class="panel-header-sub">
+                                    Tactical Proximity View
                                 </div>
                             </div>
-                            <div style="display: flex; gap: 8px">
-                                <button
-                                    onclick="toggleHeatmap()"
-                                    class="action-btn"
-                                    id="heatmap-toggle"
-                                    style="
+                        </div>
+                        <div style="display: flex; gap: 8px">
+                            <button onclick="toggleHeatmap()" class="action-btn" id="heatmap-toggle" style="
                                         background: rgba(255, 255, 255, 0.05);
                                         border: 1px solid var(--border);
                                         padding: 2px 10px;
@@ -810,121 +821,87 @@
                                         color: var(--text);
                                         font-size: 11px;
                                         font-weight: 700;
-                                    "
-                                >
-                                    <span
-                                        class="material-symbols-outlined"
-                                        style="font-size: 16px"
-                                        >local_fire_department</span
-                                    >
-                                    HEATMAP
-                                </button>
-                                <div class="active-pulse"></div>
-                            </div>
-                        </div>
-
-                        <!-- Empty state -->
-                        <div id="empty-state">
-                            <div class="e-icon">
+                                    ">
                                 <span class="material-symbols-outlined"
-                                    >touch_app</span
-                                >
+                                    style="font-size: 16px">local_fire_department</span>
+                                HEATMAP
+                            </button>
+                            <div class="active-pulse"></div>
+                        </div>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div id="empty-state">
+                        <div class="e-icon">
+                            <span class="material-symbols-outlined">touch_app</span>
+                        </div>
+                        <h3>Dispatch Center</h3>
+                        <p>
+                            Click any pending SOS request on the left to
+                            begin the dispatch protocol.
+                        </p>
+                    </div>
+
+                    <!-- Active dispatch detail (shown when a request is selected) -->
+                    <div id="detailed-view">
+                        <!-- ─ Requester Info ─ -->
+                        <div class="d-hero">
+                            <div class="d-hero-row">
+                                <div>
+                                    <div id="detail-name">—</div>
+                                    <span id="detail-category-badge">—</span>
+                                    <br />
+                                    <code id="detail-coords">—</code>
+                                </div>
+                                <span class="d-urg-badge" id="detail-urgency">Urgency: —</span>
                             </div>
-                            <h3>Dispatch Center</h3>
-                            <p>
-                                Click any pending SOS request on the left to
-                                begin the dispatch protocol.
-                            </p>
+                            <div id="detail-message" style="margin-top: 10px">
+                                "—"
+                            </div>
                         </div>
 
-                        <!-- Active dispatch detail (shown when a request is selected) -->
-                        <div id="detailed-view">
-                            <!-- ─ Requester Info ─ -->
-                            <div class="d-hero">
-                                <div class="d-hero-row">
-                                    <div>
-                                        <div id="detail-name">—</div>
-                                        <span id="detail-category-badge"
-                                            >—</span
-                                        >
-                                        <br />
-                                        <code id="detail-coords">—</code>
-                                    </div>
-                                    <span
-                                        class="d-urg-badge"
-                                        id="detail-urgency"
-                                        >Urgency: —</span
-                                    >
-                                </div>
-                                <div
-                                    id="detail-message"
-                                    style="margin-top: 10px"
-                                >
-                                    "—"
-                                </div>
+                        <!-- ─ Live Map ─ -->
+                        <div id="detail-map"></div>
+
+                        <div class="supply-section">
+                            <div class="supply-section-title">
+                                <span class="material-symbols-outlined">inventory_2</span>
+                                Available Supplies — Select one to dispatch
                             </div>
+                            <div id="nearest-resources"></div>
+                        </div>
 
-                            <!-- ─ Live Map ─ -->
-                            <div id="detail-map"></div>
-
-                            <div class="supply-section">
-                                <div class="supply-section-title">
-                                    <span class="material-symbols-outlined"
-                                        >inventory_2</span
-                                    >
-                                    Available Supplies — Select one to dispatch
-                                </div>
-                                <div id="nearest-resources"></div>
+                        <!-- ─ Field Responders (Skill-Based) ─ -->
+                        <div class="supply-section" style="border-bottom: none">
+                            <div class="supply-section-title">
+                                <span class="material-symbols-outlined">person_pin</span>
+                                Field Responders — Recommended by Skill
                             </div>
+                            <div id="nearest-volunteers-list"></div>
+                        </div>
 
-                            <!-- ─ Field Responders (Skill-Based) ─ -->
-                            <div
-                                class="supply-section"
-                                style="border-bottom: none"
-                            >
-                                <div class="supply-section-title">
-                                    <span class="material-symbols-outlined"
-                                        >person_pin</span
-                                    >
-                                    Field Responders — Recommended by Skill
+                        <!-- ─ Dispatch Action ─ -->
+                        <div id="dispatch-action-area">
+                            <!-- Dispatcher strip — shows who is dispatching -->
+                            <div id="dispatcher-strip">
+                                <div class="d-strip-avatar" id="strip-avatar">
+                                    ?
                                 </div>
-                                <div id="nearest-volunteers-list"></div>
-                            </div>
-
-                            <!-- ─ Dispatch Action ─ -->
-                            <div id="dispatch-action-area">
-                                <!-- Dispatcher strip — shows who is dispatching -->
-                                <div id="dispatcher-strip">
-                                    <div
-                                        class="d-strip-avatar"
-                                        id="strip-avatar"
-                                    >
-                                        ?
+                                <div class="d-strip-info">
+                                    <div class="d-strip-label">
+                                        Dispatching As
                                     </div>
-                                    <div class="d-strip-info">
-                                        <div class="d-strip-label">
-                                            Dispatching As
-                                        </div>
-                                        <div
-                                            class="d-strip-name"
-                                            id="strip-name"
-                                        >
-                                            Loading…
-                                        </div>
+                                    <div class="d-strip-name" id="strip-name">
+                                        Loading…
                                     </div>
-                                    <span
-                                        class="material-symbols-outlined"
-                                        style="
+                                </div>
+                                <span class="material-symbols-outlined" style="
                                             font-size: 16px;
                                             color: var(--green);
-                                        "
-                                        >verified</span
-                                    >
-                                </div>
+                                        ">verified</span>
+                            </div>
 
-                                <div
-                                    id="dispatch-quantity-wrapper"
-                                    style="
+                            <div id="dispatch-quantity-wrapper" style="
                                         display: flex;
                                         align-items: center;
                                         gap: 12px;
@@ -933,39 +910,23 @@
                                         padding: 10px 14px;
                                         border-radius: 10px;
                                         border: 1px solid var(--border);
-                                    "
-                                >
-                                    <div
-                                        style="
+                                    ">
+                                <div style="
                                             display: flex;
                                             align-items: center;
                                             gap: 8px;
                                             flex: 1;
-                                        "
-                                    >
-                                        <span
-                                            class="material-symbols-outlined"
-                                            style="
+                                        ">
+                                    <span class="material-symbols-outlined" style="
                                                 font-size: 20px;
                                                 color: var(--orange);
-                                            "
-                                            >inventory_2</span
-                                        >
-                                        <span
-                                            style="
+                                            ">inventory_2</span>
+                                    <span style="
                                                 font-size: 13px;
                                                 font-weight: 700;
-                                            "
-                                            >Units to Send</span
-                                        >
-                                    </div>
-                                    <input
-                                        type="number"
-                                        id="dispatch-quantity"
-                                        value="1"
-                                        min="1"
-                                        step="1"
-                                        style="
+                                            ">Units to Send</span>
+                                </div>
+                                <input type="number" id="dispatch-quantity" value="1" min="1" step="1" style="
                                             width: 80px;
                                             height: 34px;
                                             background: var(--bg);
@@ -979,236 +940,228 @@
                                             font-size: 15px;
                                             outline: none;
                                             text-align: center;
-                                        "
-                                    />
-                                </div>
+                                        " />
+                            </div>
 
-                                <button
-                                    id="dispatch-btn"
-                                    onclick="confirmDispatch()"
-                                >
-                                    <span class="material-symbols-outlined"
-                                        >send</span
-                                    >
-                                    Dispatch Now
-                                </button>
-                                <div class="dispatch-note">
-                                    <span class="material-symbols-outlined"
-                                        >lock</span
-                                    >
-                                    This action is permanent and will be saved
-                                    to the database
-                                </div>
+                            <button id="dispatch-btn" onclick="confirmDispatch()">
+                                <span class="material-symbols-outlined">send</span>
+                                Dispatch Now
+                            </button>
+                            <div class="dispatch-note">
+                                <span class="material-symbols-outlined">lock</span>
+                                This action is permanent and will be saved
+                                to the database
                             </div>
                         </div>
-                        <!-- /detailed-view -->
                     </div>
-                    <!-- /panel-dispatch -->
+                    <!-- /detailed-view -->
                 </div>
-                <!-- /dashboard-grid -->
+                <!-- /panel-dispatch -->
             </div>
-            <!-- /main -->
+            <!-- /dashboard-grid -->
+        </div>
+        <!-- /main -->
 
-            <div id="toast"></div>
+        <div id="toast"></div>
 
-            <!-- ══════════════════════════════════════════ SCRIPTS -->
-            <script>
-                // ─── Globals ───
-                // Only connect socket once (avoid duplicate connections on re-injection)
-                if (!window._dashboardSocket) {
-                    window._dashboardSocket = io();
+        <!-- ══════════════════════════════════════════ SCRIPTS -->
+        <script>
+            // ─── Globals ───
+            // Only connect socket once (avoid duplicate connections on re-injection)
+            if (!window._dashboardSocket) {
+                window._dashboardSocket = io();
+            }
+            const socket = window._dashboardSocket;
+            let map = null,
+                mapMarker = null;
+            let heatmapLayer = null; // Layer for SOS heatmap
+            let isHeatmapActive = false;
+            let selectedRequest = null;
+            let selectedResourceId = null;
+            let selectedVolunteerId = null; // New global for responder selection
+            let currentVolunteer = null; // { VolunteerID, Name, Role, … }
+
+            // ─── Real-time SOS Listener ───
+            // Remove previous listener before re-adding to avoid duplicates
+            socket.off("new_sos");
+            socket.on("new_sos", (sos) => {
+                console.log("🚨 NEW SOS RECEIVED:", sos);
+
+                // 1. Show a special SOS toast
+                showToast(
+                    `🚨 URGENT: New SOS from ${sos.RequestorName}!`,
+                    true,
+                );
+
+                // 2. Refresh the requests list and stats
+                if (typeof loadRequests === "function") loadRequests();
+                if (typeof fetchGlobalStats === "function") fetchGlobalStats();
+            });
+
+            // ─── Real-time Mission Completed Listener ───
+            socket.off("mission_completed");
+            socket.on("mission_completed", (data) => {
+                console.log("✅ MISSION COMPLETED:", data);
+                showToast(`✅ Mission #${data.RequestID} completed! Volunteer is now available.`);
+                if (typeof loadRequests === "function") loadRequests();
+                if (typeof fetchGlobalStats === "function") fetchGlobalStats();
+                if (typeof loadVolunteers === "function") loadVolunteers();
+            });
+
+            // ─── Real-time Dispatch Resolved Listener ───
+            socket.off("dispatch_resolved");
+            socket.on("dispatch_resolved", (data) => {
+                console.log("🚨 DISPATCH RESOLVED:", data);
+                showToast(`🚨 Request #${data.RequestID} resolved by ${data.AdminName || 'Admin'}.`);
+                if (typeof loadRequests === "function") loadRequests();
+                if (typeof fetchGlobalStats === "function") fetchGlobalStats();
+                if (typeof loadVolunteers === "function") loadVolunteers();
+            });
+
+            // ─── Real-time Feedback Listener ───
+            socket.off("feedback_received");
+            socket.on("feedback_received", (data) => {
+                console.log("⭐ VICTIM FEEDBACK RECEIVED:", data);
+                showToast(`⭐ Victim feedback received for Request #${data.RequestID}: ${data.Rating}/5 stars!`);
+                if (typeof loadRequests === "function") loadRequests();
+            });
+
+            // ─── Toast ───
+            function showToast(msg, isError = false) {
+                const t = document.getElementById("toast");
+                t.textContent = msg;
+                t.style.background = isError ? "#7f1d1d" : "#14532d";
+                t.style.color = isError ? "#fca5a5" : "#86efac";
+                t.style.display = "block";
+                clearTimeout(t._timer);
+                t._timer = setTimeout(() => {
+                    t.style.display = "none";
+                }, 3800);
+            }
+            window.showToast = showToast;
+
+            // ─── Fetch current volunteer profile after auth is ready ───
+            window.addEventListener("authReady", async (e) => {
+                const { uid } = e.detail;
+                try {
+                    const res = await fetch(`/api/me?uid=${uid}`);
+                    if (!res.ok) {
+                        console.warn(
+                            "Volunteer profile not found for this UID. Fetching whitelisted Admin profile.",
+                        );
+
+                        let adminName = "Admin Desk";
+                        const email = window.currentFirebaseUser ? window.currentFirebaseUser.email : null;
+                        if (email) {
+                            try {
+                                const verifyRes = await fetch(`/api/admin/verify?email=${encodeURIComponent(email)}`);
+                                if (verifyRes.ok) {
+                                    const verifyData = await verifyRes.json();
+                                    if (verifyData.isAdmin && verifyData.adminName) {
+                                        adminName = verifyData.adminName;
+                                    }
+                                }
+                            } catch (errVerify) {
+                                console.error("Admin verification fetch failed:", errVerify);
+                            }
+                        }
+                        currentVolunteer = { Name: adminName, Role: "Admin" };
+                    } else {
+                        currentVolunteer = await res.json();
+                    }
+
+                    // Show badge in header
+                    const badge =
+                        document.getElementById("dispatcher-badge");
+                    const dbName = document.getElementById("db-name");
+                    const dbAvatar = document.getElementById("db-avatar");
+                    badge.style.display = "flex";
+                    dbName.textContent = currentVolunteer.Name;
+                    dbAvatar.textContent =
+                        currentVolunteer.Name.charAt(0).toUpperCase();
+
+                    // Fill strip
+                    document.getElementById("strip-name").textContent =
+                        currentVolunteer.Name;
+                    document.getElementById("strip-avatar").textContent =
+                        currentVolunteer.Name.charAt(0).toUpperCase();
+                } catch (err) {
+                    console.error("Could not load volunteer profile:", err);
                 }
-                const socket = window._dashboardSocket;
-                let map = null,
-                    mapMarker = null;
-                let heatmapLayer = null; // Layer for SOS heatmap
-                let isHeatmapActive = false;
-                let selectedRequest = null;
-                let selectedResourceId = null;
-                let selectedVolunteerId = null; // New global for responder selection
-                let currentVolunteer = null; // { VolunteerID, Name, Role, … }
+            });
 
-                // ─── Real-time SOS Listener ───
-                // Remove previous listener before re-adding to avoid duplicates
-                socket.off("new_sos");
-                socket.on("new_sos", (sos) => {
-                    console.log("🚨 NEW SOS RECEIVED:", sos);
+            // ─── Map ───
+            function initMap() {
+                if (map) return;
+                const container = document.getElementById("detail-map");
+                if (!container) return;
+                // Clear any stale Leaflet state on the container
+                if (container._leaflet_id) {
+                    delete container._leaflet_id;
+                    container.innerHTML = "";
+                }
+                map = L.map("detail-map", {
+                    zoomControl: false,
+                    attributionControl: false,
+                    fullscreenControl: true,
+                    fullscreenControlOptions: { position: "topleft" },
+                }).setView([23.8103, 90.4125], 13);
+                L.tileLayer(
+                    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                    maxZoom: 19,
+                    attribution: "© OpenStreetMap contributors"
+                }
+                ).addTo(map);
+                // Register with router for cleanup
+                if (window.registerLeafletMap)
+                    window.registerLeafletMap(map);
+            }
 
-                    // 1. Show a special SOS toast
-                    showToast(
-                        `🚨 URGENT: New SOS from ${sos.RequestorName}!`,
-                        true,
+            // ─── Load Requests ───
+            async function loadRequests() {
+                try {
+                    const data = await fetch("/api/requests").then((r) =>
+                        r.json(),
+                    );
+                    const feed = document.getElementById("request-feed");
+                    if (!feed) return;
+                    feed.innerHTML = "";
+
+                    const pending = data
+                        .filter((r) => r.Status === "Pending")
+                        .sort((a, b) => b.UrgencyScore - a.UrgencyScore);
+                    const dispatched = data.filter(
+                        (r) => r.Status === "Dispatched" || r.Status === "Completed",
+                    );
+                    const resolved = data.filter(
+                        (r) => r.Status === "Resolved",
                     );
 
-                    // 2. Refresh the requests list and stats
-                    if (typeof loadRequests === "function") loadRequests();
-                    if (typeof fetchGlobalStats === "function") fetchGlobalStats();
-                });
-
-                // ─── Real-time Mission Completed Listener ───
-                socket.off("mission_completed");
-                socket.on("mission_completed", (data) => {
-                    console.log("✅ MISSION COMPLETED:", data);
-                    showToast(`✅ Mission #${data.RequestID} completed! Volunteer is now available.`);
-                    if (typeof loadRequests === "function") loadRequests();
-                    if (typeof fetchGlobalStats === "function") fetchGlobalStats();
-                    if (typeof loadVolunteers === "function") loadVolunteers();
-                });
-
-                // ─── Real-time Dispatch Resolved Listener ───
-                socket.off("dispatch_resolved");
-                socket.on("dispatch_resolved", (data) => {
-                    console.log("🚨 DISPATCH RESOLVED:", data);
-                    showToast(`🚨 Request #${data.RequestID} resolved by ${data.AdminName || 'Admin'}.`);
-                    if (typeof loadRequests === "function") loadRequests();
-                    if (typeof fetchGlobalStats === "function") fetchGlobalStats();
-                    if (typeof loadVolunteers === "function") loadVolunteers();
-                });
-
-                // ─── Real-time Feedback Listener ───
-                socket.off("feedback_received");
-                socket.on("feedback_received", (data) => {
-                    console.log("⭐ VICTIM FEEDBACK RECEIVED:", data);
-                    showToast(`⭐ Victim feedback received for Request #${data.RequestID}: ${data.Rating}/5 stars!`);
-                    if (typeof loadRequests === "function") loadRequests();
-                });
-
-                // ─── Toast ───
-                function showToast(msg, isError = false) {
-                    const t = document.getElementById("toast");
-                    t.textContent = msg;
-                    t.style.background = isError ? "#7f1d1d" : "#14532d";
-                    t.style.color = isError ? "#fca5a5" : "#86efac";
-                    t.style.display = "block";
-                    clearTimeout(t._timer);
-                    t._timer = setTimeout(() => {
-                        t.style.display = "none";
-                    }, 3800);
-                }
-                window.showToast = showToast;
-
-                // ─── Fetch current volunteer profile after auth is ready ───
-                window.addEventListener("authReady", async (e) => {
-                    const { uid } = e.detail;
-                    try {
-                        const res = await fetch(`/api/me?uid=${uid}`);
-                        if (!res.ok) {
-                            console.warn(
-                                "Volunteer profile not found for this UID. Fetching whitelisted Admin profile.",
-                            );
-                            
-                            let adminName = "Admin Desk";
-                            const email = window.currentFirebaseUser ? window.currentFirebaseUser.email : null;
-                            if (email) {
-                                try {
-                                    const verifyRes = await fetch(`/api/admin/verify?email=${encodeURIComponent(email)}`);
-                                    if (verifyRes.ok) {
-                                        const verifyData = await verifyRes.json();
-                                        if (verifyData.isAdmin && verifyData.adminName) {
-                                            adminName = verifyData.adminName;
-                                        }
-                                    }
-                                } catch (errVerify) {
-                                    console.error("Admin verification fetch failed:", errVerify);
-                                }
-                            }
-                            currentVolunteer = { Name: adminName, Role: "Admin" };
-                        } else {
-                            currentVolunteer = await res.json();
-                        }
-
-                        // Show badge in header
-                        const badge =
-                            document.getElementById("dispatcher-badge");
-                        const dbName = document.getElementById("db-name");
-                        const dbAvatar = document.getElementById("db-avatar");
-                        badge.style.display = "flex";
-                        dbName.textContent = currentVolunteer.Name;
-                        dbAvatar.textContent =
-                            currentVolunteer.Name.charAt(0).toUpperCase();
-
-                        // Fill strip
-                        document.getElementById("strip-name").textContent =
-                            currentVolunteer.Name;
-                        document.getElementById("strip-avatar").textContent =
-                            currentVolunteer.Name.charAt(0).toUpperCase();
-                    } catch (err) {
-                        console.error("Could not load volunteer profile:", err);
+                    if (!data.length) {
+                        feed.innerHTML =
+                            '<div style="color:var(--text-dim);text-align:center;padding:40px;font-size:12px;font-style:italic;">No SOS requests yet.</div>';
+                        return;
                     }
-                });
 
-                // ─── Map ───
-                function initMap() {
-                    if (map) return;
-                    const container = document.getElementById("detail-map");
-                    if (!container) return;
-                    // Clear any stale Leaflet state on the container
-                    if (container._leaflet_id) {
-                        delete container._leaflet_id;
-                        container.innerHTML = "";
-                    }
-                    map = L.map("detail-map", {
-                        zoomControl: false,
-                        attributionControl: false,
-                        fullscreenControl: true,
-                        fullscreenControlOptions: { position: "topleft" },
-                    }).setView([23.8103, 90.4125], 13);
-                    L.tileLayer(
-                        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                            maxZoom: 19,
-                            attribution: "© OpenStreetMap contributors"
-                        }
-                    ).addTo(map);
-                    // Register with router for cleanup
-                    if (window.registerLeafletMap)
-                        window.registerLeafletMap(map);
-                }
+                    [...pending, ...dispatched, ...resolved].forEach((req) => {
+                        const isD = req.Status === "Dispatched";
+                        const isC = req.Status === "Completed";
+                        const isR = req.Status === "Resolved";
 
-                // ─── Load Requests ───
-                async function loadRequests() {
-                    try {
-                        const data = await fetch("/api/requests").then((r) =>
-                            r.json(),
-                        );
-                        const feed = document.getElementById("request-feed");
-                        if (!feed) return;
-                        feed.innerHTML = "";
+                        const statusLabel = isR ? "RESOLVED" : isC ? "COMPLETED" : isD ? "DISPATCHED" : "PENDING";
+                        const statusDotClass = isR ? "bg-emerald-400" : isC ? "bg-green-400" : isD ? "done" : "";
 
-                        const pending = data
-                            .filter((r) => r.Status === "Pending")
-                            .sort((a, b) => b.UrgencyScore - a.UrgencyScore);
-                        const dispatched = data.filter(
-                            (r) => r.Status === "Dispatched" || r.Status === "Completed",
-                        );
-                        const resolved = data.filter(
-                            (r) => r.Status === "Resolved",
-                        );
+                        const card = document.createElement("div");
+                        card.className =
+                            "req-card" + (isD || isC ? " dispatched" : "") + (isR ? " opacity-80" : "");
+                        card.dataset.id = req.RequestID;
 
-                        if (!data.length) {
-                            feed.innerHTML =
-                                '<div style="color:var(--text-dim);text-align:center;padding:40px;font-size:12px;font-style:italic;">No SOS requests yet.</div>';
-                            return;
+                        let starsHtml = "";
+                        if (req.Rating) {
+                            starsHtml = "★".repeat(req.Rating) + "☆".repeat(5 - req.Rating);
                         }
 
-                        [...pending, ...dispatched, ...resolved].forEach((req) => {
-                            const isD = req.Status === "Dispatched";
-                            const isC = req.Status === "Completed";
-                            const isR = req.Status === "Resolved";
-
-                            const statusLabel = isR ? "RESOLVED" : isC ? "COMPLETED" : isD ? "DISPATCHED" : "PENDING";
-                            const statusDotClass = isR ? "bg-emerald-400" : isC ? "bg-green-400" : isD ? "done" : "";
-
-                            const card = document.createElement("div");
-                            card.className =
-                                "req-card" + (isD || isC ? " dispatched" : "") + (isR ? " opacity-80" : "");
-                            card.dataset.id = req.RequestID;
-
-                            let starsHtml = "";
-                            if (req.Rating) {
-                                starsHtml = "★".repeat(req.Rating) + "☆".repeat(5 - req.Rating);
-                            }
-
-                            card.innerHTML = `
+                        card.innerHTML = `
                         <div class="req-row">
                           <div>
                             <div class="req-name">${req.RequestorName}</div>
@@ -1226,17 +1179,15 @@
                           </div>
                         </div>
 
-                        ${
-                            (isD || isC) && req.DispatcherName
+                        ${(isD || isC) && req.DispatcherName
                                 ? `
                           <div class="dispatched-footer">
                             <b>${req.DispatcherName}</b> dispatched <b>${req.DispatchedQuantity || "1 unit"}</b> of <b>${req.DispatchedItemName || "supplies"}</b>
                           </div>`
                                 : ""
-                        }
+                            }
 
-                        ${
-                            req.VictimPhone || req.MobilityStatus
+                        ${req.VictimPhone || req.MobilityStatus
                                 ? `
                           <div class="mt-2 p-2 bg-red-950/30 border border-red-500/20 rounded-lg text-xs flex flex-col gap-1">
                             <div class="flex items-center justify-between font-bold text-red-300">
@@ -1248,10 +1199,9 @@
                             ${req.EmergencyContactName ? `<div class="text-zinc-400">📞 Emergency: ${req.EmergencyContactName} (${req.EmergencyContactPhone || '—'})</div>` : ''}
                           </div>`
                                 : ""
-                        }
+                            }
 
-                        ${
-                            req.Rating || req.FeedbackNote
+                        ${req.Rating || req.FeedbackNote
                                 ? `
                           <div class="mt-2 p-2 bg-emerald-950/40 border border-emerald-500/30 rounded-lg text-xs flex flex-col gap-1">
                             <div class="flex items-center justify-between font-bold text-emerald-400">
@@ -1261,188 +1211,188 @@
                             ${req.FeedbackNote ? `<div class="text-zinc-300 italic">"${req.FeedbackNote}"</div>` : ''}
                           </div>`
                                 : ""
-                        }
+                            }
                       `;
 
-                            if (req.Status === "Pending")
-                                card.onclick = () => selectRequest(req, card);
+                        if (req.Status === "Pending")
+                            card.onclick = () => selectRequest(req, card);
 
-                            feed.appendChild(card);
-                        });
+                        feed.appendChild(card);
+                    });
 
-                        document.getElementById("nav-active-sos").textContent =
-                            pending.length;
-                    } catch (err) {
-                        const feed = document.getElementById("request-feed");
-                        if (feed) feed.innerHTML =
-                            '<div style="color:var(--red);text-align:center;padding:30px;font-size:12px;">Failed to load requests.</div>';
-                        console.error(err);
-                    }
+                    document.getElementById("nav-active-sos").textContent =
+                        pending.length;
+                } catch (err) {
+                    const feed = document.getElementById("request-feed");
+                    if (feed) feed.innerHTML =
+                        '<div style="color:var(--red);text-align:center;padding:30px;font-size:12px;">Failed to load requests.</div>';
+                    console.error(err);
+                }
+            }
+
+            // ─── Select a Request ───
+            async function selectRequest(req, cardEl) {
+                // Prevent dispatch if volunteer profile isn't loaded
+                if (!currentVolunteer) {
+                    showToast(
+                        "Your volunteer profile is not loaded yet. Please wait.",
+                        true,
+                    );
+                    return;
                 }
 
-                // ─── Select a Request ───
-                async function selectRequest(req, cardEl) {
-                    // Prevent dispatch if volunteer profile isn't loaded
-                    if (!currentVolunteer) {
-                        showToast(
-                            "Your volunteer profile is not loaded yet. Please wait.",
-                            true,
-                        );
+                selectedRequest = req;
+                selectedResourceId = null;
+
+                // Highlight card
+                document
+                    .querySelectorAll(".req-card")
+                    .forEach((c) => c.classList.remove("selected"));
+                cardEl?.classList.add("selected");
+
+                // Update panel header (optional element — may not exist in all layouts)
+                const panelSub =
+                    document.getElementById("dispatch-panel-sub");
+                if (panelSub) panelSub.textContent = req.RequestorName;
+
+                // Switch views
+                document.getElementById("empty-state").style.display =
+                    "none";
+                document.getElementById("detailed-view").style.display =
+                    "flex";
+                document.getElementById(
+                    "dispatch-action-area",
+                ).style.display = "none";
+
+                // Fill hero
+                document.getElementById("detail-name").textContent =
+                    req.RequestorName;
+                document.getElementById(
+                    "detail-category-badge",
+                ).textContent = req.CategoryName;
+                document.getElementById("detail-urgency").textContent =
+                    `Urgency: ${req.UrgencyScore}`;
+                document.getElementById("detail-coords").textContent =
+                    `${parseFloat(req.Latitude).toFixed(4)}° N, ${parseFloat(req.Longitude).toFixed(4)}° E`;
+                document.getElementById("detail-message").textContent =
+                    `"${req.ShortMessage || "Needs urgent assistance with " + req.CategoryName + "."}"`;
+
+                // Map
+                initMap();
+                const pos = [
+                    parseFloat(req.Latitude),
+                    parseFloat(req.Longitude),
+                ];
+                map.setView(pos, 15);
+                if (mapMarker) mapMarker.setLatLng(pos);
+                else
+                    mapMarker = L.marker(pos, {
+                        icon: L.divIcon({
+                            className: "",
+                            html: `<div style="width:14px;height:14px;background:var(--red);border:2.5px solid white;border-radius:50%;box-shadow:0 0 0 5px rgba(255,107,107,0.25);"></div>`,
+                            iconSize: [14, 14],
+                            iconAnchor: [7, 7],
+                        }),
+                    }).addTo(map);
+                setTimeout(() => map.invalidateSize(), 60);
+
+                // Load supplies and volunteers
+                await Promise.all([
+                    loadNearestResources(req),
+                    loadNearestVolunteers(req.CategoryID),
+                ]);
+            }
+
+            // ─── Load Volunteers (Skill-Based) ───
+            async function loadNearestVolunteers(categoryId) {
+                const container = document.getElementById(
+                    "nearest-volunteers-list",
+                );
+                container.innerHTML =
+                    '<div class="supply-empty">Finding responders…</div>';
+
+                try {
+                    const data = await fetch(
+                        `/api/nearest-volunteers?categoryId=${categoryId}`,
+                    ).then((r) => r.json());
+                    container.innerHTML = "";
+
+                    if (!data.length) {
+                        container.innerHTML =
+                            '<div class="supply-empty">No available volunteers found.</div>';
                         return;
                     }
 
-                    selectedRequest = req;
-                    selectedResourceId = null;
+                    data.forEach((v) => {
+                        const el = document.createElement("div");
+                        el.className = "volunteer-item";
+                        if (v.VolunteerID === selectedVolunteerId)
+                            el.classList.add("selected");
 
-                    // Highlight card
-                    document
-                        .querySelectorAll(".req-card")
-                        .forEach((c) => c.classList.remove("selected"));
-                    cardEl?.classList.add("selected");
-
-                    // Update panel header (optional element — may not exist in all layouts)
-                    const panelSub =
-                        document.getElementById("dispatch-panel-sub");
-                    if (panelSub) panelSub.textContent = req.RequestorName;
-
-                    // Switch views
-                    document.getElementById("empty-state").style.display =
-                        "none";
-                    document.getElementById("detailed-view").style.display =
-                        "flex";
-                    document.getElementById(
-                        "dispatch-action-area",
-                    ).style.display = "none";
-
-                    // Fill hero
-                    document.getElementById("detail-name").textContent =
-                        req.RequestorName;
-                    document.getElementById(
-                        "detail-category-badge",
-                    ).textContent = req.CategoryName;
-                    document.getElementById("detail-urgency").textContent =
-                        `Urgency: ${req.UrgencyScore}`;
-                    document.getElementById("detail-coords").textContent =
-                        `${parseFloat(req.Latitude).toFixed(4)}° N, ${parseFloat(req.Longitude).toFixed(4)}° E`;
-                    document.getElementById("detail-message").textContent =
-                        `"${req.ShortMessage || "Needs urgent assistance with " + req.CategoryName + "."}"`;
-
-                    // Map
-                    initMap();
-                    const pos = [
-                        parseFloat(req.Latitude),
-                        parseFloat(req.Longitude),
-                    ];
-                    map.setView(pos, 15);
-                    if (mapMarker) mapMarker.setLatLng(pos);
-                    else
-                        mapMarker = L.marker(pos, {
-                            icon: L.divIcon({
-                                className: "",
-                                html: `<div style="width:14px;height:14px;background:var(--red);border:2.5px solid white;border-radius:50%;box-shadow:0 0 0 5px rgba(255,107,107,0.25);"></div>`,
-                                iconSize: [14, 14],
-                                iconAnchor: [7, 7],
-                            }),
-                        }).addTo(map);
-                    setTimeout(() => map.invalidateSize(), 60);
-
-                    // Load supplies and volunteers
-                    await Promise.all([
-                        loadNearestResources(req),
-                        loadNearestVolunteers(req.CategoryID),
-                    ]);
-                }
-
-                // ─── Load Volunteers (Skill-Based) ───
-                async function loadNearestVolunteers(categoryId) {
-                    const container = document.getElementById(
-                        "nearest-volunteers-list",
-                    );
-                    container.innerHTML =
-                        '<div class="supply-empty">Finding responders…</div>';
-
-                    try {
-                        const data = await fetch(
-                            `/api/nearest-volunteers?categoryId=${categoryId}`,
-                        ).then((r) => r.json());
-                        container.innerHTML = "";
-
-                        if (!data.length) {
-                            container.innerHTML =
-                                '<div class="supply-empty">No available volunteers found.</div>';
-                            return;
-                        }
-
-                        data.forEach((v) => {
-                            const el = document.createElement("div");
-                            el.className = "volunteer-item";
-                            if (v.VolunteerID === selectedVolunteerId)
-                                el.classList.add("selected");
-
-                            el.innerHTML = `
+                        el.innerHTML = `
                         <div class="volunteer-info">
                           <div class="volunteer-name">${v.Name} ${v.VolunteerID === currentVolunteer?.VolunteerID ? "(You)" : ""}</div>
                           <div class="volunteer-role">${v.Role} &bull; ${v.Location || "Field"}</div>
                           ${v.isRecommended ? `<span class="rec-badge"><span class="material-symbols-outlined" style="font-size:11px;">star</span> RECOMMENDED</span>` : ""}
                         </div>
                       `;
-                            el.onclick = () =>
-                                selectVolunteer(v.VolunteerID, v.Name, el);
-                            container.appendChild(el);
-                        });
-                    } catch (err) {
-                        container.innerHTML =
-                            '<div class="supply-empty">Error loading volunteers.</div>';
-                        console.error(err);
-                    }
-                }
-
-                function selectVolunteer(id, name, el) {
-                    selectedVolunteerId = id;
-                    window._selectedVolunteerName = name;
-                    document
-                        .querySelectorAll(".volunteer-item")
-                        .forEach((i) => i.classList.remove("selected"));
-                    el.classList.add("selected");
-                    checkDispatchReady();
-                }
-
-                function checkDispatchReady() {
-                    if (selectedResourceId && selectedVolunteerId) {
-                        document.getElementById(
-                            "dispatch-action-area",
-                        ).style.display = "flex";
-                    }
-                }
-
-                // ─── Load All Available Resources ───
-                async function loadNearestResources(req) {
-                    const container =
-                        document.getElementById("nearest-resources");
+                        el.onclick = () =>
+                            selectVolunteer(v.VolunteerID, v.Name, el);
+                        container.appendChild(el);
+                    });
+                } catch (err) {
                     container.innerHTML =
-                        '<div class="supply-empty">Loading available supplies…</div>';
+                        '<div class="supply-empty">Error loading volunteers.</div>';
+                    console.error(err);
+                }
+            }
 
-                    try {
-                        const data = await fetch(
-                            `/api/available-resources?lat=${req.Latitude}&lon=${req.Longitude}`,
-                        ).then((r) => r.json());
+            function selectVolunteer(id, name, el) {
+                selectedVolunteerId = id;
+                window._selectedVolunteerName = name;
+                document
+                    .querySelectorAll(".volunteer-item")
+                    .forEach((i) => i.classList.remove("selected"));
+                el.classList.add("selected");
+                checkDispatchReady();
+            }
 
-                        container.innerHTML = "";
+            function checkDispatchReady() {
+                if (selectedResourceId && selectedVolunteerId) {
+                    document.getElementById(
+                        "dispatch-action-area",
+                    ).style.display = "flex";
+                }
+            }
 
-                        if (!data.length) {
-                            container.innerHTML = `<div class="supply-empty" style="color:var(--red);border-color:rgba(255,107,107,0.3);">
+            // ─── Load All Available Resources ───
+            async function loadNearestResources(req) {
+                const container =
+                    document.getElementById("nearest-resources");
+                container.innerHTML =
+                    '<div class="supply-empty">Loading available supplies…</div>';
+
+                try {
+                    const data = await fetch(
+                        `/api/available-resources?lat=${req.Latitude}&lon=${req.Longitude}`,
+                    ).then((r) => r.json());
+
+                    container.innerHTML = "";
+
+                    if (!data.length) {
+                        container.innerHTML = `<div class="supply-empty" style="color:var(--red);border-color:rgba(255,107,107,0.3);">
                         No supplies currently available in inventory.
                       </div>`;
-                            return;
-                        }
+                        return;
+                    }
 
-                        data.forEach((res) => {
-                            const el = document.createElement("div");
-                            el.className = "supply-item";
-                            if (res.ResourceID === selectedResourceId)
-                                el.classList.add("selected");
-                            el.dataset.id = res.ResourceID;
-                            el.innerHTML = `
+                    data.forEach((res) => {
+                        const el = document.createElement("div");
+                        el.className = "supply-item";
+                        if (res.ResourceID === selectedResourceId)
+                            el.classList.add("selected");
+                        el.dataset.id = res.ResourceID;
+                        el.innerHTML = `
                         <div class="supply-left">
                           <div class="supply-name">
                             ${res.CategoryName}
@@ -1452,250 +1402,251 @@
                         </div>
                         <span class="supply-qty ${res.Quantity < 50 ? "low-stock" : ""}">Qty: ${res.Quantity}</span>
                       `;
-                            el.onclick = () =>
-                                selectSupply(
-                                    el,
-                                    res.ResourceID,
-                                    res.CategoryName,
-                                    res.Quantity,
-                                );
-                            container.appendChild(el);
-                        });
-                    } catch (e) {
-                        container.innerHTML =
-                            '<div class="supply-empty">Error loading supplies. Check connection.</div>';
-                        console.error(e);
-                    }
-                }
-
-                // ─── Select a Supply ───
-                function selectSupply(
-                    el,
-                    resourceId,
-                    supplyName,
-                    availableQty,
-                ) {
-                    selectedResourceId = resourceId;
-                    window._selectedSupplyName =
-                        supplyName || "selected supply";
-
-                    // Set max quantity
-                    const qtyInput =
-                        document.getElementById("dispatch-quantity");
-                    qtyInput.max = availableQty;
-                    qtyInput.value = 1;
-
-                    document
-                        .querySelectorAll(".supply-item")
-                        .forEach((i) => i.classList.remove("selected"));
-                    el.classList.add("selected");
-                    checkDispatchReady();
-                }
-
-                // ─── Confirm & Execute Dispatch ───
-                async function confirmDispatch() {
-                    if (
-                        !selectedRequest ||
-                        !selectedResourceId ||
-                        !selectedVolunteerId
-                    )
-                        return;
-
-                    const reqName = selectedRequest.RequestorName;
-                    const supplyName =
-                        window._selectedSupplyName || "selected supply";
-                    const responderName =
-                        window._selectedVolunteerName || "Assigned Responder";
-                    const quantity =
-                        parseInt(
-                            document.getElementById("dispatch-quantity").value,
-                        ) || 1;
-
-                    const ok = confirm(
-                        `DISPATCH CONFIRMATION\n\n` +
-                            `  Requester : ${reqName}\n` +
-                            `  Supply    : ${supplyName} (x${quantity})\n` +
-                            `  Responder : ${responderName}\n\n` +
-                            `This will:\n` +
-                            `  • Mark the request as "Dispatched"\n` +
-                            `  • Reduce ${supplyName} stock by ${quantity}\n` +
-                            `  • Log ${responderName} as the active responder\n\n` +
-                            `Confirm dispatch?`,
-                    );
-                    if (!ok) return;
-
-                    try {
-                        const res = await fetch("/api/dispatch", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                requestId: selectedRequest.RequestID,
-                                resourceId: selectedResourceId,
-                                volunteerId: selectedVolunteerId,
-                                quantity: quantity,
-                            }),
-                        });
-
-                        if (res.ok) {
-                            showToast(
-                                `✅ Dispatched! ${supplyName} is on the way to ${reqName}.`,
+                        el.onclick = () =>
+                            selectSupply(
+                                el,
+                                res.ResourceID,
+                                res.CategoryName,
+                                res.Quantity,
                             );
-                            // Reset right panel
-                            document.getElementById(
-                                "detailed-view",
-                            ).style.display = "none";
-                            document.getElementById(
-                                "empty-state",
-                            ).style.display = "flex";
-                            document.getElementById(
-                                "dispatch-action-area",
-                            ).style.display = "none";
-                            const pSub =
-                                document.getElementById("dispatch-panel-sub");
-                            if (pSub) pSub.textContent = "Select a request";
-                            document
-                                .querySelectorAll(".req-card")
-                                .forEach((c) => c.classList.remove("selected"));
-                            selectedRequest = selectedResourceId = null;
-                            // Refresh
-                            await loadRequests();
-                            await fetchGlobalStats();
-                        } else {
-                            const err = await res.json();
-                            showToast(
-                                `❌ Dispatch failed: ${err.error || "Unknown error"}`,
-                                true,
-                            );
-                        }
-                    } catch (e) {
-                        console.error(e);
-                        showToast("❌ Network error during dispatch.", true);
-                    }
+                        container.appendChild(el);
+                    });
+                } catch (e) {
+                    container.innerHTML =
+                        '<div class="supply-empty">Error loading supplies. Check connection.</div>';
+                    console.error(e);
                 }
+            }
 
-                // ─── Global Stats ───
-                async function fetchGlobalStats() {
-                    try {
-                        const data = await fetch("/api/stats").then((r) =>
-                            r.json(),
+            // ─── Select a Supply ───
+            function selectSupply(
+                el,
+                resourceId,
+                supplyName,
+                availableQty,
+            ) {
+                selectedResourceId = resourceId;
+                window._selectedSupplyName =
+                    supplyName || "selected supply";
+
+                // Set max quantity
+                const qtyInput =
+                    document.getElementById("dispatch-quantity");
+                qtyInput.max = availableQty;
+                qtyInput.value = 1;
+
+                document
+                    .querySelectorAll(".supply-item")
+                    .forEach((i) => i.classList.remove("selected"));
+                el.classList.add("selected");
+                checkDispatchReady();
+            }
+
+            // ─── Confirm & Execute Dispatch ───
+            async function confirmDispatch() {
+                if (
+                    !selectedRequest ||
+                    !selectedResourceId ||
+                    !selectedVolunteerId
+                )
+                    return;
+
+                const reqName = selectedRequest.RequestorName;
+                const supplyName =
+                    window._selectedSupplyName || "selected supply";
+                const responderName =
+                    window._selectedVolunteerName || "Assigned Responder";
+                const quantity =
+                    parseInt(
+                        document.getElementById("dispatch-quantity").value,
+                    ) || 1;
+
+                const ok = confirm(
+                    `DISPATCH CONFIRMATION\n\n` +
+                    `  Requester : ${reqName}\n` +
+                    `  Supply    : ${supplyName} (x${quantity})\n` +
+                    `  Responder : ${responderName}\n\n` +
+                    `This will:\n` +
+                    `  • Mark the request as "Dispatched"\n` +
+                    `  • Reduce ${supplyName} stock by ${quantity}\n` +
+                    `  • Log ${responderName} as the active responder\n\n` +
+                    `Confirm dispatch?`,
+                );
+                if (!ok) return;
+
+                try {
+                    const res = await fetch("/api/dispatch", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            requestId: selectedRequest.RequestID,
+                            resourceId: selectedResourceId,
+                            volunteerId: selectedVolunteerId,
+                            quantity: quantity,
+                        }),
+                    });
+
+                    if (res.ok) {
+                        showToast(
+                            `✅ Dispatched! ${supplyName} is on the way to ${reqName}.`,
                         );
-                        document.getElementById("nav-active-sos").textContent =
-                            data.pending ?? "0";
-                        document.getElementById("nav-low-stock").textContent =
-                            data.lowStockCount ?? "0";
+                        // Reset right panel
                         document.getElementById(
-                            "nav-active-volunteers",
-                        ).textContent = data.volunteers ?? "0";
-                    } catch (e) {
-                        /* silent */
-                    }
-                }
-
-                // ─── Export PDF ───
-                async function exportRegistry() {
-                    showToast("Generating registry PDF…");
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF();
-                    try {
-                        const [vols, res, shelters] = await Promise.all([
-                            fetch("/api/volunteers").then((r) => r.json()),
-                            fetch("/api/resources").then((r) => r.json()),
-                            fetch("/api/shelters").then((r) => r.json()),
-                        ]);
-                        doc.setFontSize(22);
-                        doc.text("Geo-Aid Hub: Global Registry Report", 14, 20);
-                        doc.setFontSize(10);
-                        doc.text(
-                            `Generated: ${new Date().toLocaleString()}`,
-                            14,
-                            28,
+                            "detailed-view",
+                        ).style.display = "none";
+                        document.getElementById(
+                            "empty-state",
+                        ).style.display = "flex";
+                        document.getElementById(
+                            "dispatch-action-area",
+                        ).style.display = "none";
+                        const pSub =
+                            document.getElementById("dispatch-panel-sub");
+                        if (pSub) pSub.textContent = "Select a request";
+                        document
+                            .querySelectorAll(".req-card")
+                            .forEach((c) => c.classList.remove("selected"));
+                        selectedRequest = selectedResourceId = null;
+                        // Refresh
+                        await loadRequests();
+                        await fetchGlobalStats();
+                    } else {
+                        const err = await res.json();
+                        showToast(
+                            `❌ Dispatch failed: ${err.error || "Unknown error"}`,
+                            true,
                         );
-                        doc.setFontSize(16);
-                        doc.text("1. Volunteer Fleet", 14, 44);
-                        doc.autoTable({
-                            startY: 49,
-                            head: [
-                                ["ID", "Name", "Role", "Status", "Location"],
-                            ],
-                            body: vols.map((v) => [
-                                v.VolunteerID,
-                                v.Name,
-                                v.Role,
-                                v.Status,
-                                v.Location,
-                            ]),
-                            theme: "grid",
-                            headStyles: { fillColor: [254, 87, 51] },
-                        });
-                        let y = doc.lastAutoTable.finalY + 14;
-                        doc.setFontSize(16);
-                        doc.text("2. Resource Inventory", 14, y);
-                        doc.autoTable({
-                            startY: y + 5,
-                            head: [
-                                ["Item", "Qty", "Unit", "Location", "Status"],
-                            ],
-                            body: res.map((r) => [
-                                r.CategoryName,
-                                r.Quantity,
-                                r.UnitOfMeasure,
-                                r.CurrentLocation,
-                                r.Status,
-                            ]),
-                            theme: "grid",
-                            headStyles: { fillColor: [56, 106, 55] },
-                        });
-                        y = doc.lastAutoTable.finalY + 14;
-                        doc.setFontSize(16);
-                        doc.text("3. Shelter Occupancy", 14, y);
-                        doc.autoTable({
-                            startY: y + 5,
-                            head: [
-                                [
-                                    "Name",
-                                    "Capacity",
-                                    "Occupancy",
-                                    "Status",
-                                    "Area",
-                                ],
-                            ],
-                            body: shelters.map((s) => [
-                                s.ShelterName,
-                                s.TotalCapacity,
-                                s.CurrentOccupancy,
-                                s.Status,
-                                s.AreaName,
-                            ]),
-                            theme: "grid",
-                            headStyles: { fillColor: [0, 104, 116] },
-                        });
-                        doc.save(
-                            `GeoAid_Registry_${new Date().toISOString().split("T")[0]}.pdf`,
-                        );
-                        showToast("✅ PDF exported!");
-                    } catch (e) {
-                        showToast("❌ Export failed.", true);
                     }
+                } catch (e) {
+                    console.error(e);
+                    showToast("❌ Network error during dispatch.", true);
                 }
+            }
 
-                // ─── Init ───
+            // ─── Global Stats ───
+            async function fetchGlobalStats() {
+                try {
+                    const data = await fetch("/api/stats").then((r) =>
+                        r.json(),
+                    );
+                    document.getElementById("nav-active-sos").textContent =
+                        data.pending ?? "0";
+                    document.getElementById("nav-low-stock").textContent =
+                        data.lowStockCount ?? "0";
+                    document.getElementById(
+                        "nav-active-volunteers",
+                    ).textContent = data.volunteers ?? "0";
+                } catch (e) {
+                    /* silent */
+                }
+            }
+
+            // ─── Export PDF ───
+            async function exportRegistry() {
+                showToast("Generating registry PDF…");
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                try {
+                    const [vols, res, shelters] = await Promise.all([
+                        fetch("/api/volunteers").then((r) => r.json()),
+                        fetch("/api/resources").then((r) => r.json()),
+                        fetch("/api/shelters").then((r) => r.json()),
+                    ]);
+                    doc.setFontSize(22);
+                    doc.text("Geo-Aid Hub: Global Registry Report", 14, 20);
+                    doc.setFontSize(10);
+                    doc.text(
+                        `Generated: ${new Date().toLocaleString()}`,
+                        14,
+                        28,
+                    );
+                    doc.setFontSize(16);
+                    doc.text("1. Volunteer Fleet", 14, 44);
+                    doc.autoTable({
+                        startY: 49,
+                        head: [
+                            ["ID", "Name", "Role", "Status", "Location"],
+                        ],
+                        body: vols.map((v) => [
+                            v.VolunteerID,
+                            v.Name,
+                            v.Role,
+                            v.Status,
+                            v.Location,
+                        ]),
+                        theme: "grid",
+                        headStyles: { fillColor: [254, 87, 51] },
+                    });
+                    let y = doc.lastAutoTable.finalY + 14;
+                    doc.setFontSize(16);
+                    doc.text("2. Resource Inventory", 14, y);
+                    doc.autoTable({
+                        startY: y + 5,
+                        head: [
+                            ["Item", "Qty", "Unit", "Location", "Status"],
+                        ],
+                        body: res.map((r) => [
+                            r.CategoryName,
+                            r.Quantity,
+                            r.UnitOfMeasure,
+                            r.CurrentLocation,
+                            r.Status,
+                        ]),
+                        theme: "grid",
+                        headStyles: { fillColor: [56, 106, 55] },
+                    });
+                    y = doc.lastAutoTable.finalY + 14;
+                    doc.setFontSize(16);
+                    doc.text("3. Shelter Occupancy", 14, y);
+                    doc.autoTable({
+                        startY: y + 5,
+                        head: [
+                            [
+                                "Name",
+                                "Capacity",
+                                "Occupancy",
+                                "Status",
+                                "Area",
+                            ],
+                        ],
+                        body: shelters.map((s) => [
+                            s.ShelterName,
+                            s.TotalCapacity,
+                            s.CurrentOccupancy,
+                            s.Status,
+                            s.AreaName,
+                        ]),
+                        theme: "grid",
+                        headStyles: { fillColor: [0, 104, 116] },
+                    });
+                    doc.save(
+                        `GeoAid_Registry_${new Date().toISOString().split("T")[0]}.pdf`,
+                    );
+                    showToast("✅ PDF exported!");
+                } catch (e) {
+                    showToast("❌ Export failed.", true);
+                }
+            }
+
+            // ─── Init ───
+            loadRequests();
+            fetchGlobalStats();
+            setInterval(() => {
                 loadRequests();
                 fetchGlobalStats();
-                setInterval(() => {
-                    loadRequests();
-                    fetchGlobalStats();
-                }, 30000);
+            }, 30000);
 
-                // Register the detail map with the router so it gets cleaned up on navigation
-                window.addEventListener("_mapInitialized", () => {
-                    if (window.map && window.registerLeafletMap) {
-                        window.registerLeafletMap(window.map);
-                    }
-                });
-            </script>
-        </div>
-        <!-- /#view -->
+            // Register the detail map with the router so it gets cleaned up on navigation
+            window.addEventListener("_mapInitialized", () => {
+                if (window.map && window.registerLeafletMap) {
+                    window.registerLeafletMap(window.map);
+                }
+            });
+        </script>
+    </div>
+    <!-- /#view -->
 
-        <script src="./router.js"></script>
-    </body>
+    <script src="./router.js"></script>
+</body>
+
 </html>

@@ -188,19 +188,29 @@
         </div>
 
         <script>
-            let currentUserEmail = "admin@geo-aid.org";
+            let currentUserEmail = null;
             let allContacts = { admins: [], victims: [], volunteers: [] };
             let currentCategory = "admins";
             let activeTarget = null;
             let activeConversationId = null;
             let pollingInterval = null;
 
-            document.addEventListener("DOMContentLoaded", async () => {
-                if (window.auth && window.auth.currentUser) {
-                    currentUserEmail = window.auth.currentUser.email || currentUserEmail;
+            function syncUserAuth() {
+                const user = window.currentFirebaseUser;
+                if (user && user.email) {
+                    currentUserEmail = user.email;
+                    document.getElementById('admin-user-tag').innerText = `Logged in as: ${currentUserEmail}`;
+                    renderContacts();
                 }
-                document.getElementById('admin-user-tag').innerText = `Logged in as: ${currentUserEmail}`;
+            }
 
+            window.addEventListener("authReady", async (e) => {
+                syncUserAuth();
+                await loadContacts();
+            });
+
+            document.addEventListener("DOMContentLoaded", async () => {
+                syncUserAuth();
                 await loadContacts();
             });
 
@@ -239,7 +249,7 @@
                 }
 
                 filtered.forEach(item => {
-                    if (item.id === currentUserEmail) return;
+                    if (currentUserEmail && item.id.toLowerCase() === currentUserEmail.toLowerCase()) return;
 
                     const div = document.createElement('div');
                     div.className = `contact-item ${activeTarget && activeTarget.id === item.id ? 'active' : ''}`;
@@ -266,6 +276,7 @@
             }
 
             async function startChat(contact) {
+                if (!currentUserEmail) syncUserAuth();
                 activeTarget = contact;
                 renderContacts();
 
@@ -316,15 +327,16 @@
                     }
 
                     messages.forEach(msg => {
-                        const isMe = msg.SenderID === currentUserEmail;
+                        const isMe = msg.SenderID && currentUserEmail && (msg.SenderID.toLowerCase() === currentUserEmail.toLowerCase());
                         const div = document.createElement('div');
                         div.className = isMe ? 'msg-bubble-sent' : 'msg-bubble-recv';
                         div.style.padding = '10px 14px';
 
                         const time = new Date(msg.SentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        let senderLabel = isMe ? 'You (Admin)' : (activeTarget ? activeTarget.name : msg.SenderRole);
 
                         div.innerHTML = `
-                            <div style="font-size: 10px; color: ${isMe ? 'var(--green)' : 'var(--text-dim)'}; font-weight: bold; margin-bottom: 4px;">${isMe ? 'You (Admin)' : (activeTarget ? activeTarget.name : msg.SenderRole)}</div>
+                            <div style="font-size: 10px; color: ${isMe ? 'var(--green)' : 'var(--orange)'}; font-weight: bold; margin-bottom: 4px;">${senderLabel}</div>
                             <div style="font-size: 13px; line-height: 1.4; word-break: break-word;">${msg.MessageText}</div>
                             <div style="font-size: 9px; color: var(--text-dim); text-align: right; margin-top: 4px;">${time}</div>
                         `;
