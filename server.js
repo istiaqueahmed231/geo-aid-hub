@@ -178,6 +178,15 @@ db.connect((err) => {
     );
 
     db.query(
+      `ALTER TABLE HelpRequests ADD COLUMN CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP`,
+      (err) => {
+        if (err && err.code !== "ER_DUP_FIELDNAME") {
+          console.error("Alter HelpRequests CreatedAt failed:", err.message);
+        }
+      },
+    );
+
+    db.query(
       `ALTER TABLE Volunteers ADD COLUMN Latitude DOUBLE, ADD COLUMN Longitude DOUBLE`,
       (err) => {
         if (err && err.code !== "ER_DUP_FIELDNAME") {
@@ -1075,56 +1084,43 @@ app.get("/api/victims/requests", (req, res) => {
   const { uid } = req.query;
   if (!uid) return res.status(400).json({ error: "Missing uid parameter" });
 
-  const sql = `
-    SELECT 
-      r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage, 
-      r.DispatchedAt, r.CompletedAt, r.ResolvedAt, r.CreatedAt, r.DispatchedQuantity,
-      c.CategoryName, l.AreaName, l.Latitude, l.Longitude,
-      v.Name AS VolunteerName, v.PhoneNumber AS VolunteerPhone,
-      rc.CategoryName AS DispatchedItemName,
-      fb.IsSafe, fb.Rating, fb.FeedbackNote, fb.SubmittedAt AS FeedbackSubmittedAt
-    FROM HelpRequests r
-    LEFT JOIN Victims vct ON r.VictimID = vct.VictimID
-    LEFT JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
-    LEFT JOIN Locations l ON r.LocationID = l.LocationID
-    LEFT JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID
-    LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
-    LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
-    LEFT JOIN Feedback fb ON r.RequestID = fb.RequestID
-    WHERE vct.AuthUID = ? 
-       OR r.RequestorName = (SELECT FullName FROM Victims WHERE AuthUID = ? LIMIT 1)
-    ORDER BY r.RequestID DESC;
-  `;
+  const fetchWithFallback = (hasCreatedAtColumn) => {
+    const createdCol = hasCreatedAtColumn ? "r.CreatedAt" : "r.DispatchedAt AS CreatedAt";
 
-  db.query(sql, [uid, uid], (err, results) => {
-    if (err) {
-      console.error("Error fetching victim requests:", err.message);
-      const fallbackSql = `
-        SELECT 
-          r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage, 
-          r.DispatchedAt, r.CompletedAt, r.ResolvedAt, r.CreatedAt, r.DispatchedQuantity,
-          c.CategoryName, l.AreaName, l.Latitude, l.Longitude,
-          v.Name AS VolunteerName, v.PhoneNumber AS VolunteerPhone,
-          rc.CategoryName AS DispatchedItemName,
-          fb.IsSafe, fb.Rating, fb.FeedbackNote, fb.SubmittedAt AS FeedbackSubmittedAt
-        FROM HelpRequests r
-        LEFT JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
-        LEFT JOIN Locations l ON r.LocationID = l.LocationID
-        LEFT JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID
-        LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
-        LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
-        LEFT JOIN Feedback fb ON r.RequestID = fb.RequestID
-        WHERE r.RequestorName = (SELECT FullName FROM Victims WHERE AuthUID = ? LIMIT 1)
-        ORDER BY r.RequestID DESC;
-      `;
-      db.query(fallbackSql, [uid], (fErr, fResults) => {
-        if (fErr) return res.status(500).json({ error: fErr.message });
-        return res.json(fResults);
-      });
-      return;
-    }
-    res.json(results);
-  });
+    const sql = `
+      SELECT 
+        r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage, 
+        r.DispatchedAt, r.CompletedAt, r.ResolvedAt, ${createdCol}, r.DispatchedQuantity,
+        c.CategoryName, l.AreaName, l.Latitude, l.Longitude,
+        v.Name AS VolunteerName, v.PhoneNumber AS VolunteerPhone,
+        rc.CategoryName AS DispatchedItemName,
+        fb.IsSafe, fb.Rating, fb.FeedbackNote, fb.SubmittedAt AS FeedbackSubmittedAt
+      FROM HelpRequests r
+      LEFT JOIN Victims vct ON r.VictimID = vct.VictimID
+      LEFT JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
+      LEFT JOIN Locations l ON r.LocationID = l.LocationID
+      LEFT JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID
+      LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
+      LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
+      LEFT JOIN Feedback fb ON r.RequestID = fb.RequestID
+      WHERE vct.AuthUID = ? 
+         OR r.RequestorName = (SELECT FullName FROM Victims WHERE AuthUID = ? LIMIT 1)
+      ORDER BY r.RequestID DESC;
+    `;
+
+    db.query(sql, [uid, uid], (err, results) => {
+      if (err) {
+        console.error("Error fetching victim requests:", err.message);
+        if (hasCreatedAtColumn && (err.code === "ER_BAD_FIELD_ERROR" || err.message.includes("CreatedAt"))) {
+          return fetchWithFallback(false);
+        }
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(results);
+    });
+  };
+
+  fetchWithFallback(true);
 });
 
 // --- GET CURRENT VOLUNTEER PROFILE BY FIREBASE UID ---
@@ -1181,31 +1177,42 @@ app.get("/api/volunteers/missions", (req, res) => {
   const { uid } = req.query;
   if (!uid) return res.status(400).json({ error: "Missing uid parameter" });
 
-  const sql = `
-    SELECT 
-      r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage,
-      r.DispatchedAt, r.CompletedAt, r.ResolvedAt, r.CreatedAt, r.DispatchedQuantity,
-      c.CategoryName, l.AreaName, l.Latitude, l.Longitude,
-      vct.FullName AS VictimFullName, vct.PhoneNumber AS VictimPhone, vct.HomeAddress AS VictimAddress,
-      vct.MobilityStatus, vct.HouseholdCount, vct.MedicalDependencies, vct.EmergencyContactName, vct.EmergencyContactPhone,
-      rc.CategoryName AS DispatchedItemName,
-      fb.IsSafe, fb.Rating, fb.FeedbackNote, fb.SubmittedAt AS FeedbackSubmittedAt
-    FROM HelpRequests r
-    JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID
-    JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
-    JOIN Locations l ON r.LocationID = l.LocationID
-    LEFT JOIN Victims vct ON r.VictimID = vct.VictimID
-    LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
-    LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
-    LEFT JOIN Feedback fb ON r.RequestID = fb.RequestID
-    WHERE v.UID = ? AND r.Status IN ('Completed', 'Resolved')
-    ORDER BY r.CompletedAt DESC, r.RequestID DESC;
-  `;
+  const fetchMissionsWithFallback = (hasCreatedAtColumn) => {
+    const createdCol = hasCreatedAtColumn ? "r.CreatedAt" : "r.DispatchedAt AS CreatedAt";
 
-  db.query(sql, [uid], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
+    const sql = `
+      SELECT 
+        r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage,
+        r.DispatchedAt, r.CompletedAt, r.ResolvedAt, ${createdCol}, r.DispatchedQuantity,
+        c.CategoryName, l.AreaName, l.Latitude, l.Longitude,
+        vct.FullName AS VictimFullName, vct.PhoneNumber AS VictimPhone, vct.HomeAddress AS VictimAddress,
+        vct.MobilityStatus, vct.HouseholdCount, vct.MedicalDependencies, vct.EmergencyContactName, vct.EmergencyContactPhone,
+        rc.CategoryName AS DispatchedItemName,
+        fb.IsSafe, fb.Rating, fb.FeedbackNote, fb.SubmittedAt AS FeedbackSubmittedAt
+      FROM HelpRequests r
+      JOIN Volunteers v ON r.AssignedVolunteerID = v.VolunteerID
+      LEFT JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
+      LEFT JOIN Locations l ON r.LocationID = l.LocationID
+      LEFT JOIN Victims vct ON r.VictimID = vct.VictimID
+      LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
+      LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
+      LEFT JOIN Feedback fb ON r.RequestID = fb.RequestID
+      WHERE v.UID = ? AND r.Status IN ('Completed', 'Resolved')
+      ORDER BY r.CompletedAt DESC, r.RequestID DESC;
+    `;
+
+    db.query(sql, [uid], (err, results) => {
+      if (err) {
+        if (hasCreatedAtColumn && (err.code === "ER_BAD_FIELD_ERROR" || err.message.includes("CreatedAt"))) {
+          return fetchMissionsWithFallback(false);
+        }
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(results);
+    });
+  };
+
+  fetchMissionsWithFallback(true);
 });
 // -------------------------------------------------------
 
