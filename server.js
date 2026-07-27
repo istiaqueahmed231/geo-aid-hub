@@ -390,6 +390,10 @@ app.post("/api/sos", (req, res) => {
     authUid
   } = req.body;
 
+  const latVal = parseFloat(Latitude) || 0.0;
+  const lonVal = parseFloat(Longitude) || 0.0;
+  const catIdVal = parseInt(CategoryID) || 1;
+
   const saveHelpRequest = (vId, scoreMultiplier = 0) => {
     const finalUrgencyScore = Math.min(100, (parseInt(UrgencyScore) || 50) + scoreMultiplier);
 
@@ -398,8 +402,11 @@ app.post("/api/sos", (req, res) => {
           VALUES ('Live SOS Location', ?, ?, 'Urban');
       `;
 
-    db.query(insertLocationSql, [Latitude, Longitude], (err, locResult) => {
-      if (err) return res.status(500).json({ error: "Failed to save location" });
+    db.query(insertLocationSql, [latVal, lonVal], (err, locResult) => {
+      if (err) {
+        console.error("SOS Location Insert Error:", err.message);
+        return res.status(500).json({ error: `Failed to save location: ${err.message}` });
+      }
 
       const newLocationId = locResult.insertId;
 
@@ -411,26 +418,61 @@ app.post("/api/sos", (req, res) => {
       db.query(
         insertRequestSql,
         [
-          RequestorName,
+          RequestorName || 'Registered Victim',
           newLocationId,
-          CategoryID,
+          catIdVal,
           finalUrgencyScore,
-          ShortMessage,
+          ShortMessage || '',
           FCMToken || null,
           vId || null
         ],
         (err, reqResult) => {
-          if (err)
-            return res.status(500).json({ error: "Failed to save SOS request" });
+          if (err) {
+            console.error("SOS HelpRequest Insert Error:", err.message);
+
+            // Fallback if VictimID column is not yet present on remote DB
+            if (err.code === "ER_BAD_FIELD_ERROR" || (err.message && err.message.includes("VictimID"))) {
+              const fallbackSql = `
+                INSERT INTO HelpRequests (RequestorName, LocationID, CategoryID, UrgencyScore, Status, ShortMessage, FCMToken)
+                VALUES (?, ?, ?, ?, 'Pending', ?, ?);
+              `;
+              db.query(fallbackSql, [RequestorName || 'Registered Victim', newLocationId, catIdVal, finalUrgencyScore, ShortMessage || '', FCMToken || null], (fErr, fResult) => {
+                if (fErr) {
+                  console.error("SOS Fallback Insert Error:", fErr.message);
+                  return res.status(500).json({ error: `Failed to save SOS request: ${fErr.message}` });
+                }
+
+                io.emit("new_sos", {
+                  RequestID: fResult.insertId,
+                  RequestorName: RequestorName || 'Registered Victim',
+                  CategoryID: catIdVal,
+                  UrgencyScore: finalUrgencyScore,
+                  ShortMessage: ShortMessage || '',
+                  Latitude: latVal,
+                  Longitude: lonVal,
+                  Status: "Pending",
+                  CreatedAt: new Date()
+                });
+
+                return res.status(201).json({
+                  message: "SOS Received successfully!",
+                  requestId: fResult.insertId,
+                });
+              });
+              return;
+            }
+
+            return res.status(500).json({ error: `Failed to save SOS request: ${err.message}` });
+          }
 
           io.emit("new_sos", {
             RequestID: reqResult.insertId,
-            RequestorName,
-            CategoryID,
+            RequestorName: RequestorName || 'Registered Victim',
+            CategoryID: catIdVal,
             UrgencyScore: finalUrgencyScore,
-            ShortMessage,
-            Latitude,
-            Longitude,
+            ShortMessage: ShortMessage || '',
+            Latitude: latVal,
+            Longitude: lonVal,
             Status: "Pending",
             CreatedAt: new Date(),
             VictimID: vId || null
