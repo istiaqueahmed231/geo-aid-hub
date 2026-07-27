@@ -226,6 +226,15 @@ db.connect((err) => {
         }
       },
     );
+
+    db.query(
+      `ALTER TABLE Messages MODIFY COLUMN RequestID INT NULL`,
+      (err) => {
+        if (err) {
+          console.error("Alter Messages RequestID NULL failed:", err.message);
+        }
+      },
+    );
     db.query(
       `ALTER TABLE HelpRequests ADD COLUMN CompletedAt TIMESTAMP NULL`,
       (err) => {
@@ -732,12 +741,15 @@ app.post("/api/conversations/:conversationId/messages", (req, res) => {
   }
 
   const sql = `
-    INSERT INTO Messages (ConversationID, SenderRole, SenderID, MessageText)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO Messages (ConversationID, RequestID, SenderRole, SenderID, MessageText)
+    VALUES (?, NULL, ?, ?, ?)
   `;
 
   db.query(sql, [conversationId, senderRole || 'Admin', senderIdentifier, messageText], (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
+    if (err) {
+      console.error("Error inserting message:", err.message);
+      return res.status(500).json({ error: err.message });
+    }
 
     db.query(`UPDATE Conversations SET UpdatedAt = NOW() WHERE ConversationID = ?`, [conversationId]);
     res.json({ success: true, messageId: result.insertId, sentAt: new Date() });
