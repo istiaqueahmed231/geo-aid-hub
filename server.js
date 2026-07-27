@@ -640,9 +640,13 @@ app.get("/api/messages/:requestId", (req, res) => {
 app.get("/api/contacts", (req, res) => {
   const adminsSql = `SELECT Email AS id, Email AS name, 'Admin' AS role FROM Admins`;
   const victimsSql = `
-    SELECT AuthUID AS id, FullName AS name, PhoneNumber AS phone, 'Victim' AS role FROM Victims WHERE AuthUID IS NOT NULL AND AuthUID != ''
+    SELECT AuthUID AS id, FullName AS name, PhoneNumber AS phone, 'Victim' AS role 
+    FROM Victims 
+    WHERE AuthUID IS NOT NULL AND AuthUID != ''
     UNION
-    SELECT DISTINCT AuthUID AS id, RequestorName AS name, PhoneNumber AS phone, 'Victim' AS role FROM HelpRequests WHERE AuthUID IS NOT NULL AND AuthUID != '' AND AuthUID NOT IN (SELECT AuthUID FROM Victims WHERE AuthUID IS NOT NULL)
+    SELECT DISTINCT COALESCE(AuthUID, CONCAT('req_', RequestID)) AS id, RequestorName AS name, PhoneNumber AS phone, 'Victim' AS role 
+    FROM HelpRequests 
+    WHERE RequestorName IS NOT NULL AND RequestorName != ''
   `;
   const volunteersSql = `SELECT UID AS id, Name AS name, PhoneNumber AS phone, Role AS subRole, 'Volunteer' AS role FROM Volunteers WHERE UID IS NOT NULL AND UID != ''`;
 
@@ -666,32 +670,44 @@ app.post("/api/conversations/start", (req, res) => {
     return res.status(400).json({ error: "Missing initiator or target identifier" });
   }
 
-  const convType = type || (targetRole === 'Admin' || initiatorRole === 'Admin' ? 
-                    (targetRole === 'Victim' || initiatorRole === 'Victim' ? 'VictimDirect' : 
-                     targetRole === 'Volunteer' || initiatorRole === 'Volunteer' ? 'VolunteerDirect' : 'AdminDirect') : 'AdminDirect');
+  const isBothAdmin = (initiatorRole === 'Admin' && targetRole === 'Admin');
+  const convType = type || (isBothAdmin ? 'AdminDirect' : (targetRole === 'Victim' || initiatorRole === 'Victim' ? 'VictimDirect' : 'VolunteerDirect'));
+  const nonAdminId = !isBothAdmin ? (initiatorRole === 'Admin' ? targetIdentifier : initiatorIdentifier) : null;
 
-  // Find any existing conversation containing BOTH participants (in either direction) or between user and Admin
-  const checkSql = `
-    SELECT DISTINCT cp1.ConversationID 
-    FROM ConversationParticipants cp1
-    JOIN ConversationParticipants cp2 ON cp1.ConversationID = cp2.ConversationID
-    WHERE (
-      (cp1.UserIdentifier = ? AND cp2.UserIdentifier = ?)
-      OR (cp1.UserIdentifier = ? AND cp2.UserIdentifier = ?)
-      OR (
-        (cp1.UserRole = 'Admin' OR cp2.UserRole = 'Admin') 
-        AND (cp1.UserIdentifier = ? OR cp2.UserIdentifier = ?)
-        AND cp1.ConversationID IN (
-          SELECT ConversationID FROM ConversationParticipants WHERE UserIdentifier = ?
+  let checkSql;
+  let params;
+
+  if (isBothAdmin) {
+    // For Admin <-> Admin: match ONLY conversations between these two exact admin identifiers
+    checkSql = `
+      SELECT cp1.ConversationID 
+      FROM ConversationParticipants cp1
+      JOIN ConversationParticipants cp2 ON cp1.ConversationID = cp2.ConversationID
+      WHERE cp1.ParticipantID != cp2.ParticipantID
+        AND ((cp1.UserIdentifier = ? AND cp2.UserIdentifier = ?) OR (cp1.UserIdentifier = ? AND cp2.UserIdentifier = ?))
+      LIMIT 1
+    `;
+    params = [initiatorIdentifier, targetIdentifier, targetIdentifier, initiatorIdentifier];
+  } else {
+    // For Admin <-> Victim or Admin <-> Volunteer: match exact pair or any channel between nonAdminId and an Admin
+    checkSql = `
+      SELECT DISTINCT cp1.ConversationID 
+      FROM ConversationParticipants cp1
+      JOIN ConversationParticipants cp2 ON cp1.ConversationID = cp2.ConversationID
+      WHERE cp1.ParticipantID != cp2.ParticipantID
+        AND (
+          ((cp1.UserIdentifier = ? AND cp2.UserIdentifier = ?) OR (cp1.UserIdentifier = ? AND cp2.UserIdentifier = ?))
+          OR
+          (cp1.UserIdentifier = ? AND cp2.UserRole = 'Admin')
+          OR
+          (cp2.UserIdentifier = ? AND cp1.UserRole = 'Admin')
         )
-      )
-    )
-    LIMIT 1
-  `;
+      LIMIT 1
+    `;
+    params = [initiatorIdentifier, targetIdentifier, targetIdentifier, initiatorIdentifier, nonAdminId, nonAdminId];
+  }
 
-  const nonAdminId = (initiatorRole === 'Admin' ? targetIdentifier : initiatorIdentifier);
-
-  db.query(checkSql, [initiatorIdentifier, targetIdentifier, targetIdentifier, initiatorIdentifier, initiatorIdentifier, targetIdentifier, nonAdminId], (err, existing) => {
+  db.query(checkSql, params, (err, existing) => {
     if (!err && existing && existing.length > 0) {
       return res.json({ conversationId: existing[0].ConversationID, isNew: false });
     }
