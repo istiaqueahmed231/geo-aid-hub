@@ -152,6 +152,12 @@
       // 1. Destroy any existing Leaflet map instances BEFORE swapping DOM
       destroyLeafletMaps();
 
+      // Clear active message polling interval
+      if (window.activeMessagePolling) {
+        clearInterval(window.activeMessagePolling);
+        window.activeMessagePolling = null;
+      }
+
       // 2. Clear any page-level globals that the old page set
       //    (prevents stale closures from the old page interfering)
       window._selectedSupplyName = null;
