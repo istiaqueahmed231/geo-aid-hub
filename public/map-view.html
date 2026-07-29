@@ -88,13 +88,15 @@
                 <a class="nav-link" href="messages.html">
                     <span class="material-symbols-outlined">forum</span> Messenger Hub
                 </a>
-                <a href="support.html" class="nav-link">
-                    <span class="material-symbols-outlined">support</span>
-                    Support & Info
+                <a class="nav-link" href="profile.html">
+                    <span class="material-symbols-outlined">account_circle</span> Admin Profile
                 </a>
             </nav>
             <div class="sidebar-footer">
-                <a href="welcome.html" class="nav-link">
+                <a class="nav-link" href="#" style="pointer-events: none; opacity: 0.5; cursor: not-allowed;" onclick="event.preventDefault();">
+                    <span class="material-symbols-outlined">support</span> Support
+                </a>
+                <a href="#" class="nav-link" onclick="event.preventDefault(); window.logout && window.logout();">
                     <span class="material-symbols-outlined">logout</span>
                     Logout
                 </a>

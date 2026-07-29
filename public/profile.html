@@ -1,0 +1,191 @@
+<!doctype html>
+<html class="dark" lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+        <title>Geo-Aid Hub | Admin Profile</title>
+        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+            rel="stylesheet"
+        />
+        <script type="module" src="./firebase-config.js"></script>
+        <script type="module" src="./auth.js"></script>
+        <script src="./theme.js"></script>
+        <link rel="stylesheet" href="./app.css" />
+        <script id="tailwind-config">
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            background: "var(--bg)",
+                            surface: "var(--bg-panel)",
+                            primary: "var(--orange)",
+                            secondary: "var(--green)",
+                            error: "var(--red)",
+                            outline: "var(--border)",
+                            "surface-container": "var(--surface)",
+                            "on-surface": "var(--text)",
+                            "on-surface-variant": "var(--text-dim)",
+                        },
+                        fontFamily: {
+                            headline: ["Manrope"],
+                            body: ["Inter"],
+                        },
+                    },
+                },
+            };
+        </script>
+    </head>
+    <body class="bg-background text-on-surface font-body">
+        <!-- ══════════════════════════════════════════ SIDEBAR -->
+        <nav id="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-name">Geo-Aid <span>HUB</span></div>
+                <div class="sidebar-brand-sub">National Command Center</div>
+            </div>
+
+            <div class="sidebar-nav">
+                <a class="nav-link" href="index.html">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    Dashboard
+                </a>
+                <a class="nav-link" href="map-view.html">
+                    <span class="material-symbols-outlined">map</span> Map View
+                </a>
+                <a class="nav-link" href="resource-log.html">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    Resource Log
+                </a>
+                <a class="nav-link" href="volunteer-fleet.html">
+                    <span class="material-symbols-outlined">group</span>
+                    Volunteer Fleet
+                </a>
+                <a class="nav-link" href="messages.html">
+                    <span class="material-symbols-outlined">forum</span>
+                    Messenger Hub
+                </a>
+                <a class="nav-link active" href="profile.html">
+                    <span class="material-symbols-outlined">account_circle</span>
+                    Admin Profile
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <a class="nav-link" href="#" style="pointer-events: none; opacity: 0.5; cursor: not-allowed;" onclick="event.preventDefault();">
+                    <span class="material-symbols-outlined">help</span> Support
+                </a>
+                <a
+                    class="nav-link"
+                    href="#"
+                    onclick="event.preventDefault(); window.logout && window.logout();"
+                >
+                    <span class="material-symbols-outlined">logout</span> Logout
+                </a>
+            </div>
+        </nav>
+
+        <!-- ══════════════════════════════════════════ MAIN CONTENT -->
+        <div id="main">
+            <!-- HEADER -->
+            <header id="header">
+                <div class="header-left">
+                    <div class="header-title">GEO-AID <span>HUB</span></div>
+                    <div class="header-divider"></div>
+                    <div style="font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 14px; display: flex; align-items: center; gap: 6px; color: var(--text);">
+                        <span class="material-symbols-outlined" style="color: var(--orange);">account_circle</span>
+                        ADMIN PROFILE
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <button id="theme-toggle-btn" class="icon-btn" title="Toggle Theme">
+                        <span id="theme-icon" class="material-symbols-outlined">light_mode</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- CONTENT VIEW AREA -->
+            <div id="view">
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px;">
+                    <div style="background: var(--bg-panel); border: 1px solid var(--border); border-radius: 20px; padding: 40px; width: 100%; max-width: 480px; text-align: center; box-shadow: var(--shadow);">
+                        <!-- Avatar -->
+                        <div id="profile-avatar-container" style="position: relative; width: 100px; height: 100px; margin: 0 auto 20px;">
+                            <div id="profile-avatar" style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--orange), var(--orange-dim)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 900; box-shadow: 0 8px 24px rgba(254,87,51,0.25);">
+                                A
+                            </div>
+                        </div>
+
+                        <!-- Name & Badge -->
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 6px;">
+                            <h2 id="profile-name" style="font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 800; color: var(--text);">
+                                Administrator
+                            </h2>
+                            <span class="material-symbols-outlined" style="color: var(--green); font-size: 20px;" title="Verified Admin">verified</span>
+                        </div>
+
+                        <!-- Role Tag -->
+                        <div style="display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--orange); background: rgba(254, 87, 51, 0.1); border: 1px solid rgba(254, 87, 51, 0.2); padding: 3px 12px; border-radius: 12px; margin-bottom: 20px;">
+                            System Administrator
+                        </div>
+
+                        <!-- Divider -->
+                        <div style="height: 1px; background: var(--border); margin: 20px 0;"></div>
+
+                        <!-- Info Rows -->
+                        <div style="display: flex; flex-direction: column; gap: 14px; text-align: left;">
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+                                <span class="material-symbols-outlined" style="color: var(--text-dim);">mail</span>
+                                <div>
+                                    <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Email Address</div>
+                                    <div id="profile-email" style="font-size: 14px; font-weight: 600; color: var(--text); word-break: break-all;">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    (function() {
+                        async function loadAdminProfile() {
+                            const user = window.currentFirebaseUser;
+                            const emailEl = document.getElementById('profile-email');
+                            const nameEl = document.getElementById('profile-name');
+                            const avatarEl = document.getElementById('profile-avatar');
+
+                            if (user && user.email) {
+                                if (emailEl) emailEl.innerText = user.email;
+                                
+                                let adminName = "Admin";
+                                try {
+                                    const res = await fetch(`/api/admin/verify?email=${encodeURIComponent(user.email)}`);
+                                    if (res.ok) {
+                                        const data = await res.json();
+                                        if (data.adminName) adminName = data.adminName;
+                                    }
+                                } catch (e) {}
+
+                                if (nameEl) nameEl.innerText = adminName;
+                                if (avatarEl) avatarEl.innerText = adminName.charAt(0).toUpperCase();
+                            }
+                        }
+
+                        if (!window._profileAuthListenerSet) {
+                            window.addEventListener("authReady", loadAdminProfile);
+                            window._profileAuthListenerSet = true;
+                        }
+
+                        loadAdminProfile();
+                    })();
+                </script>
+            </div>
+        </div>
+
+        <script src="./router.js"></script>
+    </body>
+</html>
