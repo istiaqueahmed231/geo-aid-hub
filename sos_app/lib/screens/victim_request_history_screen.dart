@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'victim_request_detail_screen.dart';
+import 'chat_screen.dart';
 
 class VictimRequestHistoryScreen extends StatefulWidget {
   const VictimRequestHistoryScreen({super.key});
@@ -136,6 +137,7 @@ class _VictimRequestHistoryScreenState extends State<VictimRequestHistoryScreen>
                           final createdAt = req['CreatedAt'] != null
                               ? req['CreatedAt'].toString().replaceAll('T', ' ').split('.')[0]
                               : '';
+                          final isAssigned = volunteerName != null || status == 'Dispatched' || status == 'Completed' || status == 'Resolved';
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 14.0),
@@ -207,14 +209,33 @@ class _VictimRequestHistoryScreenState extends State<VictimRequestHistoryScreen>
                                   ),
                                 ],
                               ),
-                              trailing: const Icon(Icons.chevron_right, color: Colors.white54),
-                              onTap: () {
-                                Navigator.push(
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (isAssigned)
+                                    IconButton(
+                                      icon: const Icon(Icons.chat_bubble_outline, color: Colors.blueAccent),
+                                      tooltip: 'Chat with Volunteer',
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => ChatScreen(requestId: req['RequestID']),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  const Icon(Icons.chevron_right, color: Colors.white54),
+                                ],
+                              ),
+                              onTap: () async {
+                                await Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => VictimRequestDetailScreen(request: req),
                                   ),
                                 );
+                                _fetchRequests();
                               },
                             ),
                           );

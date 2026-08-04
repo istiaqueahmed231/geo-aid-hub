@@ -1487,6 +1487,7 @@
                             resourceId: selectedResourceId,
                             volunteerId: selectedVolunteerId,
                             quantity: quantity,
+                            adminEmail: window.currentFirebaseUser ? window.currentFirebaseUser.email : null
                         }),
                     });
 

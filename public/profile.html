@@ -146,6 +146,22 @@
                                     <div id="profile-email" style="font-size: 14px; font-weight: 600; color: var(--text); word-break: break-all;">Loading...</div>
                                 </div>
                             </div>
+                            
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+                                <span class="material-symbols-outlined" style="color: var(--orange);">campaign</span>
+                                <div>
+                                    <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">SOS Requests Dispatched</div>
+                                    <div id="profile-requests" style="font-size: 18px; font-weight: 800; color: var(--text);">0</div>
+                                </div>
+                            </div>
+                            
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+                                <span class="material-symbols-outlined" style="color: var(--green);">package_2</span>
+                                <div>
+                                    <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Relief Supplies Deployed</div>
+                                    <div id="profile-resources" style="font-size: 18px; font-weight: 800; color: var(--text);">0</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -157,6 +173,8 @@
                             const emailEl = document.getElementById('profile-email');
                             const nameEl = document.getElementById('profile-name');
                             const avatarEl = document.getElementById('profile-avatar');
+                            const requestsEl = document.getElementById('profile-requests');
+                            const resourcesEl = document.getElementById('profile-resources');
 
                             if (user && user.email) {
                                 if (emailEl) emailEl.innerText = user.email;
@@ -172,6 +190,18 @@
 
                                 if (nameEl) nameEl.innerText = adminName;
                                 if (avatarEl) avatarEl.innerText = adminName.charAt(0).toUpperCase();
+
+                                // Fetch stats
+                                try {
+                                    const statsRes = await fetch(`/api/admin/stats?email=${encodeURIComponent(user.email)}`);
+                                    if (statsRes.ok) {
+                                        const statsData = await statsRes.json();
+                                        if (requestsEl) requestsEl.innerText = statsData.requestsDispatched;
+                                        if (resourcesEl) resourcesEl.innerText = statsData.resourcesDispatched;
+                                    }
+                                } catch (e) {
+                                    console.error("Failed to fetch admin stats:", e);
+                                }
                             }
                         }
 

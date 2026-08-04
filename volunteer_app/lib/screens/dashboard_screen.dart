@@ -328,33 +328,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Category Badge
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.05),
-                                        borderRadius: BorderRadius.circular(8)
-                                    ),
-                                    child: Text(
-                                      req['CategoryName'].toString().toUpperCase(),
-                                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1),
-                                    ),
-                                  ),
-                                  // Urgency Badge
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.local_fire_department, size: 16, color: Colors.orangeAccent),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'URGENCY: ${req['UrgencyScore']}',
-                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.orangeAccent),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              ),
+                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                 children: [
+                                   // Category Badge
+                                   Flexible(
+                                     child: Container(
+                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                       decoration: BoxDecoration(
+                                           color: Colors.white.withOpacity(0.05),
+                                           borderRadius: BorderRadius.circular(8)
+                                       ),
+                                       child: Text(
+                                         req['CategoryName'].toString().toUpperCase(),
+                                         overflow: TextOverflow.ellipsis,
+                                         style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1),
+                                       ),
+                                     ),
+                                   ),
+                                   const SizedBox(width: 8),
+                                   // Urgency Badge
+                                   Row(
+                                     mainAxisSize: MainAxisSize.min,
+                                     children: [
+                                       const Icon(Icons.local_fire_department, size: 16, color: Colors.orangeAccent),
+                                       const SizedBox(width: 4),
+                                       Text(
+                                         'URGENCY: ${req['UrgencyScore']}',
+                                         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.orangeAccent),
+                                       ),
+                                     ],
+                                   )
+                                 ],
+                               ),
                               const SizedBox(height: 16),
                               Row(
                                 children: [

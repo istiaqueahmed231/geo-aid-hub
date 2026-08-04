@@ -100,8 +100,14 @@ class VolunteerMissionDetailScreen extends StatelessWidget {
                       children: [
                         const Icon(Icons.category_outlined, color: Colors.grey, size: 18),
                         const SizedBox(width: 8),
-                        Text(categoryName, style: const TextStyle(color: Colors.white70)),
-                        const Spacer(),
+                        Expanded(
+                          child: Text(
+                            categoryName,
+                            style: const TextStyle(color: Colors.white70),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                         const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 18),
                         const SizedBox(width: 4),
                         Text(

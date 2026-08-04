@@ -227,29 +227,35 @@ class _SosPortalState extends State<SosPortal> {
               Row(
                 children: [
                   Expanded(
-                    child: Slider(
-                      value: _urgencyScore,
-                      min: 1.0,
-                      max: 10.0,
-                      divisions: 9,
-                      activeColor: Colors.redAccent,
-                      inactiveColor: Colors.white10,
-                      label: 'Urgency: ${_urgencyScore.toInt()}',
-                      onChanged: (double value) {
-                        setState(() {
-                          _urgencyScore = value;
-                        });
-                      },
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackShape: const RoundedRectSliderTrackShape(),
+                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 16.0),
+                      ),
+                      child: Slider(
+                        value: _urgencyScore,
+                        min: 1.0,
+                        max: 10.0,
+                        divisions: 9,
+                        activeColor: Colors.redAccent,
+                        inactiveColor: Colors.white10,
+                        label: 'Urgency: ${_urgencyScore.toInt()}',
+                        onChanged: (double value) {
+                          setState(() {
+                            _urgencyScore = value;
+                          });
+                        },
+                      ),
                     ),
                   ),
                   Container(
-                    width: 40,
+                    width: 32,
                     alignment: Alignment.center,
                     child: Text(
                       '${_urgencyScore.toInt()}',
                       style: const TextStyle(
                         color: Colors.redAccent,
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

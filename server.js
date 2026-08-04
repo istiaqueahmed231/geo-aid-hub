@@ -275,6 +275,24 @@ db.connect((err) => {
         }
       },
     );
+
+    db.query(
+      `ALTER TABLE HelpRequests ADD COLUMN DispatchedByAdminID INT NULL`,
+      (err) => {
+        if (err && err.code !== "ER_DUP_FIELDNAME") {
+          console.error("Alter HelpRequests DispatchedByAdminID failed:", err.message);
+        } else if (!err) {
+          db.query(
+            `ALTER TABLE HelpRequests ADD CONSTRAINT fk_dispatched_by_admin FOREIGN KEY (DispatchedByAdminID) REFERENCES Admins(AdminID) ON DELETE SET NULL`,
+            (errConstraint) => {
+              if (errConstraint && errConstraint.code !== "ER_DUP_CONSTRAINT" && errConstraint.code !== "ER_FK_DUP_NAME") {
+                console.error("Add constraint fk_dispatched_by_admin failed:", errConstraint.message);
+              }
+            }
+          );
+        }
+      },
+    );
     // ----------------------------------------
   }
 });
@@ -823,6 +841,33 @@ app.get("/api/admin/verify", (req, res) => {
       res.json({ isAdmin: true, adminName: results[0].Admin_name });
     } else {
       res.json({ isAdmin: false });
+    }
+  });
+});
+
+// --- ADMIN STATS ROUTE ---
+app.get("/api/admin/stats", (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ error: "Missing email parameter" });
+
+  const sql = `
+    SELECT 
+      COUNT(r.RequestID) AS requestsDispatched,
+      COALESCE(SUM(r.DispatchedQuantity), 0) AS resourcesDispatched
+    FROM HelpRequests r
+    JOIN Admins a ON r.DispatchedByAdminID = a.AdminID
+    WHERE a.Email = ?
+  `;
+  
+  db.query(sql, [email], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (results.length === 0) {
+      res.json({ requestsDispatched: 0, resourcesDispatched: 0 });
+    } else {
+      res.json({
+        requestsDispatched: results[0].requestsDispatched,
+        resourcesDispatched: results[0].resourcesDispatched
+      });
     }
   });
 });
@@ -1527,170 +1572,184 @@ app.get("/api/nearest-volunteers", (req, res) => {
 });
 
 app.post("/api/dispatch", (req, res) => {
-  const { volunteerId, resourceId, requestId, quantity } = req.body;
+  const { volunteerId, resourceId, requestId, quantity, adminEmail } = req.body;
   const dispatchQty = parseInt(quantity) || 1;
 
   if (!volunteerId || !resourceId || !requestId) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  // Use a simplified multi-step update for now
-  const updateV =
-    "UPDATE Volunteers SET Status = 'Active' WHERE VolunteerID = ?";
-  const updateR =
-    "UPDATE Resources SET Quantity = Quantity - ? WHERE ResourceID = ? AND Quantity >= ?";
-  const updateReq =
-    "UPDATE HelpRequests SET Status = 'Dispatched', AssignedVolunteerID = ?, AssignedResourceID = ?, DispatchedQuantity = ?, DispatchedAt = NOW() WHERE RequestID = ?";
+  const executeQueries = (resolvedAdminId) => {
+    // Use a simplified multi-step update for now
+    const updateV =
+      "UPDATE Volunteers SET Status = 'Active' WHERE VolunteerID = ?";
+    const updateR =
+      "UPDATE Resources SET Quantity = Quantity - ? WHERE ResourceID = ? AND Quantity >= ?";
+    const updateReq =
+      "UPDATE HelpRequests SET Status = 'Dispatched', AssignedVolunteerID = ?, AssignedResourceID = ?, DispatchedQuantity = ?, DispatchedAt = NOW(), DispatchedByAdminID = ? WHERE RequestID = ?";
 
-  db.query(updateV, [volunteerId], (err) => {
-    if (err) return res.status(500).json({ error: "Volunteer update failed" });
+    db.query(updateV, [volunteerId], (err) => {
+      if (err) return res.status(500).json({ error: "Volunteer update failed" });
 
-    db.query(updateR, [dispatchQty, resourceId, dispatchQty], (err, result) => {
-      if (err) return res.status(500).json({ error: "Resource update failed" });
-      if (result.affectedRows === 0)
-        return res
-          .status(400)
-          .json({ error: "Insufficient resource quantity" });
+      db.query(updateR, [dispatchQty, resourceId, dispatchQty], (err, result) => {
+        if (err) return res.status(500).json({ error: "Resource update failed" });
+        if (result.affectedRows === 0)
+          return res
+            .status(400)
+            .json({ error: "Insufficient resource quantity" });
 
-      db.query(
-        updateReq,
-        [volunteerId, resourceId, dispatchQty, requestId],
-        (err) => {
-          if (err)
-            return res.status(500).json({ error: "Request update failed" });
+        db.query(
+          updateReq,
+          [volunteerId, resourceId, dispatchQty, resolvedAdminId, requestId],
+          (err) => {
+            if (err)
+              return res.status(500).json({ error: "Request update failed" });
 
-          // Notify via Socket.IO
-          io.emit("dispatch_assigned", {
-            RequestID: requestId,
-            VolunteerID: volunteerId,
-            ResourceID: resourceId,
-            DispatchedQuantity: dispatchQty,
-            DispatchedAt: new Date(),
-          });
+            // Notify via Socket.IO
+            io.emit("dispatch_assigned", {
+              RequestID: requestId,
+              VolunteerID: volunteerId,
+              ResourceID: resourceId,
+              DispatchedQuantity: dispatchQty,
+              DispatchedAt: new Date(),
+            });
 
-          // Fetch FCM Token and send Push Notification if available
-          db.query(
-            "SELECT FCMToken FROM HelpRequests WHERE RequestID = ?",
-            [requestId],
-            (err, reqRes) => {
-              if (!err && reqRes.length > 0 && reqRes[0].FCMToken) {
-                if (admin.apps.length > 0) {
-                  // Check if Firebase Admin is initialized
-                  admin
-                    .messaging()
-                    .send({
-                      token: reqRes[0].FCMToken,
-                      notification: {
-                        title: "🚨 Rescue Dispatched!",
-                        body: `Help is on the way! Your SOS request #${requestId} has been dispatched.`,
-                      },
-                      // data is required for background/terminated app to wake up
-                      data: {
-                        requestId: String(requestId),
-                        type: "dispatch",
-                      },
-                      android: {
-                        priority: "high",
+            // Fetch FCM Token and send Push Notification if available
+            db.query(
+              "SELECT FCMToken FROM HelpRequests WHERE RequestID = ?",
+              [requestId],
+              (err, reqRes) => {
+                if (!err && reqRes.length > 0 && reqRes[0].FCMToken) {
+                  if (admin.apps.length > 0) {
+                    // Check if Firebase Admin is initialized
+                    admin
+                      .messaging()
+                      .send({
+                        token: reqRes[0].FCMToken,
                         notification: {
-                          channelId: "high_importance_channel",
-                          priority: "high",
-                          defaultVibrateTimings: true,
-                          defaultSound: true,
+                          title: "🚨 Rescue Dispatched!",
+                          body: `Help is on the way! Your SOS request #${requestId} has been dispatched.`,
                         },
-                      },
-                    })
-                    .then(() => {
-                      console.log(
-                        `✅ Push notification sent for request #${requestId}`,
-                      );
-                    })
-                    .catch((e) => {
-                      console.error("FCM Send Error:", e.message || e);
-                      // If the token is no longer valid, clear it so we don't keep trying
-                      if (
-                        e.code ===
-                          "messaging/registration-token-not-registered" ||
-                        e.code === "messaging/invalid-registration-token"
-                      ) {
-                        db.query(
-                          "UPDATE HelpRequests SET FCMToken = NULL WHERE RequestID = ?",
-                          [requestId],
-                          () => {
-                            console.log(
-                              `🗑️ Cleared invalid FCM token for request #${requestId}`,
-                            );
+                        // data is required for background/terminated app to wake up
+                        data: {
+                          requestId: String(requestId),
+                          type: "dispatch",
+                        },
+                        android: {
+                          priority: "high",
+                          notification: {
+                            channelId: "high_importance_channel",
+                            priority: "high",
+                            defaultVibrateTimings: true,
+                            defaultSound: true,
                           },
-                        );
-                      }
-                    });
-                }
-              }
-            },
-          );
-
-          // Notify the assigned volunteer
-          db.query(
-            "SELECT FCMToken FROM Volunteers WHERE VolunteerID = ?",
-            [volunteerId],
-            (err, volRes) => {
-              if (!err && volRes.length > 0 && volRes[0].FCMToken) {
-                if (admin.apps.length > 0) {
-                  admin
-                    .messaging()
-                    .send({
-                      token: volRes[0].FCMToken,
-                      notification: {
-                        title: "🚨 Mission Assigned!",
-                        body: `You have been assigned to rescue mission #${requestId}. Open the app to begin.`,
-                      },
-                      data: {
-                        requestId: String(requestId),
-                        type: "mission_assigned",
-                      },
-                      android: {
-                        priority: "high",
-                        notification: {
-                          channelId: "rescue_missions_channel",
-                          priority: "high",
-                          defaultVibrateTimings: true,
-                          defaultSound: true,
                         },
-                      },
-                    })
-                    .then(() =>
-                      console.log(
-                        `✅ Volunteer #${volunteerId} notified for mission #${requestId}`,
-                      ),
-                    )
-                    .catch((e) => {
-                      console.error("Volunteer FCM Error:", e.message || e);
-                      if (
-                        e.code ===
-                          "messaging/registration-token-not-registered" ||
-                        e.code === "messaging/invalid-registration-token"
-                      ) {
-                        db.query(
-                          "UPDATE Volunteers SET FCMToken = NULL WHERE VolunteerID = ?",
-                          [volunteerId],
-                          () =>
-                            console.log(
-                              `🗑️ Cleared invalid FCM token for volunteer #${volunteerId}`,
-                            ),
+                      })
+                      .then(() => {
+                        console.log(
+                          `✅ Push notification sent for request #${requestId}`,
                         );
-                      }
-                    });
+                      })
+                      .catch((e) => {
+                        console.error("FCM Send Error:", e.message || e);
+                        // If the token is no longer valid, clear it so we don't keep trying
+                        if (
+                          e.code ===
+                            "messaging/registration-token-not-registered" ||
+                          e.code === "messaging/invalid-registration-token"
+                        ) {
+                          db.query(
+                            "UPDATE HelpRequests SET FCMToken = NULL WHERE RequestID = ?",
+                            [requestId],
+                            () => {
+                              console.log(
+                                `🗑️ Cleared invalid FCM token for request #${requestId}`,
+                              );
+                            },
+                          );
+                        }
+                      });
+                  }
                 }
-              }
-            },
-          );
+              },
+            );
 
-          res.json({
-            message: `Dispatch successful! ${dispatchQty} units have been deployed.`,
-          });
-        },
-      );
+            // Notify the assigned volunteer
+            db.query(
+              "SELECT FCMToken FROM Volunteers WHERE VolunteerID = ?",
+              [volunteerId],
+              (err, volRes) => {
+                if (!err && volRes.length > 0 && volRes[0].FCMToken) {
+                  if (admin.apps.length > 0) {
+                    admin
+                      .messaging()
+                      .send({
+                        token: volRes[0].FCMToken,
+                        notification: {
+                          title: "🚨 Mission Assigned!",
+                          body: `You have been assigned to rescue mission #${requestId}. Open the app to begin.`,
+                        },
+                        data: {
+                          requestId: String(requestId),
+                          type: "mission_assigned",
+                        },
+                        android: {
+                          priority: "high",
+                          notification: {
+                            channelId: "rescue_missions_channel",
+                            priority: "high",
+                            defaultVibrateTimings: true,
+                            defaultSound: true,
+                          },
+                        },
+                      })
+                      .then(() =>
+                        console.log(
+                          `✅ Volunteer #${volunteerId} notified for mission #${requestId}`,
+                        ),
+                      )
+                      .catch((e) => {
+                        console.error("Volunteer FCM Error:", e.message || e);
+                        if (
+                          e.code ===
+                            "messaging/registration-token-not-registered" ||
+                          e.code === "messaging/invalid-registration-token"
+                        ) {
+                          db.query(
+                            "UPDATE Volunteers SET FCMToken = NULL WHERE VolunteerID = ?",
+                            [volunteerId],
+                            () =>
+                              console.log(
+                                `🗑️ Cleared invalid FCM token for volunteer #${volunteerId}`,
+                              ),
+                          );
+                        }
+                      });
+                  }
+                }
+              },
+            );
+
+            res.json({
+              message: `Dispatch successful! ${dispatchQty} units have been deployed.`,
+            });
+          },
+        );
+      });
     });
-  });
+  };
+
+  if (adminEmail) {
+    db.query("SELECT AdminID FROM Admins WHERE Email = ? LIMIT 1", [adminEmail], (err, results) => {
+      if (!err && results.length > 0) {
+        executeQueries(results[0].AdminID);
+      } else {
+        executeQueries(null);
+      }
+    });
+  } else {
+    executeQueries(null);
+  }
 });
 
 // 5. Start the server

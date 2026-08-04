@@ -36,15 +36,12 @@ class _SosPortalState extends State<SosPortal> {
 
   bool _isSending = false;
   double _urgencyScore = 5.0;
-  List<Map<String, dynamic>> _history = [];
 
   // Keeps the latest FCM token in SharedPreferences so _sendSosAlert can read it quickly.
   Future<void> _updateFcmToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     final storedRequestId = prefs.getInt('active_request_id');
-    // Persist the latest token locally.
     await prefs.setString('fcm_token', token);
-    // If there is an active request, push the refreshed token to the server.
     if (storedRequestId != null) {
       try {
         await http.post(
@@ -62,57 +59,25 @@ class _SosPortalState extends State<SosPortal> {
   @override
   void initState() {
     super.initState();
-    _loadHistory();
 
-    // Log the FCM token so we can verify it is non-null during testing
     FirebaseMessaging.instance.getToken().then((token) {
       debugPrint("📲 FCM Token: $token");
     });
 
-    // Keep the server in sync whenever Firebase rotates the FCM token.
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
       debugPrint("FCM token refreshed: $newToken");
       _updateFcmToken(newToken);
     });
 
-    // Show a real system notification while the app is open (foreground)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
         showForegroundNotification(message);
       }
     });
 
-    // Optional: Handle tapping a notification when the app is in the background
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint('Notification tapped! Opened from background.');
-      // You can extract the requestId from message.data and navigate to TrackingScreen here
     });
-  }
-
-  Future<void> _loadHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> historyStrings = prefs.getStringList('sos_history') ?? [];
-    if (mounted) {
-      setState(() {
-        _history = historyStrings.map((s) => jsonDecode(s) as Map<String, dynamic>).toList();
-      });
-    }
-  }
-
-  Future<void> _saveHistory(int requestId, String categoryName, int urgency, String message, String name) async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> historyStrings = prefs.getStringList('sos_history') ?? [];
-    final newEntry = {
-      'requestId': requestId,
-      'category': categoryName,
-      'date': DateTime.now().toIso8601String(),
-      'urgency': urgency,
-      'message': message,
-      'name': name
-    };
-    historyStrings.insert(0, jsonEncode(newEntry));
-    await prefs.setStringList('sos_history', historyStrings);
-    _loadHistory();
   }
 
   Future<void> _sendSosAlert() async {
@@ -182,17 +147,9 @@ class _SosPortalState extends State<SosPortal> {
 
                     final responseData = jsonDecode(response.body);
                     final requestId = responseData['requestId'];
-                    // Persist the active request ID so token refresh can update it on the server
                     SharedPreferences.getInstance().then((prefs) {
                       prefs.setInt('active_request_id', requestId);
                     });
-                    _saveHistory(
-                        requestId,
-                        _categories[_selectedCategory] ?? 'Unknown',
-                        _urgencyScore.toInt(),
-                        _messageController.text,
-                        _nameController.text
-                    );
                     Navigator.push(context, MaterialPageRoute(builder: (_) => TrackingScreen(requestId: requestId)));
                   },
                   child: const Text('OK', style: TextStyle(color: Colors.redAccent)),
@@ -293,112 +250,116 @@ class _SosPortalState extends State<SosPortal> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-              // Glowing Warning Icon
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.redAccent.withOpacity(0.1),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.redAccent.withOpacity(0.2),
-                          blurRadius: 40,
-                          spreadRadius: 10,
-                        )
-                      ]
-                  ),
-                  child: const Icon(
-                    Icons.warning_amber_rounded,
-                    size: 80,
-                    color: Colors.redAccent,
-                  ),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.redAccent.withOpacity(0.1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.redAccent.withOpacity(0.2),
+                        blurRadius: 40,
+                        spreadRadius: 10,
+                      )
+                    ]
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'EMERGENCY SOS',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 2.0,
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  size: 80,
                   color: Colors.redAccent,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Alert the nearest dispatch team immediately.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'EMERGENCY SOS',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2.0,
+                color: Colors.redAccent,
               ),
-              const SizedBox(height: 48),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Alert the nearest dispatch team immediately.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+            const SizedBox(height: 48),
 
-              TextField(
-                controller: _nameController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Your Full Name',
-                  prefixIcon: Icon(Icons.person, color: Colors.redAccent),
+            TextField(
+              controller: _nameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Your Full Name',
+                prefixIcon: Icon(Icons.person, color: Colors.redAccent),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            DropdownButtonFormField<int>(
+              initialValue: _selectedCategory,
+              dropdownColor: Theme.of(context).colorScheme.surface,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Required Resources',
+                prefixIcon: Icon(Icons.category, color: Colors.redAccent),
+              ),
+              items: _categories.entries.map((entry) {
+                return DropdownMenuItem<int>(
+                  value: entry.key,
+                  child: Text(entry.value),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() => _selectedCategory = val);
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+
+            TextField(
+              controller: _messageController,
+              maxLines: 4,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Short Message (Optional)',
+                hintText: 'Describe your situation briefly...',
+                prefixIcon: Padding(
+                  padding: EdgeInsets.only(bottom: 60),
+                  child: Icon(Icons.message, color: Colors.redAccent),
                 ),
               ),
-              const SizedBox(height: 16),
+            ),
+            const SizedBox(height: 32),
 
-              DropdownButtonFormField<int>(
-                initialValue: _selectedCategory,
-                dropdownColor: Theme.of(context).colorScheme.surface,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Required Resources',
-                  prefixIcon: Icon(Icons.category, color: Colors.redAccent),
-                ),
-                items: _categories.entries.map((entry) {
-                  return DropdownMenuItem<int>(
-                    value: entry.key,
-                    child: Text(entry.value),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() => _selectedCategory = val);
-                  }
-                },
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white10)
               ),
-              const SizedBox(height: 16),
-
-              TextField(
-                controller: _messageController,
-                maxLines: 4,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Short Message (Optional)',
-                  hintText: 'Describe your situation briefly...',
-                  prefixIcon: Padding(
-                    padding: EdgeInsets.only(bottom: 60),
-                    child: Icon(Icons.message, color: Colors.redAccent),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Urgency Level',
+                    style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
                   ),
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white10)
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Urgency Level',
-                      style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            trackShape: const RoundedRectSliderTrackShape(),
+                            overlayShape: const RoundSliderOverlayShape(overlayRadius: 16.0),
+                          ),
                           child: Slider(
                             value: _urgencyScore,
                             min: 1.0,
@@ -413,125 +374,35 @@ class _SosPortalState extends State<SosPortal> {
                             },
                           ),
                         ),
-                        Container(
-                          width: 40,
-                          alignment: Alignment.center,
-                          child: Text(
-                            '${_urgencyScore.toInt()}',
-                            style: const TextStyle(
-                              color: Colors.redAccent,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
+                      ),
+                      Container(
+                        width: 32,
+                        alignment: Alignment.center,
+                        child: Text(
+                          '${_urgencyScore.toInt()}',
+                          style: const TextStyle(
+                            color: Colors.redAccent,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 40),
+            ),
+            const SizedBox(height: 40),
 
-              _isSending
-                  ? const Center(child: CircularProgressIndicator(color: Colors.redAccent))
-                  : ElevatedButton(
-                onPressed: _sendSosAlert,
-                child: const Text('BROADCAST SOS ALERT'),
-              ),
-                  TextButton.icon(
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        backgroundColor: Theme.of(context).colorScheme.surface,
-                        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                        builder: (ctx) {
-                          return Container(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                const Text('Device SOS History', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 16),
-                                if (_history.isEmpty)
-                                  const Padding(
-                                    padding: EdgeInsets.all(20),
-                                    child: Text('No previous SOS requests from this device.', style: TextStyle(color: Colors.grey), textAlign: TextAlign.center),
-                                  )
-                                else
-                                  Expanded(
-                                    child: ListView.builder(
-                                      itemCount: _history.length,
-                                      itemBuilder: (ctx, i) {
-                                        final item = _history[i];
-                                        final dateStr = item['date'] != null ? item['date'].split('T').first : 'Unknown Date';
-                                        IconData catIcon = Icons.help_outline;
-                                        if (item['category'] == 'Emergency Medical Kits') catIcon = Icons.local_hospital;
-                                        else if (item['category'] == 'Drinking Water') catIcon = Icons.water_drop;
-                                        else if (item['category'] == 'Dry Food Rations') catIcon = Icons.fastfood;
-                                        else if (item['category'] == 'Rescue Boats') catIcon = Icons.directions_boat;
-
-                                        return ListTile(
-                                          leading: Icon(catIcon, color: Colors.white),
-                                          title: Text('Request #${item['requestId']} - ${item['category']}', style: const TextStyle(color: Colors.white)),
-                                          subtitle: Text('Sent: $dateStr • Urgency: ${item['urgency'] ?? '?'}', style: const TextStyle(color: Colors.grey)),
-                                          trailing: const Icon(Icons.info_outline, color: Colors.blueAccent),
-                                          onTap: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (dialogCtx) => AlertDialog(
-                                                backgroundColor: Theme.of(context).colorScheme.surface,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                                title: Text('Request #${item['requestId']} Details', style: const TextStyle(color: Colors.white)),
-                                                content: Column(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text('Name: ${item['name'] ?? 'N/A'}', style: const TextStyle(color: Colors.white70)),
-                                                    Text('Category: ${item['category']}', style: const TextStyle(color: Colors.white70)),
-                                                    Text('Urgency Level: ${item['urgency'] ?? 'N/A'}/10', style: const TextStyle(color: Colors.redAccent)),
-                                                    const SizedBox(height: 10),
-                                                    const Text('Message:', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
-                                                    Text(
-                                                      item['message']?.isNotEmpty == true ? item['message'] : 'No message provided',
-                                                      style: const TextStyle(color: Colors.grey, fontStyle: FontStyle.italic)
-                                                    ),
-                                                  ],
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () => Navigator.pop(dialogCtx),
-                                                    child: const Text('Close', style: TextStyle(color: Colors.grey)),
-                                                  ),
-                                                  ElevatedButton.icon(
-                                                    icon: const Icon(Icons.my_location),
-                                                    label: const Text('Live Tracking'),
-                                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-                                                    onPressed: () {
-                                                      Navigator.pop(dialogCtx); // close dialog
-                                                      Navigator.pop(ctx); // close bottom sheet
-                                                      Navigator.push(context, MaterialPageRoute(builder: (_) => TrackingScreen(requestId: item['requestId'])));
-                                                    },
-                                                  )
-                                                 ],
-                                               )
-                                             );
-                                           },
-                                         );
-                                       },
-                                     ),
-                                   ),
-                               ],
-                             ),
-                           );
-                         }
-                       );
-                     },
-                     icon: const Icon(Icons.history, color: Colors.grey),
-                     label: const Text('History', style: TextStyle(color: Colors.grey)),
-                   ),
-            ],
-          ),
+            _isSending
+                ? const Center(child: CircularProgressIndicator(color: Colors.redAccent))
+                : ElevatedButton(
+              onPressed: _sendSosAlert,
+              child: const Text('BROADCAST SOS ALERT'),
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
