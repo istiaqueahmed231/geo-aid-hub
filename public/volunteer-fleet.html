@@ -398,63 +398,73 @@
                         try {
                             await ensureJsPDF();
 
-                            const [volRes, resourcesRes, sheltersRes] = await Promise.all([
-                                fetch("/api/volunteers"),
-                                fetch("/api/resources"),
-                                fetch("/api/shelters"),
-                            ]);
-
+                            const volRes = await fetch("/api/volunteers");
                             const volunteers = await volRes.json();
-                            const resources = await resourcesRes.json();
-                            const shelters = await sheltersRes.json();
 
                             const { jsPDF } = window.jspdf;
-                            const doc = new jsPDF();
+                            const doc = new jsPDF({ orientation: "landscape" });
 
-                            doc.setFontSize(22);
+                            doc.setFontSize(18);
                             doc.setTextColor(254, 87, 51);
-                            doc.text("Geo-Aid Central Registry", 14, 20);
-                            doc.setFontSize(10);
+                            doc.text("Geo-Aid Hub — Comprehensive Volunteer Fleet Registry", 14, 18);
+
+                            doc.setFontSize(9);
                             doc.setTextColor(100);
-                            doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
+                            const totalCount = volunteers.length;
+                            const verifiedCount = volunteers.filter(v => v.IsVerified == 1).length;
+                            const activeCount = volunteers.filter(v => v.Status === 'Active').length;
+                            doc.text(`Generated on: ${new Date().toLocaleString()}  |  Total Volunteers: ${totalCount}  |  Verified Responders: ${verifiedCount}  |  Active Missions: ${activeCount}`, 14, 25);
 
-                            doc.setFontSize(14);
-                            doc.setTextColor(40);
-                            doc.text("Volunteer Fleet", 14, 40);
                             doc.autoTable({
-                                startY: 45,
-                                head: [["ID", "Name", "Role", "Status", "Location", "Age", "Gender"]],
-                                body: volunteers.map((v) => [v.VolunteerID, v.Name, v.Role, v.Status, v.Location, v.Age, v.Gender]),
+                                startY: 30,
+                                head: [["ID", "Volunteer Name", "Contact Details", "Role / Specialty", "Status", "Verification", "Location / Address", "GPS Coordinates", "Demographics"]],
+                                body: volunteers.map((v) => {
+                                    const contact = [v.Email || "", v.PhoneNumber ? `Phone: ${v.PhoneNumber}` : ""].filter(Boolean).join("\n");
+                                    const verification = v.IsVerified == 1 
+                                        ? `Verified\n(by ${v.VerifiedByAdminName || 'Admin'})` 
+                                        : "Pending Approval";
+                                    const locationInfo = [v.Location || "Unspecified", v.HomeAddress ? `Address: ${v.HomeAddress}` : ""].filter(Boolean).join("\n");
+                                    const coords = (v.Latitude && v.Longitude) ? `${v.Latitude}, ${v.Longitude}` : "N/A";
+                                    const demographics = [v.Age ? `Age: ${v.Age}` : "", v.Gender || ""].filter(Boolean).join(", ") || "N/A";
+
+                                    return [
+                                        `#${v.VolunteerID}`,
+                                        v.Name || "N/A",
+                                        contact || "N/A",
+                                        v.Role || "General",
+                                        v.Status || "Pending",
+                                        verification,
+                                        locationInfo,
+                                        coords,
+                                        demographics
+                                    ];
+                                }),
                                 theme: "grid",
-                                headStyles: { fillColor: [254, 87, 51] },
-                                styles: { fontSize: 8 },
+                                headStyles: { fillColor: [254, 87, 51], textColor: [255, 255, 255], fontStyle: "bold" },
+                                styles: { fontSize: 8, cellPadding: 3, overflow: "linebreak" },
+                                columnStyles: {
+                                    0: { cellWidth: 12 },
+                                    1: { cellWidth: 32 },
+                                    2: { cellWidth: 42 },
+                                    3: { cellWidth: 28 },
+                                    4: { cellWidth: 22 },
+                                    5: { cellWidth: 28 },
+                                    6: { cellWidth: 50 },
+                                    7: { cellWidth: 30 },
+                                    8: { cellWidth: 25 },
+                                },
+                                didDrawPage: function (data) {
+                                    const str = "Page " + doc.internal.getNumberOfPages();
+                                    doc.setFontSize(8);
+                                    doc.setTextColor(150);
+                                    const pageSize = doc.internal.pageSize;
+                                    const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+                                    const pageWidth = pageSize.width ? pageSize.width : pageSize.getWidth();
+                                    doc.text(str, pageWidth - 20, pageHeight - 10);
+                                }
                             });
 
-                            doc.setFontSize(14);
-                            doc.setTextColor(40);
-                            doc.text("Emergency Resources", 14, doc.lastAutoTable.finalY + 15);
-                            doc.autoTable({
-                                startY: doc.lastAutoTable.finalY + 20,
-                                head: [["ID", "Category", "Quantity", "Status", "Location", "Coordinates"]],
-                                body: resources.map((r) => [r.ResourceID, r.CategoryName, `${r.Quantity} ${r.UnitOfMeasure}`, r.Status, r.CurrentLocation, `${r.Latitude}, ${r.Longitude}`]),
-                                theme: "grid",
-                                headStyles: { fillColor: [254, 87, 51] },
-                                styles: { fontSize: 8 },
-                            });
-
-                            doc.setFontSize(14);
-                            doc.setTextColor(40);
-                            doc.text("Active Shelters", 14, doc.lastAutoTable.finalY + 15);
-                            doc.autoTable({
-                                startY: doc.lastAutoTable.finalY + 20,
-                                head: [["Name", "Capacity", "Occupancy", "Status", "Area", "Type"]],
-                                body: shelters.map((s) => [s.ShelterName, s.TotalCapacity, s.CurrentOccupancy, s.Status, s.AreaName, s.ZoneType]),
-                                theme: "grid",
-                                headStyles: { fillColor: [254, 87, 51] },
-                                styles: { fontSize: 8 },
-                            });
-
-                            doc.save("geo-aid-registry.pdf");
+                            doc.save("Geo-Aid_Volunteer_Fleet_Detailed_Registry.pdf");
                         } catch (err) {
                             console.error("Export failed:", err);
                             alert("Export failed. Check the console for details.");
