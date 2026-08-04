@@ -1,0 +1,390 @@
+<!doctype html>
+<html class="dark" lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+        <title>Geo-Aid Hub | Volunteer Details</title>
+        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <link rel="stylesheet" href="./app.css" />
+        <script src="./mobile-menu.js"></script>
+        <script src="./theme.js"></script>
+        <script id="tailwind-config">
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            background: "var(--bg)",
+                            surface: "var(--bg-panel)",
+                            primary: "var(--orange)",
+                            secondary: "var(--green)",
+                            error: "var(--red)",
+                            outline: "var(--border)",
+                            "surface-container": "var(--surface)",
+                            "on-surface": "var(--text)",
+                            "on-surface-variant": "var(--text-dim)",
+                        },
+                        fontFamily: {
+                            headline: ["Manrope"],
+                            body: ["Inter"],
+                        },
+                    },
+                },
+            };
+        </script>
+    </head>
+    <body class="bg-background text-on-surface font-body">
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-name">Geo-Aid <span>HUB</span></div>
+                <div class="sidebar-brand-sub">National Command Center</div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-link">
+                    <span class="material-symbols-outlined">dashboard</span> Dashboard
+                </a>
+                <a href="map-view.html" class="nav-link">
+                    <span class="material-symbols-outlined">map</span> Map View
+                </a>
+                <a href="resource-log.html" class="nav-link">
+                    <span class="material-symbols-outlined">inventory_2</span> Resource Log
+                </a>
+                <a href="volunteer-fleet.html" class="nav-link active">
+                    <span class="material-symbols-outlined">group</span> Volunteer Fleet
+                </a>
+                <a href="messages.html" class="nav-link">
+                    <span class="material-symbols-outlined">forum</span> Messenger Hub
+                </a>
+                <a href="profile.html" class="nav-link">
+                    <span class="material-symbols-outlined">account_circle</span> Admin Profile
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" class="nav-link" style="pointer-events: none; opacity: 0.5; cursor: not-allowed;" onclick="event.preventDefault();">
+                    <span class="material-symbols-outlined">support</span> Support
+                </a>
+                <a href="#" class="nav-link" onclick="event.preventDefault(); window.logout && window.logout();">
+                    <span class="material-symbols-outlined">logout</span> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="main">
+            <header id="header">
+                <div class="header-left">
+                    <div class="header-title">GEO-AID <span>HUB</span></div>
+                    <div class="header-divider"></div>
+                    <div style="font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 14px; display: flex; align-items: center; gap: 6px; color: var(--text);">
+                        <span class="material-symbols-outlined" style="color: var(--orange);">person_search</span>
+                        VOLUNTEER DETAIL PROFILE
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button id="theme-toggle-btn" class="icon-btn" title="Toggle Theme">
+                        <span id="theme-icon" class="material-symbols-outlined">light_mode</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- CONTENT VIEW AREA -->
+            <div id="view">
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; padding: 24px; overflow-y: auto;">
+                    
+                    <!-- Back Button Bar -->
+                    <div>
+                        <a href="volunteer-fleet.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-300 hover:text-white hover:border-zinc-700 transition">
+                            <span class="material-symbols-outlined text-base">arrow_back</span> Back to Volunteer Fleet
+                        </a>
+                    </div>
+
+                    <!-- Profile Header Container -->
+                    <div id="vol-profile-card" class="bg-surface-container border border-surface-bright rounded-2xl p-6 shadow-lg flex flex-col gap-6">
+                        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-zinc-800 pb-6">
+                            <div class="flex items-center gap-4">
+                                <div id="vol-avatar-container" class="w-16 h-16 rounded-2xl bg-zinc-800 flex items-center justify-center text-primary font-black text-2xl border border-zinc-700">
+                                    <span id="vol-icon" class="material-symbols-outlined text-3xl">person</span>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h2 id="vol-name" class="font-extrabold text-2xl text-white font-headline">Loading...</h2>
+                                        <span id="vol-verified-badge" class="hidden text-emerald-400 material-symbols-outlined text-xl" title="Verified Volunteer">verified</span>
+                                    </div>
+                                    <div id="vol-role-badge" class="inline-block mt-1 text-xs font-bold px-3 py-1 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20 uppercase tracking-wide">
+                                        General
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span id="vol-status-badge" class="text-xs font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider bg-zinc-800 text-zinc-400 border border-zinc-700">
+                                    UNKNOWN
+                                </span>
+                                <div id="vol-verify-actions" class="hidden flex items-center gap-2">
+                                    <button id="btn-approve-vol" class="px-4 py-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-xl text-xs font-bold transition">
+                                        Approve & Verify
+                                    </button>
+                                    <button id="btn-reject-vol" class="px-4 py-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 rounded-xl text-xs font-bold transition">
+                                        Reject
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Details Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3.5 flex flex-col gap-1">
+                                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-xs">mail</span> Email Address
+                                </span>
+                                <span id="vol-email" class="text-xs font-semibold text-zinc-200 truncate">N/A</span>
+                            </div>
+                            <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3.5 flex flex-col gap-1">
+                                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-xs">call</span> Phone Number
+                                </span>
+                                <span id="vol-phone" class="text-xs font-semibold text-zinc-200">N/A</span>
+                            </div>
+                            <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3.5 flex flex-col gap-1">
+                                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-xs">home</span> Home Address
+                                </span>
+                                <span id="vol-address" class="text-xs font-semibold text-zinc-200 truncate">N/A</span>
+                            </div>
+                            <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3.5 flex flex-col gap-1">
+                                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-xs">location_on</span> Area / Demographics
+                                </span>
+                                <span id="vol-area-demo" class="text-xs font-semibold text-zinc-200">N/A</span>
+                            </div>
+                        </div>
+
+                        <div id="vol-verifier-info" class="hidden text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">admin_panel_settings</span>
+                            Verified by Administrator: <span id="vol-verifier-name">System</span>
+                        </div>
+                    </div>
+
+                    <!-- Map & Location Container -->
+                    <div class="bg-surface-container border border-surface-bright rounded-2xl p-6 shadow-lg flex flex-col gap-4">
+                        <h3 class="font-headline font-extrabold text-lg text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">map</span>
+                            Field GPS Position & Location Tracking
+                        </h3>
+                        <div id="vol-map" style="height: 280px; border-radius: 12px; border: 1px solid var(--border); overflow: hidden;"></div>
+                    </div>
+
+                    <!-- Mission Logs & History -->
+                    <div class="bg-surface-container border border-surface-bright rounded-2xl p-6 shadow-lg flex flex-col gap-4">
+                        <h3 class="font-headline font-extrabold text-lg text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">history</span>
+                            Assigned Emergency Missions & Feedback History
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="border-b border-zinc-800 text-zinc-400 font-bold uppercase text-[10px]">
+                                        <th class="p-3">Request ID & Date</th>
+                                        <th class="p-3">Victim Information</th>
+                                        <th class="p-3">Deployed Supplies</th>
+                                        <th class="p-3 text-center">Status</th>
+                                        <th class="p-3">Victim Safety & Feedback</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vol-missions-tbody">
+                                    <tr>
+                                        <td colspan="5" class="p-6 text-center text-zinc-500 font-medium">
+                                            Loading mission history...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <script>
+                    (function() {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const volId = urlParams.get('id');
+
+                        if (!volId) {
+                            alert("No volunteer ID specified.");
+                            return;
+                        }
+
+                        let mapInstance = null;
+
+                        async function loadVolunteerDetail() {
+                            try {
+                                const res = await fetch(`/api/volunteers/detail/${volId}`);
+                                if (!res.ok) throw new Error("Failed to load volunteer data");
+                                const vol = await res.json();
+
+                                // Populate text fields
+                                document.getElementById('vol-name').innerText = vol.Name || 'Volunteer';
+                                document.getElementById('vol-role-badge').innerText = vol.Role || 'General';
+                                document.getElementById('vol-email').innerText = vol.Email || 'N/A';
+                                document.getElementById('vol-phone').innerText = vol.PhoneNumber || 'N/A';
+                                document.getElementById('vol-address').innerText = vol.HomeAddress || vol.Location || 'N/A';
+                                document.getElementById('vol-area-demo').innerText = `${vol.Location || 'Unspecified'} (${vol.Age || '?'} y/o, ${vol.Gender || 'Unspecified'})`;
+
+                                // Role Icon
+                                const iconEl = document.getElementById('vol-icon');
+                                const role = vol.Role || '';
+                                if (role.includes('Medical')) iconEl.innerText = 'health_and_safety';
+                                else if (role.includes('Rescue')) iconEl.innerText = 'emergency';
+                                else if (role.includes('Supply')) iconEl.innerText = 'local_shipping';
+                                else if (role.includes('Communication')) iconEl.innerText = 'wifi_tethering';
+                                else iconEl.innerText = 'person';
+
+                                // Status Badge & Verification
+                                const statusBadge = document.getElementById('vol-status-badge');
+                                const isVerified = vol.IsVerified == 1;
+                                
+                                if (isVerified) {
+                                    document.getElementById('vol-verified-badge').classList.remove('hidden');
+                                    statusBadge.innerText = vol.Status || 'AVAILABLE';
+                                    statusBadge.className = vol.Status === 'Active' 
+                                        ? 'text-xs font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                        : 'text-xs font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider bg-zinc-800 text-zinc-300 border border-zinc-700';
+
+                                    if (vol.VerifiedByAdminName) {
+                                        document.getElementById('vol-verifier-info').classList.remove('hidden');
+                                        document.getElementById('vol-verifier-name').innerText = vol.VerifiedByAdminName;
+                                    }
+                                } else {
+                                    statusBadge.innerText = 'PENDING APPROVAL';
+                                    statusBadge.className = 'text-xs font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider bg-yellow-500/20 text-yellow-500 border border-yellow-500/30';
+                                    document.getElementById('vol-verify-actions').classList.remove('hidden');
+
+                                    // Action handlers
+                                    document.getElementById('btn-approve-vol').onclick = () => handleVerify(true);
+                                    document.getElementById('btn-reject-vol').onclick = () => handleVerify(false);
+                                }
+
+                                // Initialize Leaflet map if coordinates exist
+                                initVolunteerMap(vol.Latitude, vol.Longitude, vol.Name, vol.Location);
+
+                            } catch (e) {
+                                console.error("Error loading volunteer details:", e);
+                            }
+                        }
+
+                        async function handleVerify(approve) {
+                            const adminEmail = window.currentFirebaseUser ? window.currentFirebaseUser.email : 'admin@geoaid.com';
+                            try {
+                                const res = await fetch(`/api/volunteers/${volId}/verify`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ status: approve ? 'Active' : 'Rejected', adminEmail })
+                                });
+                                if (res.ok) {
+                                    alert(approve ? "Volunteer Approved successfully!" : "Volunteer Rejected.");
+                                    loadVolunteerDetail();
+                                } else {
+                                    alert("Action failed.");
+                                }
+                            } catch (e) {
+                                console.error(e);
+                            }
+                        }
+
+                        function initVolunteerMap(lat, lon, volName, locName) {
+                            const mapEl = document.getElementById('vol-map');
+                            if (!mapEl) return;
+
+                            const defaultLat = lat ? parseFloat(lat) : 23.8103;
+                            const defaultLon = lon ? parseFloat(lon) : 90.4125;
+
+                            if (window.L && L.map) {
+                                mapInstance = L.map('vol-map').setView([defaultLat, defaultLon], 12);
+                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                    attribution: '© OpenStreetMap'
+                                }).addTo(mapInstance);
+
+                                if (window._activeLeafletMaps) window._activeLeafletMaps.push(mapInstance);
+
+                                const marker = L.marker([defaultLat, defaultLon]).addTo(mapInstance);
+                                marker.bindPopup(`<b>${volName || 'Volunteer'}</b><br/>Location: ${locName || 'Base'}`).openPopup();
+                            }
+                        }
+
+                        async function loadVolunteerMissions() {
+                            try {
+                                const res = await fetch(`/api/volunteers/detail/${volId}/missions`);
+                                const missions = res.ok ? await res.json() : [];
+                                const tbody = document.getElementById('vol-missions-tbody');
+                                if (!tbody) return;
+
+                                if (missions.length === 0) {
+                                    tbody.innerHTML = `
+                                        <tr>
+                                            <td colspan="5" class="p-6 text-center text-zinc-500 font-medium">
+                                                No missions assigned to this responder yet.
+                                            </td>
+                                        </tr>
+                                    `;
+                                    return;
+                                }
+
+                                tbody.innerHTML = missions.map(m => {
+                                    const date = m.DispatchedAt ? new Date(m.DispatchedAt).toLocaleString() : 'N/A';
+                                    
+                                    let statusBadgeStyle = "bg-orange-500/10 text-orange-400 border-orange-500/20";
+                                    if (m.Status === 'Completed' || m.Status === 'Resolved') {
+                                        statusBadgeStyle = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+                                    } else if (m.Status === 'Cancelled') {
+                                        statusBadgeStyle = "bg-red-500/10 text-red-400 border-red-500/20";
+                                    }
+
+                                    const ratingStars = m.Rating ? '⭐'.repeat(m.Rating) : 'No rating';
+
+                                    return `
+                                        <tr class="border-b border-zinc-800/60 hover:bg-zinc-900/40 transition">
+                                            <td class="p-3 vertical-top">
+                                                <div class="font-extrabold text-white">#${m.RequestID}</div>
+                                                <div class="text-[11px] text-zinc-500 mt-1">${date}</div>
+                                            </td>
+                                            <td class="p-3 vertical-top">
+                                                <div class="font-semibold text-zinc-200">${m.VictimFullName || m.RequestorName || 'Victim'}</div>
+                                                <div class="text-[11px] text-zinc-500 mt-0.5">📞 ${m.VictimPhone || 'N/A'}</div>
+                                                <div class="text-[11px] text-zinc-500">📍 ${m.AreaName || 'SOS Area'}</div>
+                                            </td>
+                                            <td class="p-3 vertical-top">
+                                                <div class="font-extrabold text-zinc-200">${m.DispatchedQuantity || 1} units</div>
+                                                <div class="text-[11px] text-zinc-500 mt-0.5">${m.DispatchedItemName || m.CategoryName || 'Supplies'}</div>
+                                            </td>
+                                            <td class="p-3 vertical-top text-center">
+                                                <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full border ${statusBadgeStyle}">
+                                                    ${m.Status}
+                                                </span>
+                                            </td>
+                                            <td class="p-3 vertical-top">
+                                                <div class="font-bold text-amber-400">${ratingStars}</div>
+                                                <div class="text-[11px] text-zinc-400 italic mt-0.5">${m.FeedbackNote ? `"${m.FeedbackNote}"` : (m.IsSafe ? 'Confirmed Safe' : 'No feedback')}</div>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('');
+
+                            } catch (e) {
+                                console.error("Failed to load volunteer missions:", e);
+                            }
+                        }
+
+                        loadVolunteerDetail();
+                        loadVolunteerMissions();
+                    })();
+                </script>
+            </div>
+        </div>
+
+        <script src="./router.js"></script>
+    </body>
+</html>

@@ -161,7 +161,7 @@
                                 id="btn-export-registry"
                                 class="bg-primary-container/20 border border-primary-container/50 px-4 py-2 rounded-lg text-sm text-primary font-bold hover:bg-primary-container/40 transition flex items-center justify-center min-w-[140px]"
                             >
-                                Export Registry
+                                Export Volunteer Registry
                             </button>
                         </div>
                     </div>
@@ -265,7 +265,12 @@
 
                         const card = document.createElement("div");
                         card.className =
-                            "bg-surface-container border border-surface-bright rounded-xl p-5 hover:border-zinc-500 transition-colors duration-300 flex flex-col gap-3 group";
+                            "bg-surface-container border border-surface-bright rounded-xl p-5 hover:border-orange-500/50 cursor-pointer transition-all duration-300 flex flex-col gap-3 group";
+
+                        card.onclick = (e) => {
+                            if (e.target.closest(".btn-verify-action")) return;
+                            window.location.href = `volunteer-detail.html?id=${vol.VolunteerID}`;
+                        };
 
                         card.innerHTML = `
                         <div class="flex justify-between items-start">
@@ -312,6 +317,10 @@
                             </div>
                         ` : ''}
 
+                        <div class="flex items-center justify-between text-[11px] font-bold text-orange-400/90 pt-2 border-t border-zinc-800/80 group-hover:text-orange-400 transition-colors">
+                            <span class="flex items-center gap-1">View Full Profile & History <span class="material-symbols-outlined text-xs">arrow_forward</span></span>
+                        </div>
+
                         ${!isVerified ? `
                             <div class="flex gap-2 pt-2 border-t border-zinc-800 mt-1">
                                 <button data-id="${vol.VolunteerID}" data-action="approve" class="btn-verify-action flex-1 py-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs font-bold rounded-lg border border-emerald-500/30 transition">
@@ -329,6 +338,7 @@
                     // Attach action handlers for approve/reject buttons
                     grid.querySelectorAll(".btn-verify-action").forEach(btn => {
                         btn.addEventListener("click", (e) => {
+                            e.stopPropagation();
                             const id = e.currentTarget.dataset.id;
                             const action = e.currentTarget.dataset.action;
                             verifyVolunteer(id, action === "approve");

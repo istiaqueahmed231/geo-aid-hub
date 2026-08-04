@@ -616,6 +616,50 @@ app.get("/api/volunteers", (req, res) => {
   });
 });
 
+// --- GET SINGLE VOLUNTEER DETAIL BY ID ---
+app.get("/api/volunteers/detail/:id", (req, res) => {
+  const { id } = req.params;
+  const sql = `
+    SELECT VolunteerID, Name, Email, UID, Gender, Age, Location, Latitude, Longitude, Role, Status, PhoneNumber, HomeAddress, IsVerified, VerifiedByAdminName
+    FROM Volunteers
+    WHERE VolunteerID = ?
+    LIMIT 1;
+  `;
+  db.query(sql, [id], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (results.length === 0) return res.status(404).json({ error: "Volunteer not found" });
+    res.json(results[0]);
+  });
+});
+
+// --- GET ALL MISSIONS ASSIGNED TO A VOLUNTEER BY ID ---
+app.get("/api/volunteers/detail/:id/missions", (req, res) => {
+  const { id } = req.params;
+  const sql = `
+    SELECT 
+      r.RequestID, r.RequestorName, r.UrgencyScore, r.Status, r.ShortMessage,
+      r.DispatchedAt, r.CompletedAt, r.ResolvedAt, r.DispatchedQuantity,
+      c.CategoryName, l.AreaName, l.Latitude, l.Longitude,
+      vct.FullName AS VictimFullName, vct.PhoneNumber AS VictimPhone, vct.HomeAddress AS VictimAddress,
+      rc.CategoryName AS DispatchedItemName,
+      fb.IsSafe, fb.Rating, fb.FeedbackNote
+    FROM HelpRequests r
+    LEFT JOIN ResourceCategories c ON r.CategoryID = c.CategoryID
+    LEFT JOIN Locations l ON r.LocationID = l.LocationID
+    LEFT JOIN Victims vct ON r.VictimID = vct.VictimID
+    LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
+    LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
+    LEFT JOIN Feedback fb ON r.RequestID = fb.RequestID
+    WHERE r.AssignedVolunteerID = ?
+    ORDER BY r.DispatchedAt DESC;
+  `;
+
+  db.query(sql, [id], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+});
+
 // --- GET SPECIFIC REQUEST (For Tracking Web/App) ---
 app.get("/api/requests/:requestId", (req, res) => {
   const { requestId } = req.params;
