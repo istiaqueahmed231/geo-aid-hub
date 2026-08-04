@@ -269,7 +269,12 @@
 
                         card.onclick = (e) => {
                             if (e.target.closest(".btn-verify-action")) return;
-                            window.location.href = `volunteer-detail.html?id=${vol.VolunteerID}`;
+                            const targetUrl = `volunteer-detail.html?id=${vol.VolunteerID}`;
+                            if (typeof window.navigateTo === "function") {
+                                window.navigateTo(targetUrl);
+                            } else {
+                                window.location.href = targetUrl;
+                            }
                         };
 
                         card.innerHTML = `

@@ -163,8 +163,37 @@
       window._selectedSupplyName = null;
       window._selectedVolunteerName = null;
 
+      // Sync any page-specific <style> and <link rel="stylesheet"> elements from target page's <head>
+      if (doc.head) {
+        doc.head.querySelectorAll("style, link[rel='stylesheet']").forEach((node) => {
+          if (node.tagName.toLowerCase() === "style") {
+            const cssText = node.textContent;
+            if (cssText && !Array.from(document.head.querySelectorAll("style")).some((s) => s.textContent === cssText)) {
+              const newStyle = document.createElement("style");
+              newStyle.textContent = cssText;
+              document.head.appendChild(newStyle);
+            }
+          } else if (node.tagName.toLowerCase() === "link") {
+            const href = node.getAttribute("href");
+            if (href && !Array.from(document.head.querySelectorAll("link[rel='stylesheet']")).some((l) => l.getAttribute("href") === href)) {
+              const newLink = document.createElement("link");
+              newLink.rel = "stylesheet";
+              newLink.href = href;
+              document.head.appendChild(newLink);
+            }
+          }
+        });
+      }
+
       // 3. Swap the view content
       currentView.innerHTML = newView.innerHTML;
+
+      // Swap top header bar content if present on target page
+      const newHeader = doc.getElementById("header");
+      const currentHeader = document.getElementById("header");
+      if (newHeader && currentHeader) {
+        currentHeader.innerHTML = newHeader.innerHTML;
+      }
 
       // 4. Ensure view has proper CSS to fill layout
       ensureViewStyles();
@@ -193,6 +222,15 @@
 
       // 8. Re-run scripts inside the new view
       runViewScripts(currentView);
+
+      // Refresh Tailwind CSS JIT scanner for newly injected view elements
+      if (window.tailwind && typeof window.tailwind.refresh === "function") {
+        try {
+          window.tailwind.refresh();
+        } catch (e) {
+          /* ignore refresh warnings */
+        }
+      }
 
       // Sync theme icon for any new theme buttons in the loaded view
       if (typeof window.updateThemeIcons === "function") {
