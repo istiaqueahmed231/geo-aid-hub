@@ -872,6 +872,44 @@ app.get("/api/admin/stats", (req, res) => {
   });
 });
 
+// --- ADMIN DISPATCHES LOG ROUTE ---
+app.get("/api/admin/dispatches", (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ error: "Missing email parameter" });
+
+  const sql = `
+    SELECT 
+      r.RequestID,
+      r.Status,
+      r.DispatchedAt,
+      r.DispatchedQuantity,
+      r.ShortMessage,
+      l.AreaName,
+      vct.FullName AS VictimName,
+      vct.PhoneNumber AS VictimPhone,
+      vct.MobilityStatus AS VictimMobility,
+      vol.Name AS VolunteerName,
+      vol.Role AS VolunteerRole,
+      vol.PhoneNumber AS VolunteerPhone,
+      rc.CategoryName AS ResourceName,
+      rc.UnitOfMeasure
+    FROM HelpRequests r
+    JOIN Admins a ON r.DispatchedByAdminID = a.AdminID
+    LEFT JOIN Locations l ON r.LocationID = l.LocationID
+    LEFT JOIN Victims vct ON r.VictimID = vct.VictimID
+    LEFT JOIN Volunteers vol ON r.AssignedVolunteerID = vol.VolunteerID
+    LEFT JOIN Resources res ON r.AssignedResourceID = res.ResourceID
+    LEFT JOIN ResourceCategories rc ON res.CategoryID = rc.CategoryID
+    WHERE a.Email = ?
+    ORDER BY r.DispatchedAt DESC
+  `;
+
+  db.query(sql, [email], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+});
+
 // --- VOLUNTEER LOCATION UPDATE ---
 app.post("/api/volunteer/location", (req, res) => {
   const { uid, latitude, longitude, status } = req.body;
