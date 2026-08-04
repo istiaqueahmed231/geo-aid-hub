@@ -93,19 +93,35 @@
         <!-- ══════════════════════════════════════════ MAIN CONTENT -->
         <div id="main">
             <!-- HEADER -->
+            <!-- HEADER -->
             <header id="header">
                 <div class="header-left">
                     <div class="header-title">GEO-AID <span>HUB</span></div>
                     <div class="header-divider"></div>
-                    <div style="font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 14px; display: flex; align-items: center; gap: 6px; color: var(--text);">
-                        <span class="material-symbols-outlined" style="color: var(--orange);">account_circle</span>
-                        ADMIN PROFILE
+                    <div class="header-stats">
+                        <div class="stat-item">
+                            <span class="stat-dot red"></span>
+                            <span style="color: var(--red)">Active SOS: <strong id="nav-active-sos">…</strong></span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-dot orange"></span>
+                            <span style="color: var(--orange)">Low Stock: <strong id="nav-low-stock">0</strong></span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-dot green"></span>
+                            <span style="color: var(--green)">Volunteers: <strong id="nav-active-volunteers">…</strong></span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="header-right">
-                    <button id="theme-toggle-btn" class="icon-btn" title="Toggle Theme">
-                        <span id="theme-icon" class="material-symbols-outlined">light_mode</span>
+                    <div id="dispatcher-badge" class="flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/60">
+                        <div class="w-6 h-6 rounded-full bg-orange-500 text-white font-bold text-xs flex items-center justify-center" id="db-avatar">A</div>
+                        <span id="db-name" class="text-xs font-bold text-zinc-200">Admin</span>
+                    </div>
+
+                    <button class="icon-btn" id="theme-toggle-btn" title="Toggle Theme">
+                        <span class="material-symbols-outlined" id="theme-icon">light_mode</span>
                     </button>
                 </div>
             </header>

@@ -237,6 +237,11 @@
         window.updateThemeIcons();
       }
 
+      // Initialize global top header stats and admin badge
+      if (typeof window.initGlobalHeader === "function") {
+        window.initGlobalHeader();
+      }
+
       // 9. Scroll to top
       currentView.scrollTop = 0;
       window.scrollTo(0, 0);
@@ -299,6 +304,44 @@
 
   // Apply view styles immediately on load
   ensureViewStyles();
+
+  // Global header stats & admin user badge synchronization helper
+  async function initGlobalHeader() {
+    try {
+      const res = await fetch("/api/stats");
+      if (res.ok) {
+        const data = await res.json();
+        const sosEl = document.getElementById("nav-active-sos");
+        const stockEl = document.getElementById("nav-low-stock");
+        const volEl = document.getElementById("nav-active-volunteers");
+        if (sosEl) sosEl.textContent = data.pending ?? "0";
+        if (stockEl) stockEl.textContent = data.lowStockCount ?? "0";
+        if (volEl) volEl.textContent = data.volunteers ?? "0";
+      }
+    } catch (e) {}
+
+    const user = window.currentFirebaseUser;
+    const nameEl = document.getElementById("db-name");
+    const avatarEl = document.getElementById("db-avatar");
+
+    if (user && user.email) {
+      let adminName = "Admin";
+      try {
+        const adminRes = await fetch(`/api/admin/verify?email=${encodeURIComponent(user.email)}`);
+        if (adminRes.ok) {
+          const adminData = await adminRes.json();
+          if (adminData.adminName) adminName = adminData.adminName;
+        }
+      } catch (e) {}
+
+      if (nameEl) nameEl.textContent = adminName;
+      if (avatarEl) avatarEl.textContent = adminName.charAt(0).toUpperCase();
+    }
+  }
+
+  window.initGlobalHeader = initGlobalHeader;
+  window.addEventListener("authReady", initGlobalHeader);
+  initGlobalHeader();
 
   // Expose navigateTo globally for any code that needs programmatic navigation
   window.navigateTo = navigateTo;
