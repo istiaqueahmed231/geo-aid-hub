@@ -577,7 +577,7 @@ app.post("/api/sos", (req, res) => {
   };
 
   if (victimId || authUid) {
-    const findVictimSql = victimId 
+    const findVictimSql = victimId
       ? `SELECT VictimID, MobilityStatus, HasVulnerableDependents FROM Victims WHERE VictimID = ? LIMIT 1`
       : `SELECT VictimID, MobilityStatus, HasVulnerableDependents FROM Victims WHERE AuthUID = ? LIMIT 1`;
     const param = victimId || authUid;
@@ -902,7 +902,7 @@ app.get("/api/admin/stats", (req, res) => {
     JOIN Admins a ON r.DispatchedByAdminID = a.AdminID
     WHERE a.Email = ?
   `;
-  
+
   db.query(sql, [email], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     if (results.length === 0) {
@@ -1480,7 +1480,7 @@ app.put("/api/volunteers/me", (req, res) => {
 
   db.query(sql, [name || null, phoneNumber || null, homeAddress || null, ageVal, gender || null, role || null, uid], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
-    
+
     db.query(`SELECT VolunteerID, Name, Email, Role, Status, Location, PhoneNumber, HomeAddress, Gender, Age, IsVerified, VerifiedByAdminName FROM Volunteers WHERE UID = ? LIMIT 1`, [uid], (err, results) => {
       if (err || results.length === 0) return res.json({ success: true, message: "Profile updated successfully" });
       res.json({ success: true, volunteer: results[0] });
@@ -1737,7 +1737,7 @@ app.post("/api/dispatch", (req, res) => {
                         // If the token is no longer valid, clear it so we don't keep trying
                         if (
                           e.code ===
-                            "messaging/registration-token-not-registered" ||
+                          "messaging/registration-token-not-registered" ||
                           e.code === "messaging/invalid-registration-token"
                         ) {
                           db.query(
@@ -1794,7 +1794,7 @@ app.post("/api/dispatch", (req, res) => {
                         console.error("Volunteer FCM Error:", e.message || e);
                         if (
                           e.code ===
-                            "messaging/registration-token-not-registered" ||
+                          "messaging/registration-token-not-registered" ||
                           e.code === "messaging/invalid-registration-token"
                         ) {
                           db.query(
